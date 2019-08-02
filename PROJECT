@@ -1,0 +1,7 @@
+version: "2"
+domain: pivotal.io
+repo: marketplace-project
+resources:
+- group: marketplace
+  version: v1
+  kind: Project

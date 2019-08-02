@@ -1,0 +1,7 @@
+apiVersion: marketplace.pivotal.io/v1
+kind: Project
+metadata:
+  name: project-sample
+spec:
+  # Add fields here
+  foo: bar

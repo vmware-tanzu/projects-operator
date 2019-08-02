@@ -26,7 +26,6 @@ import (
 type ProjectSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Name string `json:"name"`
 }
 
 // ProjectStatus defines the observed state of Project

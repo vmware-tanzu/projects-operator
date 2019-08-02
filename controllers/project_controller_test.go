@@ -32,9 +32,7 @@ func Project(namespace, name string) *v1.Project {
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: v1.ProjectSpec{
-			Name: name,
-		},
+		Spec: v1.ProjectSpec{},
 	}
 }
 

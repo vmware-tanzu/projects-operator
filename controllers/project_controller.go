@@ -46,8 +46,7 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      project.Name,
-			Namespace: project.Namespace,
+			Name: project.Name,
 		},
 	}
 

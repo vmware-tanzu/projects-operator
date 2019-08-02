@@ -20,8 +20,7 @@ import (
 func Request(namespace, name string) ctrl.Request {
 	return ctrl.Request{
 		NamespacedName: types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
+			Name: name,
 		},
 	}
 }
@@ -29,8 +28,7 @@ func Request(namespace, name string) ctrl.Request {
 func Project(namespace, name string) *v1.Project {
 	return &v1.Project{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name: name,
 		},
 		Spec: v1.ProjectSpec{},
 	}
@@ -60,7 +58,7 @@ var _ = Describe("ProjectController", func() {
 	})
 
 	Describe("Reconcile", func() {
-		It("creates a namespace under required namespace", func() {
+		It("creates a namespace", func() {
 			_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -71,10 +69,9 @@ var _ = Describe("ProjectController", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(namespace.Name).To(Equal("my-project"))
-			Expect(namespace.Namespace).To(Equal("default"))
 		})
 
-		It("updates an existing namespace under required namespace", func() {
+		It("updates an existing namespace", func() {
 			_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 			Expect(err).NotTo(HaveOccurred())
 

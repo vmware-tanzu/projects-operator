@@ -19,8 +19,7 @@ var _ = Describe("Project", func() {
 
 		project := &v1.Project{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-project",
-				Namespace: "default",
+				Name: "my-project",
 			},
 			Spec: v1.ProjectSpec{},
 		}

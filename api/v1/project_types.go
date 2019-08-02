@@ -35,6 +35,7 @@ type ProjectStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
 
 // Project is the Schema for the projects API
 type Project struct {

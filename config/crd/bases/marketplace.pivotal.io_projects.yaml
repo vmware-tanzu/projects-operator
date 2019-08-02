@@ -10,7 +10,7 @@ spec:
   names:
     kind: Project
     plural: projects
-  scope: ""
+  scope: Cluster
   validation:
     openAPIV3Schema:
       description: Project is the Schema for the projects API

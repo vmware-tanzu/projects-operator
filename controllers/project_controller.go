@@ -26,12 +26,14 @@ import (
 	marketplacev1 "github.com/pivotal-cf/marketplace-project/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
-	Log logr.Logger
+	Log    logr.Logger
+	Scheme *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=marketplace.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -48,6 +50,10 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: project.Name,
 		},
+	}
+
+	if err := controllerutil.SetControllerReference(project, namespace, r.Scheme); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	_, err := controllerutil.CreateOrUpdate(context.TODO(), r, namespace, func() error { return nil })

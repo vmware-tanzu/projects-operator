@@ -69,3 +69,8 @@ CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
+
+
+#### Custom tasks ####
+clean-crs:
+	kubectl delete projects --all

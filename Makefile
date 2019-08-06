@@ -3,6 +3,7 @@
 IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+GINKGO_ARGS = -r -p -randomizeSuites -randomizeAllSpecs
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -13,9 +14,13 @@ endif
 
 all: manager
 
-# Run tests
-test: generate fmt vet manifests
-	go test ./api/... ./controllers/... -coverprofile cover.out
+# skip integration/acceptance tests
+unit-tests:
+	ginkgo ${GINKGO_ARGS} -skipPackage acceptance
+
+# Cannot yet -randomizeAllSpecs the acceptance tests
+acceptance-tests:
+	ginkgo -r acceptance
 
 # Build manager binary
 manager: generate fmt vet

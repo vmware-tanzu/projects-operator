@@ -13,7 +13,7 @@ params:
 - KUBECONFIG_FILE_CONTENTS:
 
 run:
-  path: marketplace-project/ism/ci/shim
+  path: marketplace-project/ci/shim
   args:
      - make
      - acceptance-tests

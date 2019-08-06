@@ -1,0 +1,45 @@
+jobs:
+- name: absolute-unit
+  plan:
+  - get: marketplace-project
+    trigger: true
+  - task: unit
+    file: marketplace-project/ci/tasks/unit.yml
+
+- name: acceptance
+  plan:
+  - get: marketplace-project
+    trigger: true
+    passed: [absolute-unit]
+  - task: acceptance
+    file: marketplace-project/ci/tasks/acceptance.yml
+    params:
+      KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
+
+# - name: osl
+#   plan:
+#   - get: oslo-scan-status
+#     trigger: true
+#   - get: ism
+#     trigger: true
+#     passed: [acceptance]
+#   - task: check-status-file
+#     file: ism/ci/tasks/osl.yml
+
+# - name: build
+#   plan:
+#   - get: ism
+#     trigger: true
+#     passed: [osl]
+#   - task: build
+#     file: ism/ci/tasks/build.yml
+
+resources:
+- name: marketplace-project
+  type: git
+  icon: github-face
+  source:
+    private_key: {{CONCOURSE_DEPLOY_KEY}}
+    uri: git@github.com:pivotal-cf/marketplace-project
+    branch: master
+

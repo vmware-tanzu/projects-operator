@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+export PATH="$PATH:/root/go/bin"
+cd marketplace-project
+
+if [ -n "$KUBECONFIG_FILE_CONTENTS" ]; then
+    mkdir -p "$HOME/.kube"
+    echo "$KUBECONFIG_FILE_CONTENTS" > "$HOME/.kube/config"
+fi
+
+"$@"

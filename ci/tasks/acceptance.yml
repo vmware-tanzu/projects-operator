@@ -1,0 +1,19 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: ismteam/ci
+    tag: 0.0.5
+
+inputs:
+- name: marketplace-project
+
+params:
+- KUBECONFIG_FILE_CONTENTS:
+
+run:
+  path: marketplace-project/ism/ci/shim
+  args:
+     - make
+     - acceptance-tests

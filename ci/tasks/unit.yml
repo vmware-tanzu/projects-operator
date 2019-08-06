@@ -1,0 +1,16 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: ismteam/ci
+    tag: 0.0.5
+
+inputs:
+- name: marketplace-project
+
+run:
+  path: marketplace-project/ci/shim
+  args:
+     - make
+     - unit-tests

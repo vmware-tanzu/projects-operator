@@ -1,0 +1,29 @@
+
+dn: cn=Enterprise Resource Unit,dc=example,dc=com
+cn: Enterprise Resource Unit
+gidnumber: 500
+givenname: Enterprise Resource
+homedirectory: /home/users/eunit
+mail: eunit@example.com
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: Unit
+uid: eunit
+uidnumber: 1000
+userpassword: {SHA512}qIgTSt8srGufiv2KDK3PW7l2BUu42SQxEoTKUayYZx4+NhzUzCFI62
+ R1ZR5iwoAbKl/hH7YyiBAuUtvtdXfxcA==
+
+
+dn: cn=ldap-experts,dc=example,dc=com
+cn: ldap-experts
+member: cn=Enterprise Resource Unit,dc=example,dc=com
+objectclass: groupOfNames
+objectclass: top
+
+
+dn: cn=posix-group,dc=example,dc=com
+cn: posix-group
+gidnumber: 500
+objectclass: posixGroup
+objectclass: top

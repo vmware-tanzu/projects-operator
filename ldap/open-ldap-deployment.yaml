@@ -1,0 +1,73 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: openldap-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ci-storage
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openldap-deployment
+  labels:
+    app: openldap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openldap
+  template:
+    metadata:
+      labels:
+        app: openldap
+    spec:
+      volumes:
+        - name: openldap-storage
+          persistentVolumeClaim:
+            claimName: openldap-claim
+      containers:
+      - name: openldap
+        image: osixia/openldap:1.2.4
+        ports:
+        - containerPort: 389
+        - containerPort: 636
+        volumeMounts:
+          - mountPath: "/var/lib/ldap"
+            name: openldap-storage
+            subPath: ldap
+          - mountPath: "/etc/ldap/slapd.d"
+            name: openldap-storage
+            subPath: slapd.d
+        env:
+        - name: LDAP_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: openldap-admin-secret
+              key: password
+        - name: LDAP_DOMAIN
+          value: example.com
+        - name: LDAP_ORGANISATION
+          value: "Test Environment"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openldap-service
+spec:
+  ports:
+    - port: 389
+      name: ldap
+    - port: 636
+      name: ldaps
+  selector:
+    app: openldap
+  type: LoadBalancer

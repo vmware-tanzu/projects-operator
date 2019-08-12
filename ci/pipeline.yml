@@ -19,24 +19,6 @@ jobs:
       CLUSTER_LOCATION: {{CLUSTER_LOCATION}}
       CODY_PASSWORD: {{CODY_PASSWORD}}
 
-# - name: osl
-#   plan:
-#   - get: oslo-scan-status
-#     trigger: true
-#   - get: ism
-#     trigger: true
-#     passed: [acceptance]
-#   - task: check-status-file
-#     file: ism/ci/tasks/osl.yml
-
-# - name: build
-#   plan:
-#   - get: ism
-#     trigger: true
-#     passed: [osl]
-#   - task: build
-#     file: ism/ci/tasks/build.yml
-
 resources:
 - name: marketplace-project
   type: git

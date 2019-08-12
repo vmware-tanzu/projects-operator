@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -29,9 +30,11 @@ type Env struct {
 var (
 	controllerSession *Session
 	Params            Env
+	tempFilePaths     []string
 )
 
 func TestAcceptance(t *testing.T) {
+
 	SetDefaultEventuallyTimeout(time.Minute)
 
 	BeforeSuite(func() {
@@ -40,20 +43,36 @@ func TestAcceptance(t *testing.T) {
 			panic(err)
 		}
 
-	})
-
-	BeforeEach(func() {
 		RunMake("install")
 		RunMake("clean-crs")
 		startController()
 	})
 
 	AfterEach(func() {
+		for _, file := range tempFilePaths {
+			err := os.Remove(file)
+			Expect(err).NotTo(HaveOccurred())
+		}
+		tempFilePaths = []string{}
+	})
+
+	AfterSuite(func() {
 		stopController()
 	})
 
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Acceptance Suite")
+}
+
+func AsFile(content string) string {
+	tmpProjectFile, err := ioutil.TempFile("", "project")
+	Expect(err).NotTo(HaveOccurred())
+
+	_, err = tmpProjectFile.Write([]byte(content))
+	Expect(err).NotTo(HaveOccurred())
+
+	tempFilePaths = append(tempFilePaths, tmpProjectFile.Name())
+	return tmpProjectFile.Name()
 }
 
 func startController() {

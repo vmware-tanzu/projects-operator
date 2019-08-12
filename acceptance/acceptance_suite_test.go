@@ -1,11 +1,18 @@
 package acceptance_test
 
 import (
+	"crypto/tls"
+	"encoding/json"
 	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/caarlos0/env/v6"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,10 +20,27 @@ import (
 	. "github.com/onsi/gomega/gexec"
 )
 
-var controllerSession *Session
+type Env struct {
+	UaaLocation     string `env:"UAA_LOCATION"`
+	ClusterLocation string `env:"CLUSTER_LOCATION"`
+	CodyPassword    string `env:"CODY_PASSWORD"`
+}
+
+var (
+	controllerSession *Session
+	Params            Env
+)
 
 func TestAcceptance(t *testing.T) {
 	SetDefaultEventuallyTimeout(time.Minute)
+
+	BeforeSuite(func() {
+		err := env.Parse(&Params)
+		if err != nil {
+			panic(err)
+		}
+
+	})
 
 	BeforeEach(func() {
 		RunMake("install")
@@ -47,14 +71,23 @@ func stopController() {
 	controllerSession.Terminate()
 }
 
-func RunKubectl(args ...string) string {
+type Kubectl = func(...string) (string, error)
+
+func GetKubectlFor(api, cluster, token string) Kubectl {
+	return func(args ...string) (string, error) {
+		allArgs := append([]string{"--insecure-skip-tls-verify", "--cluster=" + cluster, "--token=" + token, "--server=" + api}, args...)
+		return runKubectl(allArgs...)
+	}
+}
+
+func runKubectl(args ...string) (string, error) {
 	outBuf := NewBuffer()
 	command := exec.Command("kubectl", args...)
 	command.Stdout = io.MultiWriter(GinkgoWriter, outBuf)
 	command.Stderr = io.MultiWriter(GinkgoWriter, outBuf)
-	Expect(command.Run()).To(Succeed())
+	err := command.Run()
 
-	return string(outBuf.Contents())
+	return string(outBuf.Contents()), err
 }
 
 func RunMake(task string) {
@@ -63,4 +96,30 @@ func RunMake(task string) {
 	command.Stdout = GinkgoWriter
 	command.Stderr = GinkgoWriter
 	Expect(command.Run()).To(Succeed())
+}
+
+func GetToken(uaaLocation, user, password string) string {
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: transport}
+
+	resp, err := client.PostForm(uaaLocation+"/oauth/token", url.Values{
+		"client_id":     {"pks_cluster_client"},
+		"client_secret": {""},
+		"grant_type":    {"password"},
+		"username":      {user},
+		"response_type": {"id_token"},
+		"password":      {password},
+	})
+	Expect(err).NotTo(HaveOccurred())
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	Expect(err).NotTo(HaveOccurred())
+
+	responseMap := make(map[string]interface{})
+	err = json.Unmarshal(body, &responseMap)
+	Expect(err).NotTo(HaveOccurred())
+
+	return responseMap["id_token"].(string)
 }

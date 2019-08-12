@@ -1,15 +1,10 @@
 package acceptance_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"time"
-
-	marketplacev1 "github.com/pivotal-cf/marketplace-project/api/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,23 +12,27 @@ import (
 
 var _ = Describe("Project", func() {
 	var (
-		project        *marketplacev1.Project
-		projectName    string
-		tmpProjectFile *os.File
+		projectResource string
+		projectName     string
+		tmpProjectFile  *os.File
+		token           string
+		kubectl         Kubectl
 	)
 
 	BeforeEach(func() {
+
+		token = GetToken(Params.UaaLocation, "eunit", Params.CodyPassword)
+		kubectl = GetKubectlFor(Params.ClusterLocation, "marketplace-project-ci", token)
+
 		projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
 
-		project = &marketplacev1.Project{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Project",
-				APIVersion: "marketplace.pivotal.io/v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: projectName,
-			},
-		}
+		projectResource = fmt.Sprintf(`---
+apiVersion: marketplace.pivotal.io/v1
+kind: Project
+metadata:
+  name: %s
+`, projectName)
+
 	})
 
 	JustBeforeEach(func() {
@@ -41,10 +40,7 @@ var _ = Describe("Project", func() {
 		tmpProjectFile, err = ioutil.TempFile("", "project")
 		Expect(err).NotTo(HaveOccurred())
 
-		projectContent, err := json.Marshal(project)
-		Expect(err).NotTo(HaveOccurred())
-
-		_, err = tmpProjectFile.Write(projectContent)
+		_, err = tmpProjectFile.Write([]byte(projectResource))
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -54,36 +50,39 @@ var _ = Describe("Project", func() {
 
 	When("a Project resource is created", func() {
 		AfterEach(func() {
-			RunKubectl("delete", "--wait=true", "-f", tmpProjectFile.Name())
+			_, err := kubectl("delete", "--wait=true", "-f", tmpProjectFile.Name())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("creates a namespace with the project name", func() {
-			RunKubectl("apply", "-f", tmpProjectFile.Name())
+			_, err := kubectl("apply", "-f", tmpProjectFile.Name())
+			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func() string {
-				output, _ := exec.Command("kubectl", "get", "namespace", projectName).CombinedOutput()
-				return string(output)
-			}).Should(
-				SatisfyAll(MatchRegexp("NAME\\s+STATUS\\s+"), MatchRegexp(fmt.Sprintf("%s\\s+Active\\s+", projectName))))
+				output, _ := kubectl("get", "namespace")
+				return output
+			}).Should(SatisfyAll(MatchRegexp("NAME\\s+STATUS\\s+"), MatchRegexp(fmt.Sprintf("%s\\s+Active\\s+", projectName))))
 		})
 	})
 
 	When("a Project resource is deleted", func() {
 		JustBeforeEach(func() {
-			RunKubectl("apply", "-f", tmpProjectFile.Name())
+			_, err := kubectl("apply", "-f", tmpProjectFile.Name())
+			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func() string {
-				output, _ := exec.Command("kubectl", "get", "namespace", projectName).CombinedOutput()
-				return string(output)
+				output, _ := kubectl("get", "namespace", projectName)
+				return output
 			}).Should(SatisfyAll(MatchRegexp("NAME\\s+STATUS\\s+"), MatchRegexp(fmt.Sprintf("%s\\s+Active\\s+", projectName))))
 		})
 
 		It("deletes its corresponding namespace", func() {
-			RunKubectl("delete", "-f", tmpProjectFile.Name())
+			_, err := kubectl("delete", "-f", tmpProjectFile.Name())
+			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func() string {
-				output, _ := exec.Command("kubectl", "get", "namespace", projectName).CombinedOutput()
-				return string(output)
+				output, _ := kubectl("get", "namespace", projectName)
+				return output
 			}).Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
 		})
 	})

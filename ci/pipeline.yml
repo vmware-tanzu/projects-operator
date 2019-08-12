@@ -15,6 +15,9 @@ jobs:
     file: marketplace-project/ci/tasks/acceptance.yml
     params:
       KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
+      UAA_LOCATION: {{UAA_LOCATION}}
+      CLUSTER_LOCATION: {{CLUSTER_LOCATION}}
+      CODY_PASSWORD: {{CODY_PASSWORD}}
 
 # - name: osl
 #   plan:

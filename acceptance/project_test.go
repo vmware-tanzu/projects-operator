@@ -12,16 +12,16 @@ var _ = Describe("Project Resources", func() {
 	var (
 		projectResource string
 		projectName     string
-		token           string
-		kubectl         Kubectl
+		eunit           KubeContext
 	)
 
-	Context("a non admin user", func() {
+	Context("as cody", func() {
 
 		BeforeEach(func() {
 
-			token = GetToken(Params.UaaLocation, "eunit", Params.CodyPassword)
-			kubectl = GetKubectlFor(Params.ClusterLocation, "marketplace-project-ci", token)
+			eunitToken := GetToken(Params.UaaLocation, "eunit", Params.CodyPassword)
+
+			eunit = GetContextFor(Params.ClusterLocation, "marketplace-project-ci", eunitToken)
 
 			projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
 
@@ -33,21 +33,18 @@ metadata:
 		})
 
 		It("can create and delete a project", func() {
-			_, err := kubectl("apply", "-f", AsFile(projectResource))
+			_, err := eunit.Kubectl("apply", "-f", AsFile(projectResource))
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(func() string {
-				output, _ := kubectl("get", "namespace")
-				return output
-			}).Should(SatisfyAll(MatchRegexp("NAME\\s+STATUS\\s+"), MatchRegexp(fmt.Sprintf("%s\\s+Active\\s+", projectName))))
+			Eventually(eunit.TryKubectl("get", "namespace", projectName, "--output", "jsonpath={.status.phase}")).
+				Should(Equal("Active"))
 
-			_, err = kubectl("delete", "-f", AsFile(projectResource))
+			_, err = eunit.Kubectl("delete", "-f", AsFile(projectResource))
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(func() string {
-				output, _ := kubectl("get", "namespace", projectName)
-				return output
-			}).Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
+			Eventually(eunit.TryKubectl("get", "namespace", projectName)).
+				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
 		})
+
 	})
 })

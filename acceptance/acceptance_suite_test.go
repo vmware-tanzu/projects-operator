@@ -90,13 +90,27 @@ func stopController() {
 	controllerSession.Terminate()
 }
 
-type Kubectl = func(...string) (string, error)
+func GetContextFor(api, cluster, token string) KubeContext {
+	return KubeContext{api, cluster, token}
+}
 
-func GetKubectlFor(api, cluster, token string) Kubectl {
-	return func(args ...string) (string, error) {
-		allArgs := append([]string{"--insecure-skip-tls-verify", "--cluster=" + cluster, "--token=" + token, "--server=" + api}, args...)
-		return runKubectl(allArgs...)
+type KubeContext struct {
+	api     string
+	cluster string
+	token   string
+}
+
+func (c KubeContext) Kubectl(args ...string) (string, error) {
+	allArgs := append([]string{"--insecure-skip-tls-verify", "--cluster=" + c.cluster, "--token=" + c.token, "--server=" + c.api}, args...)
+	return runKubectl(allArgs...)
+}
+
+func (c KubeContext) TryKubectl(args ...string) func() string {
+	f := func() string {
+		s, _ := c.Kubectl(args...)
+		return s
 	}
+	return f
 }
 
 func runKubectl(args ...string) (string, error) {

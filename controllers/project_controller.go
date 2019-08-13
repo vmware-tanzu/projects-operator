@@ -25,6 +25,7 @@ import (
 
 	marketplacev1 "github.com/pivotal-cf/marketplace-project/api/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -57,6 +58,58 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	_, err := controllerutil.CreateOrUpdate(context.TODO(), r, namespace, func() error { return nil })
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	role := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      project.Name + "-role",
+			Namespace: project.Name,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"*"},
+				Resources: []string{"*"},
+				Verbs:     []string{"*"},
+			},
+		},
+	}
+
+	if err := controllerutil.SetControllerReference(project, role, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), r, role, func() error { return nil })
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	subjects := []rbacv1.Subject{}
+	for _, userRef := range project.Spec.Access {
+		subjects = append(subjects, rbacv1.Subject{
+			Kind:     "User",
+			Name:     userRef.Name,
+			APIGroup: "rbac.authorization.k8s.io",
+		})
+	}
+
+	roleBinding := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      project.Name + "-rolebinding",
+			Namespace: project.Name,
+		},
+		Subjects: subjects,
+		RoleRef: rbacv1.RoleRef{
+			Kind:     "Role",
+			Name:     project.Name + "-role",
+			APIGroup: "rbac.authorization.k8s.io",
+		},
+	}
+
+	if err := controllerutil.SetControllerReference(project, roleBinding, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), r, roleBinding, func() error { return nil })
 	if err != nil {
 		return ctrl.Result{}, err
 	}

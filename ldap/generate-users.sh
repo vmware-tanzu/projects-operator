@@ -41,17 +41,45 @@ gidnumber: 500
 objectclass: posixGroup
 objectclass: top
 
-dn: cn=eunit,dc=example,dc=com
-cn: eunit
+dn: cn=cody,dc=example,dc=com
+cn: cody
 gidnumber: 500
 givenname: Enterprise Resource
-homedirectory: /home/users/eunit
-mail: eunit@example.com
+homedirectory: /home/users/cody
+mail: cody@example.com
 objectclass: inetOrgPerson
 objectclass: posixAccount
 objectclass: top
 sn: Unit
-uid: eunit
+uid: cody
+uidnumber: 1000
+userpassword: $hashedPassword
+
+dn: cn=alice,dc=example,dc=com
+cn: alice
+gidnumber: 500
+givenname: Enterprise Resource
+homedirectory: /home/users/alice
+mail: alice@example.com
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: Unit
+uid: alice
+uidnumber: 1000
+userpassword: $hashedPassword
+
+dn: cn=bob,dc=example,dc=com
+cn: bob
+gidnumber: 500
+givenname: Enterprise Resource
+homedirectory: /home/users/bob
+mail: bob@example.com
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: Unit
+uid: bob
 uidnumber: 1000
 userpassword: $hashedPassword
 

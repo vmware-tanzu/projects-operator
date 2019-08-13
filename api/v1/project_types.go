@@ -26,6 +26,12 @@ import (
 type ProjectSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Access []SubjectRef `json:"access"`
+}
+
+type SubjectRef struct {
+	Kind string `json:"kind"`
+	Name string `json:"name"`
 }
 
 // ProjectStatus defines the observed state of Project

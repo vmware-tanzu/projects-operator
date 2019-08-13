@@ -91,17 +91,20 @@ func stopController() {
 }
 
 func GetContextFor(api, cluster, token string) KubeContext {
-	return KubeContext{api, cluster, token}
+	extraArgs := []string{"--insecure-skip-tls-verify", "--cluster=" + cluster, "--token=" + token, "--server=" + api}
+	return KubeContext{extraArgs}
+}
+
+func GetContextForAlana() KubeContext {
+	return KubeContext{[]string{}}
 }
 
 type KubeContext struct {
-	api     string
-	cluster string
-	token   string
+	extraArgs []string
 }
 
 func (c KubeContext) Kubectl(args ...string) (string, error) {
-	allArgs := append([]string{"--insecure-skip-tls-verify", "--cluster=" + c.cluster, "--token=" + c.token, "--server=" + c.api}, args...)
+	allArgs := append(c.extraArgs, args...)
 	return runKubectl(allArgs...)
 }
 
@@ -153,6 +156,7 @@ func GetToken(uaaLocation, user, password string) string {
 	responseMap := make(map[string]interface{})
 	err = json.Unmarshal(body, &responseMap)
 	Expect(err).NotTo(HaveOccurred())
+	Expect(responseMap).To(HaveKey("id_token"))
 
 	return responseMap["id_token"].(string)
 }

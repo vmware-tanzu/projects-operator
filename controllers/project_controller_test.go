@@ -40,9 +40,7 @@ var _ = Describe("ProjectController", func() {
 			user1 = "some-user1"
 			user2 = "some-user2"
 			project = Project("my-project", user1, user2)
-		})
 
-		JustBeforeEach(func() {
 			fakeClient = fake.NewFakeClientWithScheme(scheme, project)
 
 			reconciler = controllers.ProjectReconciler{
@@ -50,86 +48,137 @@ var _ = Describe("ProjectController", func() {
 				Client: fakeClient,
 				Scheme: scheme,
 			}
+
+			_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		When("there is a new project resource", func() {
-			It("creates a namespace with given project name", func() {
-				_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
-				Expect(err).NotTo(HaveOccurred())
+			Describe("creates a namespace", func() {
 
-				namespace := &corev1.Namespace{}
-				err = fakeClient.Get(context.TODO(), client.ObjectKey{
-					Name: project.Name,
-				}, namespace)
-				Expect(err).NotTo(HaveOccurred())
+				It("with given project name", func() {
+					namespace := &corev1.Namespace{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name,
+					}, namespace)
+					Expect(err).NotTo(HaveOccurred())
 
-				Expect(namespace.Name).To(Equal("my-project"))
+					Expect(namespace.Name).To(Equal("my-project"))
+				})
 
-				Expect(namespace.ObjectMeta.OwnerReferences).To(HaveLen(1))
-				ownerReference := namespace.ObjectMeta.OwnerReferences[0]
-				Expect(ownerReference.Name).To(Equal(project.Name))
-				Expect(ownerReference.Kind).To(Equal("Project"))
+				It("owned by the project", func() {
+
+					namespace := &corev1.Namespace{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name,
+					}, namespace)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(namespace.ObjectMeta.OwnerReferences).To(HaveLen(1))
+					ownerReference := namespace.ObjectMeta.OwnerReferences[0]
+					Expect(ownerReference.Name).To(Equal(project.Name))
+					Expect(ownerReference.Kind).To(Equal("Project"))
+				})
 			})
 
-			It("creates a role to access the project", func() {
-				_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
-				Expect(err).NotTo(HaveOccurred())
+			Describe("creates a role", func() {
+				It("to access the project", func() {
+					role := &rbacv1.Role{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      project.Name + "-role",
+						Namespace: project.Name,
+					}, role)
+					Expect(err).NotTo(HaveOccurred())
 
-				role := &rbacv1.Role{}
-				err = fakeClient.Get(context.TODO(), client.ObjectKey{
-					Name:      project.Name + "-role",
-					Namespace: project.Name,
-				}, role)
-				Expect(err).NotTo(HaveOccurred())
+					Expect(role.Name).To(Equal("my-project-role"))
+					Expect(role.ObjectMeta.Namespace).To(Equal("my-project"))
+					rule := role.Rules[0]
+					Expect(rule.APIGroups[0]).To(Equal("*"))
+					Expect(rule.Resources[0]).To(Equal("*"))
+					Expect(rule.Verbs[0]).To(Equal("*"))
+				})
 
-				Expect(role.Name).To(Equal("my-project-role"))
-				Expect(role.ObjectMeta.Namespace).To(Equal("my-project"))
-				rule := role.Rules[0]
-				Expect(rule.APIGroups[0]).To(Equal("*"))
-				Expect(rule.Resources[0]).To(Equal("*"))
-				Expect(rule.Verbs[0]).To(Equal("*"))
+				It("owned by the project", func() {
+					role := &rbacv1.Role{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      project.Name + "-role",
+						Namespace: project.Name,
+					}, role)
+					Expect(err).NotTo(HaveOccurred())
 
-				Expect(role.ObjectMeta.OwnerReferences).To(HaveLen(1))
-				ownerReference := role.ObjectMeta.OwnerReferences[0]
-				Expect(ownerReference.Name).To(Equal(project.Name))
-				Expect(ownerReference.Kind).To(Equal("Project"))
+					Expect(role.ObjectMeta.OwnerReferences).To(HaveLen(1))
+					ownerReference := role.ObjectMeta.OwnerReferences[0]
+					Expect(ownerReference.Name).To(Equal(project.Name))
+					Expect(ownerReference.Kind).To(Equal("Project"))
+				})
 			})
 
-			It("creates a role binding that allows the user specified in the project access to the project", func() {
-				_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
-				Expect(err).NotTo(HaveOccurred())
+			Describe("creates a role binding", func() {
+				It("that allows the user specified in the project access to the project", func() {
+					role := &rbacv1.RoleBinding{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      project.Name + "-rolebinding",
+						Namespace: project.Name,
+					}, role)
+					Expect(err).NotTo(HaveOccurred())
 
-				role := &rbacv1.RoleBinding{}
-				err = fakeClient.Get(context.TODO(), client.ObjectKey{
-					Name:      project.Name + "-rolebinding",
-					Namespace: project.Name,
-				}, role)
-				Expect(err).NotTo(HaveOccurred())
+					Expect(role.Name).To(Equal("my-project-rolebinding"))
+					Expect(role.ObjectMeta.Namespace).To(Equal("my-project"))
 
-				Expect(role.Name).To(Equal("my-project-rolebinding"))
-				Expect(role.ObjectMeta.Namespace).To(Equal("my-project"))
+					subject1 := role.Subjects[0]
+					Expect(subject1.Kind).To(Equal("User"))
+					Expect(subject1.Name).To(Equal(user1))
+					Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 
-				subject1 := role.Subjects[0]
-				Expect(subject1.Kind).To(Equal("User"))
-				Expect(subject1.Name).To(Equal(user1))
-				Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+					subject2 := role.Subjects[1]
+					Expect(subject2.Kind).To(Equal("User"))
+					Expect(subject2.Name).To(Equal(user2))
+					Expect(subject2.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 
-				subject2 := role.Subjects[1]
-				Expect(subject2.Kind).To(Equal("User"))
-				Expect(subject2.Name).To(Equal(user2))
-				Expect(subject2.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+					roleRef := role.RoleRef
+					Expect(roleRef.Kind).To(Equal("Role"))
+					Expect(roleRef.Name).To(Equal("my-project-role"))
+					Expect(roleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+				})
 
-				roleRef := role.RoleRef
-				Expect(roleRef.Kind).To(Equal("Role"))
-				Expect(roleRef.Name).To(Equal("my-project-role"))
-				Expect(roleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+				It("owned by the project", func() {
+					role := &rbacv1.RoleBinding{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      project.Name + "-rolebinding",
+						Namespace: project.Name,
+					}, role)
+					Expect(err).NotTo(HaveOccurred())
 
-				Expect(role.ObjectMeta.OwnerReferences).To(HaveLen(1))
-				ownerReference := role.ObjectMeta.OwnerReferences[0]
-				Expect(ownerReference.Name).To(Equal(project.Name))
-				Expect(ownerReference.Kind).To(Equal("Project"))
+					Expect(role.ObjectMeta.OwnerReferences).To(HaveLen(1))
+					ownerReference := role.ObjectMeta.OwnerReferences[0]
+					Expect(ownerReference.Name).To(Equal(project.Name))
+					Expect(ownerReference.Kind).To(Equal("Project"))
+				})
+
+				It("that can be updated", func() {
+					first := project.Spec.Access[0]
+					project.Spec.Access = []marketplacev1.SubjectRef{first}
+
+					err := fakeClient.Update(context.TODO(), project)
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+					Expect(err).NotTo(HaveOccurred())
+
+					updatedRole := &rbacv1.RoleBinding{}
+					_ = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      project.Name + "-rolebinding",
+						Namespace: project.Name,
+					}, updatedRole)
+
+					Expect(updatedRole.Subjects).To(HaveLen(1))
+					subject1 := updatedRole.Subjects[0]
+					Expect(subject1.Kind).To(Equal("User"))
+					Expect(subject1.Name).To(Equal(user1))
+					Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+
+				})
 			})
-
 		})
 
 		When("project resource already exists", func() {

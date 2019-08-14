@@ -45,7 +45,10 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("project", req.NamespacedName)
 
 	project := &marketplacev1.Project{}
-	r.Client.Get(context.TODO(), req.NamespacedName, project)
+
+	if err := r.Client.Get(context.TODO(), req.NamespacedName, project); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -57,32 +60,36 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	_, err := controllerutil.CreateOrUpdate(context.TODO(), r, namespace, func() error { return nil })
+	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, namespace, func() error { return nil })
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	r.Log.Info("creating/updating resource", "type", "namespace", "status", status)
 
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      project.Name + "-role",
 			Namespace: project.Name,
 		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{"*"},
-				Resources: []string{"*"},
-				Verbs:     []string{"*"},
-			},
-		},
 	}
 
 	if err := controllerutil.SetControllerReference(project, role, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r, role, func() error { return nil })
+	status, err = controllerutil.CreateOrUpdate(context.TODO(), r, role, func() error {
+		role.Rules = []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"*"},
+				Resources: []string{"*"},
+				Verbs:     []string{"*"},
+			},
+		}
+		return nil
+	})
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	r.Log.Info("creating/updating resource", "type", "role", "status", status)
 
 	subjects := []rbacv1.Subject{}
 	for _, userRef := range project.Spec.Access {
@@ -98,21 +105,24 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			Name:      project.Name + "-rolebinding",
 			Namespace: project.Name,
 		},
-		Subjects: subjects,
-		RoleRef: rbacv1.RoleRef{
-			Kind:     "Role",
-			Name:     project.Name + "-role",
-			APIGroup: "rbac.authorization.k8s.io",
-		},
 	}
-
 	if err := controllerutil.SetControllerReference(project, roleBinding, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r, roleBinding, func() error { return nil })
+
+	status, err = controllerutil.CreateOrUpdate(context.TODO(), r, roleBinding, func() error {
+		roleBinding.Subjects = subjects
+		roleBinding.RoleRef = rbacv1.RoleRef{
+			Kind:     "Role",
+			Name:     project.Name + "-role",
+			APIGroup: "rbac.authorization.k8s.io",
+		}
+		return nil
+	})
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	r.Log.Info("creating/updating resource", "type", "rolebinding", "status", status)
 
 	return ctrl.Result{}, nil
 }

@@ -12,9 +12,9 @@ var _ = Describe("Project Resources", func() {
 	var (
 		projectResource string
 		projectName     string
-		cody            KubeContext
 		alana           KubeContext
 		alice           KubeContext
+		cody            KubeContext
 		bob             KubeContext
 	)
 
@@ -76,6 +76,33 @@ spec:
 					ContainSubstring("test-map-alice"),
 					Not(ContainSubstring("test-map-bob")),
 				))
+		})
+
+		It("Alana can revoke access to a project from cody", func() {
+			message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
+			Expect(err).NotTo(HaveOccurred(), message)
+
+			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", fmt.Sprintf("configmap-%d", time.Now().UnixNano()))).
+				Should(ContainSubstring("created"))
+
+			projectResource = fmt.Sprintf(`---
+apiVersion: marketplace.pivotal.io/v1
+kind: Project
+metadata:
+ name: %s
+spec:
+  access:
+  - kind: User
+    name: alice
+`, projectName)
+
+			message, err = alana.Kubectl("apply", "-f", AsFile(projectResource))
+			Expect(err).NotTo(HaveOccurred(), message)
+
+			Eventually(func() string {
+				m, _ := cody.Kubectl("-n", projectName, "create", "configmap", fmt.Sprintf("configmap-%d", time.Now().UnixNano()))
+				return m
+			}).Should(ContainSubstring(`"cody" cannot create resource "configmaps"`))
 		})
 
 		It("Alana can delete a project", func() {

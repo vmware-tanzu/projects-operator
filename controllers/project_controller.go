@@ -98,10 +98,16 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	subjects := []rbacv1.Subject{}
 	for _, userRef := range project.Spec.Access {
+
+		apiGroup := ""
+		if userRef.Kind == "User" {
+			apiGroup = "rbac.authorization.k8s.io"
+		}
 		subjects = append(subjects, rbacv1.Subject{
-			Kind:     "User",
-			Name:     userRef.Name,
-			APIGroup: "rbac.authorization.k8s.io",
+			Kind:      string(userRef.Kind),
+			Name:      userRef.Name,
+			Namespace: "default",
+			APIGroup:  apiGroup,
 		})
 	}
 

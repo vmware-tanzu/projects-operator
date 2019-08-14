@@ -2,6 +2,7 @@ package acceptance_test
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -159,4 +160,20 @@ func GetToken(uaaLocation, user, password string) string {
 	Expect(responseMap).To(HaveKey("id_token"))
 
 	return responseMap["id_token"].(string)
+}
+
+func CreateServiceAccount(context KubeContext, serviceAccountName string) string {
+
+	message, err := context.Kubectl("create", "serviceaccount", serviceAccountName)
+	Expect(err).NotTo(HaveOccurred(), message)
+
+	secretName, err := context.Kubectl("get", "serviceaccount", serviceAccountName, "-o", "jsonpath={.secrets[0].name}")
+	Expect(err).NotTo(HaveOccurred(), message)
+
+	secret, err := context.Kubectl("get", "secret", secretName, "-o", "jsonpath={.data.token}")
+
+	token, err := base64.StdEncoding.DecodeString(secret)
+	Expect(err).NotTo(HaveOccurred(), message)
+
+	return string(token)
 }

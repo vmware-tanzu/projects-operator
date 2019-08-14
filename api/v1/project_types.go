@@ -29,9 +29,12 @@ type ProjectSpec struct {
 	Access []SubjectRef `json:"access"`
 }
 
+// +kubebuilder:validation:Enum=ServiceAccount;User
+type KindEnum string
+
 type SubjectRef struct {
-	Kind string `json:"kind"`
-	Name string `json:"name"`
+	Kind KindEnum `json:"kind"`
+	Name string   `json:"name"`
 }
 
 // ProjectStatus defines the observed state of Project

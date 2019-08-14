@@ -10,11 +10,10 @@ import (
 
 var _ = Describe("Project Resources", func() {
 	var (
-		projectResource string
-		projectName     string
-		alana           KubeContext
-		alice           KubeContext
-		cody            KubeContext
+		projectName string
+		alana       KubeContext
+		alice       KubeContext
+		cody        KubeContext
 	)
 
 	BeforeEach(func() {
@@ -24,6 +23,8 @@ var _ = Describe("Project Resources", func() {
 		alice = GetContextFor(Params.ClusterLocation, "marketplace-project-ci", aliceToken)
 		codyToken := GetToken(Params.UaaLocation, "cody", Params.CodyPassword)
 		cody = GetContextFor(Params.ClusterLocation, "marketplace-project-ci", codyToken)
+
+		projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
 	})
 
 	It("Cody can not add resources by default", func() {
@@ -34,20 +35,21 @@ var _ = Describe("Project Resources", func() {
 	})
 
 	It("Cody can not create projects", func() {
-		message, err := cody.Kubectl("create", "-f", AsFile(`
+		message, err := cody.Kubectl("create", "-f", AsFile(fmt.Sprintf(`
             apiVersion: marketplace.pivotal.io/v1
             kind: Project
             metadata:
-              name: name`))
+              name: %s`, projectName)))
 
 		Expect(err).To(HaveOccurred())
 		Expect(message).To(ContainSubstring(`User "cody" cannot create resource "projects"`))
 	})
 
-	When("Alana creates a project", func() {
+	When("Alana creates a project for Users", func() {
+		var projectResource string
 
 		BeforeEach(func() {
-			projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
+
 			projectResource = fmt.Sprintf(`
                 apiVersion: marketplace.pivotal.io/v1
                 kind: Project
@@ -112,6 +114,65 @@ var _ = Describe("Project Resources", func() {
 			Eventually(alana.TryKubectl("get", "namespace", projectName)).
 				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
 		})
+
+	})
+
+	When("Alana creates a project for ServiceAccounts", func() {
+
+		var (
+			projectResource    string
+			serviceAccountName string
+			serviceAccount     KubeContext
+		)
+		BeforeEach(func() {
+
+			serviceAccountName = fmt.Sprintf("service-account-acceptance-test-%d", time.Now().UnixNano())
+			token := CreateServiceAccount(alana, serviceAccountName)
+
+			serviceAccount = GetContextFor(Params.ClusterLocation, "marketplace-project-ci", token)
+
+			projectResource = fmt.Sprintf(`
+                apiVersion: marketplace.pivotal.io/v1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access:
+                  - kind: ServiceAccount
+                    name: %s`, projectName, serviceAccountName)
+
+			message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
+			Expect(err).NotTo(HaveOccurred(), message)
+		})
+
+		AfterEach(func() {
+			message, err := alana.Kubectl("delete", "serviceaccount", serviceAccountName)
+			Expect(err).NotTo(HaveOccurred(), message)
+		})
+
+		It("ServiceAccount can add a resource into it", func() {
+			Eventually(serviceAccount.TryKubectl("-n", projectName, "create", "configmap", "test-map-serviceaccount")).
+				Should(ContainSubstring("created"))
+		})
+
+	})
+
+	It("does not allow unknown service types", func() {
+
+		projectResource := `
+                apiVersion: marketplace.pivotal.io/v1
+                kind: Project
+                metadata:
+                 name: project
+                spec:
+                  access:
+                  - kind: SomeUnknownKind
+                    name: alice`
+
+		message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
+
+		Expect(err).To(HaveOccurred(), message)
+		Expect(message).To(ContainSubstring("spec.access.kind in body should be one of [ServiceAccount User]"))
 
 	})
 })

@@ -36,6 +36,9 @@ spec:
               items:
                 properties:
                   kind:
+                    enum:
+                    - ServiceAccount
+                    - User
                     type: string
                   name:
                     type: string

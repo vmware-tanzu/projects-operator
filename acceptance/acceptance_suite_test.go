@@ -162,15 +162,16 @@ func GetToken(uaaLocation, user, password string) string {
 	return responseMap["id_token"].(string)
 }
 
-func CreateServiceAccount(context KubeContext, serviceAccountName string) string {
+func CreateServiceAccount(context KubeContext, serviceAccountName, namespace string) string {
 
-	message, err := context.Kubectl("create", "serviceaccount", serviceAccountName)
+	message, err := context.Kubectl("-n", namespace, "create", "serviceaccount", serviceAccountName)
 	Expect(err).NotTo(HaveOccurred(), message)
 
-	secretName, err := context.Kubectl("get", "serviceaccount", serviceAccountName, "-o", "jsonpath={.secrets[0].name}")
+	secretName, err := context.Kubectl("-n", namespace, "get", "serviceaccount", serviceAccountName, "-o", "jsonpath={.secrets[0].name}")
 	Expect(err).NotTo(HaveOccurred(), message)
 
-	secret, err := context.Kubectl("get", "secret", secretName, "-o", "jsonpath={.data.token}")
+	secret, err := context.Kubectl("-n", namespace, "get", "secret", secretName, "-o", "jsonpath={.data.token}")
+	Expect(err).NotTo(HaveOccurred(), secret)
 
 	token, err := base64.StdEncoding.DecodeString(secret)
 	Expect(err).NotTo(HaveOccurred(), message)

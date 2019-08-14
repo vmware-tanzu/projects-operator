@@ -33,8 +33,9 @@ type ProjectSpec struct {
 type KindEnum string
 
 type SubjectRef struct {
-	Kind KindEnum `json:"kind"`
-	Name string   `json:"name"`
+	Kind      KindEnum `json:"kind"`
+	Name      string   `json:"name"`
+	Namespace string   `json:"namespace,omitempty"`
 }
 
 // ProjectStatus defines the observed state of Project

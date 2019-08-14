@@ -106,7 +106,7 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		subjects = append(subjects, rbacv1.Subject{
 			Kind:      string(userRef.Kind),
 			Name:      userRef.Name,
-			Namespace: "default",
+			Namespace: userRef.Namespace,
 			APIGroup:  apiGroup,
 		})
 	}

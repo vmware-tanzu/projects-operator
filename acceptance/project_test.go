@@ -117,17 +117,22 @@ var _ = Describe("Project Resources", func() {
 
 	})
 
-	When("Alana creates a project for ServiceAccounts", func() {
+	When("Alana creates a project for ServiceAccounts created in a namespace", func() {
 
 		var (
-			projectResource    string
-			serviceAccountName string
-			serviceAccount     KubeContext
+			projectResource  string
+			accountNamespace string
+			serviceAccount   KubeContext
 		)
 		BeforeEach(func() {
 
-			serviceAccountName = fmt.Sprintf("service-account-acceptance-test-%d", time.Now().UnixNano())
-			token := CreateServiceAccount(alana, serviceAccountName)
+			accountNamespace = "users" + projectName
+
+			message, err := alana.Kubectl("create", "namespace", accountNamespace)
+			Expect(err).NotTo(HaveOccurred(), message)
+
+			serviceAccountName := fmt.Sprintf("service-account-acceptance-test-%d", time.Now().UnixNano())
+			token := CreateServiceAccount(alana, serviceAccountName, accountNamespace)
 
 			serviceAccount = GetContextFor(Params.ClusterLocation, "marketplace-project-ci", token)
 
@@ -139,14 +144,15 @@ var _ = Describe("Project Resources", func() {
                 spec:
                   access:
                   - kind: ServiceAccount
-                    name: %s`, projectName, serviceAccountName)
+                    name: %s
+                    namespace: %s`, projectName, serviceAccountName, accountNamespace)
 
-			message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
+			message, err = alana.Kubectl("apply", "-f", AsFile(projectResource))
 			Expect(err).NotTo(HaveOccurred(), message)
 		})
 
 		AfterEach(func() {
-			message, err := alana.Kubectl("delete", "serviceaccount", serviceAccountName)
+			message, err := alana.Kubectl("delete", "namespace", accountNamespace)
 			Expect(err).NotTo(HaveOccurred(), message)
 		})
 

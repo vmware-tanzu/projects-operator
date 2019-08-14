@@ -148,8 +148,9 @@ var _ = Describe("ProjectController", func() {
 							Spec: marketplacev1.ProjectSpec{
 								Access: []marketplacev1.SubjectRef{
 									{
-										Kind: "ServiceAccount",
-										Name: serviceAccountName,
+										Kind:      "ServiceAccount",
+										Name:      serviceAccountName,
+										Namespace: "some-namespace",
 									},
 								},
 							},
@@ -177,6 +178,7 @@ var _ = Describe("ProjectController", func() {
 						subject1 := role.Subjects[0]
 						Expect(subject1.Kind).To(Equal("ServiceAccount"))
 						Expect(subject1.Name).To(Equal(serviceAccountName))
+						Expect(subject1.Namespace).To(Equal("some-namespace"))
 						Expect(subject1.APIGroup).To(Equal(""))
 
 						roleRef := role.RoleRef

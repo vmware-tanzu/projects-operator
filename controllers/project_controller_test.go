@@ -54,6 +54,18 @@ var _ = Describe("ProjectController", func() {
 		})
 
 		When("called with a project", func() {
+
+			Describe("that has been deleted", func() {
+
+				It("completed reconciliation normally", func() {
+					err := fakeClient.Delete(context.TODO(), project)
+
+					_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+			})
+
 			Describe("creates a namespace", func() {
 
 				It("with given project name", func() {

@@ -53,7 +53,7 @@ var _ = Describe("ProjectController", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		When("there is a new project resource", func() {
+		When("called with a project", func() {
 			Describe("creates a namespace", func() {
 
 				It("with given project name", func() {
@@ -178,16 +178,6 @@ var _ = Describe("ProjectController", func() {
 					Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 
 				})
-			})
-		})
-
-		When("project resource already exists", func() {
-			It("updates the project", func() {
-				_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
-				Expect(err).NotTo(HaveOccurred())
-
-				_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
-				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 	})

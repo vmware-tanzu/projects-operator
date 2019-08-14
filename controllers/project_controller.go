@@ -55,6 +55,28 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
+	if err := r.createNamespace(project); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.createRole(project); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.createRoleBinding(project); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&marketplacev1.Project{}).
+		Complete(r)
+}
+
+func (r *ProjectReconciler) createNamespace(project *marketplacev1.Project) error {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: project.Name,
@@ -62,15 +84,19 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if err := controllerutil.SetControllerReference(project, namespace, r.Scheme); err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
 	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, namespace, func() error { return nil })
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 	r.Log.Info("creating/updating resource", "type", "namespace", "status", status)
 
+	return nil
+}
+
+func (r *ProjectReconciler) createRole(project *marketplacev1.Project) error {
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      project.Name + "-role",
@@ -79,9 +105,9 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if err := controllerutil.SetControllerReference(project, role, r.Scheme); err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
-	status, err = controllerutil.CreateOrUpdate(context.TODO(), r, role, func() error {
+	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, role, func() error {
 		role.Rules = []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{"*"},
@@ -92,10 +118,14 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return nil
 	})
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 	r.Log.Info("creating/updating resource", "type", "role", "status", status)
 
+	return nil
+}
+
+func (r *ProjectReconciler) createRoleBinding(project *marketplacev1.Project) error {
 	subjects := []rbacv1.Subject{}
 	for _, userRef := range project.Spec.Access {
 
@@ -118,10 +148,10 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		},
 	}
 	if err := controllerutil.SetControllerReference(project, roleBinding, r.Scheme); err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 
-	status, err = controllerutil.CreateOrUpdate(context.TODO(), r, roleBinding, func() error {
+	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, roleBinding, func() error {
 		roleBinding.Subjects = subjects
 		roleBinding.RoleRef = rbacv1.RoleRef{
 			Kind:     "Role",
@@ -131,15 +161,9 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return nil
 	})
 	if err != nil {
-		return ctrl.Result{}, err
+		return err
 	}
 	r.Log.Info("creating/updating resource", "type", "rolebinding", "status", status)
 
-	return ctrl.Result{}, nil
-}
-
-func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&marketplacev1.Project{}).
-		Complete(r)
+	return nil
 }

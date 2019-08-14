@@ -18,6 +18,12 @@ jobs:
       UAA_LOCATION: {{UAA_LOCATION}}
       CLUSTER_LOCATION: {{CLUSTER_LOCATION}}
       CODY_PASSWORD: {{CODY_PASSWORD}}
+  - put: build-artefacts
+    params:
+      file: marketplace-project/config/crd/bases/marketplace.pivotal.io_projects.yaml
+  - put: gcr-repository
+    params:
+      build: marketplace-project
 
 resources:
 - name: marketplace-project
@@ -28,3 +34,22 @@ resources:
     uri: git@github.com:pivotal-cf/marketplace-project
     branch: master
 
+- name: gcr-repository
+  type: docker-image
+  source:
+    repository: gcr.io/cf-ism-0/marketplace-project
+    username: _json_key
+    password: {{GCR_SERVICE_ACCOUNT_KEY}}
+
+- name: build-artefacts
+  type: google-cloud-storage
+  source:
+    bucket: marketplace-build-artefacts
+    json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
+    regexp: project/marketplace.pivotal.io_projects.yaml
+
+resource_types:
+  - name: google-cloud-storage
+    type: docker-image
+    source:
+      repository: frodenas/gcs-resource

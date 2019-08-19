@@ -14,6 +14,8 @@ endif
 
 all: manager
 
+test: unit-tests acceptance-tests
+
 # skip integration/acceptance tests
 unit-tests:
 	ginkgo ${GINKGO_ARGS} -skipPackage acceptance

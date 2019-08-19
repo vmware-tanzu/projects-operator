@@ -82,7 +82,9 @@ var _ = Describe("Project Resources", func() {
 		})
 
 		It("Alana can revoke access to a project from cody", func() {
-			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", fmt.Sprintf("configmap-%d", time.Now().UnixNano()))).
+			configmapName := fmt.Sprintf("configmap-%d", time.Now().UnixNano())
+
+			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", configmapName)).
 				Should(ContainSubstring("created"))
 
 			projectResource = fmt.Sprintf(`
@@ -99,9 +101,9 @@ var _ = Describe("Project Resources", func() {
 			Expect(err).NotTo(HaveOccurred(), message)
 
 			Eventually(func() string {
-				m, _ := cody.Kubectl("-n", projectName, "create", "configmap", fmt.Sprintf("configmap-%d", time.Now().UnixNano()))
+				m, _ := cody.Kubectl("-n", projectName, "get", "configmap", configmapName)
 				return m
-			}).Should(ContainSubstring(`"cody" cannot create resource "configmaps"`))
+			}).Should(ContainSubstring(`"cody" cannot get resource "configmaps"`))
 		})
 
 		It("Alana can delete a project", func() {

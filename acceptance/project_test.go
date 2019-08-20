@@ -49,7 +49,6 @@ var _ = Describe("Project Resources", func() {
 		var projectResource string
 
 		BeforeEach(func() {
-
 			projectResource = fmt.Sprintf(`
                 apiVersion: marketplace.pivotal.io/v1
                 kind: Project
@@ -66,8 +65,18 @@ var _ = Describe("Project Resources", func() {
 			Expect(err).NotTo(HaveOccurred(), message)
 		})
 
-		It("Cody and Alice can add a resource into it", func() {
+		AfterEach(func() {
+			Eventually(alana.TryKubectl("get", "namespace", projectName, "--output", "jsonpath={.status.phase}")).
+				Should(Equal("Active"))
 
+			_, err := alana.Kubectl("delete", "-f", AsFile(projectResource))
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(alana.TryKubectl("get", "namespace", projectName)).
+				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
+		})
+
+		It("Cody and Alice can add a resource into it", func() {
 			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", "test-map-cody")).
 				Should(ContainSubstring("created"))
 
@@ -105,22 +114,9 @@ var _ = Describe("Project Resources", func() {
 				return m
 			}).Should(ContainSubstring(`"cody" cannot get resource "configmaps"`))
 		})
-
-		It("Alana can delete a project", func() {
-			Eventually(alana.TryKubectl("get", "namespace", projectName, "--output", "jsonpath={.status.phase}")).
-				Should(Equal("Active"))
-
-			_, err := alana.Kubectl("delete", "-f", AsFile(projectResource))
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(alana.TryKubectl("get", "namespace", projectName)).
-				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
-		})
-
 	})
 
 	When("Alana creates a project for ServiceAccounts created in a namespace", func() {
-
 		var (
 			projectResource  string
 			accountNamespace string
@@ -156,13 +152,15 @@ var _ = Describe("Project Resources", func() {
 		AfterEach(func() {
 			message, err := alana.Kubectl("delete", "namespace", accountNamespace)
 			Expect(err).NotTo(HaveOccurred(), message)
+
+			message, err = alana.Kubectl("delete", "projects", projectName)
+			Expect(err).NotTo(HaveOccurred(), message)
 		})
 
 		It("ServiceAccount can add a resource into it", func() {
 			Eventually(serviceAccount.TryKubectl("-n", projectName, "create", "configmap", "test-map-serviceaccount")).
 				Should(ContainSubstring("created"))
 		})
-
 	})
 
 	It("does not allow unknown service types", func() {

@@ -28,6 +28,7 @@ var _ = Describe("ProjectController", func() {
 			user1      string
 			user2      string
 			scheme     *runtime.Scheme
+			roleConfig controllers.RoleConfiguration
 		)
 
 		BeforeEach(func() {
@@ -43,10 +44,17 @@ var _ = Describe("ProjectController", func() {
 
 			fakeClient = fake.NewFakeClientWithScheme(scheme, project)
 
+			roleConfig = controllers.RoleConfiguration{
+				APIGroups: []string{"*"},
+				Resources: []string{"configmap"},
+				Verbs:     []string{"*"},
+			}
+
 			reconciler = controllers.ProjectReconciler{
-				Log:    ctrl.Log.WithName("controllers").WithName("Project"),
-				Client: fakeClient,
-				Scheme: scheme,
+				Log:        ctrl.Log.WithName("controllers").WithName("Project"),
+				Client:     fakeClient,
+				Scheme:     scheme,
+				RoleConfig: roleConfig,
 			}
 		})
 
@@ -112,9 +120,9 @@ var _ = Describe("ProjectController", func() {
 					Expect(role.Name).To(Equal("my-project-role"))
 					Expect(role.ObjectMeta.Namespace).To(Equal("my-project"))
 					rule := role.Rules[0]
-					Expect(rule.APIGroups[0]).To(Equal("*"))
-					Expect(rule.Resources[0]).To(Equal("*"))
-					Expect(rule.Verbs[0]).To(Equal("*"))
+					Expect(rule.APIGroups).To(ConsistOf(roleConfig.APIGroups))
+					Expect(rule.Resources).To(ConsistOf(roleConfig.Resources))
+					Expect(rule.Verbs).To(ConsistOf(roleConfig.Verbs))
 				})
 
 				It("owned by the project", func() {
@@ -219,6 +227,7 @@ var _ = Describe("ProjectController", func() {
 						Expect(roleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 					})
 				})
+
 				It("owned by the project", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
@@ -265,7 +274,6 @@ var _ = Describe("ProjectController", func() {
 					Expect(subject1.Kind).To(Equal("User"))
 					Expect(subject1.Name).To(Equal(user1))
 					Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
-
 				})
 			})
 		})
@@ -281,7 +289,6 @@ func Request(namespace, name string) ctrl.Request {
 }
 
 func Project(projectName string, users ...string) *marketplacev1.Project {
-
 	subjectRefs := []marketplacev1.SubjectRef{}
 
 	for _, user := range users {

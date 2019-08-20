@@ -28,6 +28,12 @@ type Env struct {
 	CodyPassword    string `env:"CODY_PASSWORD"`
 }
 
+const (
+	testRoleApiGroupEnv = "*"
+	testRoleResourceEnv = "configmaps,serviceaccounts"
+	testRoleVerbEnv     = "*"
+)
+
 var (
 	controllerSession *Session
 	Params            Env
@@ -81,6 +87,7 @@ func startController() {
 	Expect(err).NotTo(HaveOccurred())
 
 	command := exec.Command(pathToController)
+	command.Env = []string{"ROLE_APIGROUPS=" + testRoleApiGroupEnv, "ROLE_RESOURCES=" + testRoleResourceEnv, "ROLE_VERBS=" + testRoleVerbEnv}
 	controllerSession, err = Start(command, GinkgoWriter, GinkgoWriter)
 	Eventually(controllerSession.Err).Should(Say("starting manager"))
 

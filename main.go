@@ -18,6 +18,7 @@ package main
 import (
 	"flag"
 	"os"
+	"strings"
 
 	marketplacev1 "github.com/pivotal-cf/marketplace-project/api/v1"
 
@@ -34,6 +35,10 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+
+	apigroupsEnv = os.Getenv("ROLE_APIGROUPS")
+	resourcesEnv = os.Getenv("ROLE_RESOURCES")
+	verbsEnv     = os.Getenv("ROLE_VERBS")
 )
 
 func init() {
@@ -62,11 +67,19 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+	apiGroups := strings.Split(apigroupsEnv, ",")
+	resources := strings.Split(resourcesEnv, ",")
+	verbs := strings.Split(verbsEnv, ",")
 
 	if err = (&controllers.ProjectReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Project"),
 		Scheme: scheme,
+		RoleConfig: controllers.RoleConfiguration{
+			APIGroups: apiGroups,
+			Resources: resources,
+			Verbs:     verbs,
+		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)

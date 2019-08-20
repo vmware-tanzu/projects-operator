@@ -32,11 +32,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+type RoleConfiguration struct {
+	APIGroups []string
+	Resources []string
+	Verbs     []string
+}
+
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log        logr.Logger
+	Scheme     *runtime.Scheme
+	RoleConfig RoleConfiguration
 }
 
 // +kubebuilder:rbac:groups=marketplace.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -110,9 +117,9 @@ func (r *ProjectReconciler) createRole(project *marketplacev1.Project) error {
 	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, role, func() error {
 		role.Rules = []rbacv1.PolicyRule{
 			{
-				APIGroups: []string{"*"},
-				Resources: []string{"*"},
-				Verbs:     []string{"*"},
+				APIGroups: r.RoleConfig.APIGroups,
+				Resources: r.RoleConfig.Resources,
+				Verbs:     r.RoleConfig.Verbs,
 			},
 		}
 		return nil

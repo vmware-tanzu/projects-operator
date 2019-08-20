@@ -76,32 +76,26 @@ var _ = Describe("Project Resources", func() {
 				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
 		})
 
-		It("allows Cody and Alice can add a resource into it", func() {
+		It("allows Cody and Alice to add allowed resource into it", func() {
 			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", "test-map-cody")).
 				Should(ContainSubstring("created"))
 
-			Eventually(alice.TryKubectl("-n", projectName, "create", "configmap", "test-map-alice")).
+			Eventually(alice.TryKubectl("-n", projectName, "create", "serviceaccount", "test-sa-alice")).
 				Should(ContainSubstring("created"))
 
-			Eventually(cody.TryKubectl("-n", projectName, "get", "configmaps")).
+			Eventually(cody.TryKubectl("-n", projectName, "get", "configmaps,serviceaccounts")).
 				Should(SatisfyAll(
 					ContainSubstring("test-map-cody"),
-					ContainSubstring("test-map-alice"),
+					ContainSubstring("test-sa-alice"),
 				))
 		})
 
-		It("allows Cody and Alice can add a resource into it", func() {
-			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", "test-map-cody")).
-				Should(ContainSubstring("created"))
+		It("does not allow Cody and Alice to add arbitary resources into it", func() {
+			Eventually(cody.TryKubectl("-n", projectName, "create", "quota", "test-quota-cody")).
+				Should(ContainSubstring("forbidden"))
 
-			Eventually(alice.TryKubectl("-n", projectName, "create", "configmap", "test-map-alice")).
-				Should(ContainSubstring("created"))
-
-			Eventually(cody.TryKubectl("-n", projectName, "get", "configmaps")).
-				Should(SatisfyAll(
-					ContainSubstring("test-map-cody"),
-					ContainSubstring("test-map-alice"),
-				))
+			Eventually(alice.TryKubectl("-n", projectName, "create", "quota", "test-quota-aalice")).
+				Should(ContainSubstring("forbidden"))
 		})
 
 		It("allows Alana can revoke access to a project from cody", func() {

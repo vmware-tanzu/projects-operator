@@ -27,14 +27,14 @@ var _ = Describe("Project Resources", func() {
 		projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
 	})
 
-	It("Cody can not add resources by default", func() {
+	It("does not allow Cody to add resources by default", func() {
 		message, err := cody.Kubectl("create", "configmap", "test-map")
 
 		Expect(err).To(HaveOccurred())
 		Expect(message).To(ContainSubstring(`"cody" cannot create resource "configmaps"`))
 	})
 
-	It("Cody can not create projects", func() {
+	It("does not allow Cody to create projects", func() {
 		message, err := cody.Kubectl("create", "-f", AsFile(fmt.Sprintf(`
             apiVersion: marketplace.pivotal.io/v1
             kind: Project
@@ -76,7 +76,7 @@ var _ = Describe("Project Resources", func() {
 				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
 		})
 
-		It("Cody and Alice can add a resource into it", func() {
+		It("allows Cody and Alice can add a resource into it", func() {
 			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", "test-map-cody")).
 				Should(ContainSubstring("created"))
 
@@ -90,7 +90,21 @@ var _ = Describe("Project Resources", func() {
 				))
 		})
 
-		It("Alana can revoke access to a project from cody", func() {
+		It("allows Cody and Alice can add a resource into it", func() {
+			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", "test-map-cody")).
+				Should(ContainSubstring("created"))
+
+			Eventually(alice.TryKubectl("-n", projectName, "create", "configmap", "test-map-alice")).
+				Should(ContainSubstring("created"))
+
+			Eventually(cody.TryKubectl("-n", projectName, "get", "configmaps")).
+				Should(SatisfyAll(
+					ContainSubstring("test-map-cody"),
+					ContainSubstring("test-map-alice"),
+				))
+		})
+
+		It("allows Alana can revoke access to a project from cody", func() {
 			configmapName := fmt.Sprintf("configmap-%d", time.Now().UnixNano())
 
 			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", configmapName)).
@@ -157,7 +171,7 @@ var _ = Describe("Project Resources", func() {
 			Expect(err).NotTo(HaveOccurred(), message)
 		})
 
-		It("ServiceAccount can add a resource into it", func() {
+		It("allows a ServiceAccount to add a resource into it", func() {
 			Eventually(serviceAccount.TryKubectl("-n", projectName, "create", "configmap", "test-map-serviceaccount")).
 				Should(ContainSubstring("created"))
 		})

@@ -7,6 +7,17 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - marketplace.pivotal.io
   resources:
   - projects
@@ -26,3 +37,37 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
+  - servicebindings
+  verbs:
+  - '*'
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
+  - serviceinstances
+  verbs:
+  - '*'

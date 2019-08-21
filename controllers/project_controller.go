@@ -48,6 +48,11 @@ type ProjectReconciler struct {
 
 // +kubebuilder:rbac:groups=marketplace.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=marketplace.pivotal.io,resources=projects/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=watch;list;create;get;update;patch
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=watch;list;create;get;update;patch
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=watch;list;create;get;update;patch
+// +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=servicebindings,verbs=*
+// +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=serviceinstances,verbs=*
 
 func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()

@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"flag"
 	"os"
 	"strings"
@@ -35,10 +36,6 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
-
-	apigroupsEnv = os.Getenv("ROLE_APIGROUPS")
-	resourcesEnv = os.Getenv("ROLE_RESOURCES")
-	verbsEnv     = os.Getenv("ROLE_VERBS")
 )
 
 func init() {
@@ -67,7 +64,18 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-	apiGroups := strings.Split(apigroupsEnv, ",")
+
+	apigroupsEnv, apiGroupsExist := os.LookupEnv("ROLE_APIGROUPS")
+	resourcesEnv, resourcesExist := os.LookupEnv("ROLE_RESOURCES")
+	verbsEnv, verbsExist := os.LookupEnv("ROLE_VERBS")
+
+	if !apiGroupsExist || !resourcesExist || !verbsExist {
+		err = errors.New("ROLE_APIGROUPS, ROLE_RESOURCES and ROLE_VERBS envs must be set")
+		setupLog.Error(err, "unable to create controller", "controller", "Project")
+		os.Exit(1)
+	}
+
+	apiGroups := strings.Split(strings.Trim(apigroupsEnv, ""), ",")
 	resources := strings.Split(resourcesEnv, ",")
 	verbs := strings.Split(verbsEnv, ",")
 

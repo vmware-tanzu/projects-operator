@@ -42,5 +42,5 @@ spec:
         - name: ROLE_RESOURCES
           value: "servicebindings,serviceinstances"
         - name: ROLE_VERBS
-          value: ""
+          value: "*"
       terminationGracePeriodSeconds: 10

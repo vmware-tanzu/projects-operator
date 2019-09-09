@@ -10,10 +10,10 @@ inputs:
 - name: marketplace-project
 
 params:
-- KUBECONFIG_FILE_CONTENTS:
-- UAA_LOCATION:
-- CLUSTER_LOCATION:
-- CODY_PASSWORD:
+  KUBECONFIG_FILE_CONTENTS:
+  UAA_LOCATION:
+  CLUSTER_LOCATION:
+  CODY_PASSWORD:
 
 run:
   path: marketplace-project/ci/shim

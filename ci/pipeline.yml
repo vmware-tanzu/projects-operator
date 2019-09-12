@@ -21,6 +21,9 @@ jobs:
   - put: build-artefacts
     params:
       file: marketplace-project/config/crd/bases/marketplace.pivotal.io_projects.yaml
+  - put: build-artefacts
+    params:
+      file: marketplace-project/deployment/deployment.yaml
   - put: gcr-repository
     params:
       build: marketplace-project

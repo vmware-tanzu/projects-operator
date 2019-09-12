@@ -18,12 +18,23 @@ jobs:
       UAA_LOCATION: {{UAA_LOCATION}}
       CLUSTER_LOCATION: {{CLUSTER_LOCATION}}
       CODY_PASSWORD: {{CODY_PASSWORD}}
+  - task: assemble-build-artefact
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: ismteam/ci
+          tag: 0.0.7
+      inputs:
+        - name: marketplace-project
+      outputs:
+        - name: archive
+      run:
+        path: marketplace-project/ci/scripts/assemble-build-artefact.sh
   - put: build-artefacts
     params:
-      file: marketplace-project/config/crd/bases/marketplace.pivotal.io_projects.yaml
-  - put: build-artefacts
-    params:
-      file: marketplace-project/deployment/deployment.yaml
+      file: archive/projects.tgz
   - put: gcr-repository
     params:
       build: marketplace-project
@@ -49,7 +60,7 @@ resources:
   source:
     bucket: marketplace-build-artefacts
     json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
-    regexp: project/marketplace.pivotal.io_projects.yaml
+    regexp: project/projects.tgz
 
 resource_types:
   - name: google-cloud-storage

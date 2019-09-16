@@ -1,4 +1,4 @@
-module github.com/pivotal-cf/marketplace-project
+module github.com/pivotal/marketplace-project
 
 go 1.12
 

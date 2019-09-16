@@ -45,7 +45,7 @@ resources:
   icon: github-face
   source:
     private_key: {{CONCOURSE_DEPLOY_KEY}}
-    uri: git@github.com:pivotal-cf/marketplace-project
+    uri: git@github.com:pivotal/marketplace-project
     branch: master
 
 - name: gcr-repository

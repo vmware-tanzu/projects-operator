@@ -83,7 +83,7 @@ func AsFile(content string) string {
 }
 
 func startController() {
-	pathToController, err := Build("github.com/pivotal-cf/marketplace-project")
+	pathToController, err := Build("github.com/pivotal/marketplace-project")
 	Expect(err).NotTo(HaveOccurred())
 
 	command := exec.Command(pathToController)

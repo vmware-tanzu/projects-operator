@@ -23,7 +23,7 @@ spec:
 
 ##### Limitations
 
-Right now projects is hardcoded for usage by ISM to retrict users to a set of ServiceCatalog resources. This will be removed in the future. 
+Right now projects is hardcoded for usage by Marketplace to retrict users to a set of ServiceCatalog resources. This will be removed in the future. 
 In order to configure arbitary resources you must change the following configuration:
 1. The controller environment vars for [role permissions](https://github.com/pivotal-cf/marketplace-project/blob/master/config/manager/manager.yaml#L40-L45).
 1. The controller's [own permissions](https://github.com/pivotal-cf/marketplace-project/blob/master/controllers/project_controller.go#L54-L55) since the controller must have permission to resources it creates.
@@ -40,7 +40,7 @@ To run the acceptance tests you must have a pks k8s cluster using OIDC pointing 
 
 ### Development
 
-The following dependencies need to be installed in order to hack on ism:
+The following dependencies need to be installed in order to hack on marketplace:
 
 * [Go](https://golang.org/doc/install)
   * [ginkgo](https://github.com/onsi/ginkgo)

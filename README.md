@@ -35,7 +35,8 @@ To run the acceptance tests you must have a pks k8s cluster using OIDC pointing 
 1. Run `./ldap/generate-users.sh <ldap_host> <admin_dn> <admin_password>` and take note of the generated password
 1. Setup the following env vars: 
   1. `export UAA_LOCATION=<UAA_SERVER_LOCATION>`
-  1. `export CLUSTER_LOCATION=<CLUSTER>`
+  1. `export CLUSTER_API_LOCATION=<CLUSTER>`
+  1. `export CLUSTER_NAME=<CLUSTER_NAME>`
   1. `export CODY_PASSWORD=<PASSWORD_ABOVE>`
 
 ### Development

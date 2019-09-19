@@ -142,7 +142,7 @@ func (r *ProjectReconciler) createRoleBinding(project *marketplacev1.Project) er
 	for _, userRef := range project.Spec.Access {
 
 		apiGroup := ""
-		if userRef.Kind == "User" {
+		if userRef.Kind == "User" || userRef.Kind == "Group" {
 			apiGroup = "rbac.authorization.k8s.io"
 		}
 		subjects = append(subjects, rbacv1.Subject{

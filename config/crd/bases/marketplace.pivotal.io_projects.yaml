@@ -39,6 +39,7 @@ spec:
                     enum:
                     - ServiceAccount
                     - User
+                    - Group
                     type: string
                   name:
                     type: string

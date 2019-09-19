@@ -19,7 +19,6 @@ import (
 )
 
 var _ = Describe("ProjectController", func() {
-
 	Describe("Reconcile", func() {
 		var (
 			reconciler controllers.ProjectReconciler
@@ -59,7 +58,6 @@ var _ = Describe("ProjectController", func() {
 		})
 
 		Describe("deletion", func() {
-
 			It("deletes a project without errors", func() {
 				_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 				Expect(err).NotTo(HaveOccurred())
@@ -72,7 +70,6 @@ var _ = Describe("ProjectController", func() {
 		})
 
 		Describe("creation", func() {
-
 			Describe("creates a namespace", func() {
 
 				It("with given project name", func() {
@@ -144,7 +141,6 @@ var _ = Describe("ProjectController", func() {
 			})
 
 			Describe("creates a role binding", func() {
-
 				When("the subject is a ServiceAccount", func() {
 					var serviceAccountName = "service-account"
 
@@ -168,8 +164,7 @@ var _ = Describe("ProjectController", func() {
 						Expect(err).NotTo(HaveOccurred())
 					})
 
-					It("that allows the user specified in the project access to the project", func() {
-
+					It("allows the user specified in the project access to the project", func() {
 						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -197,7 +192,7 @@ var _ = Describe("ProjectController", func() {
 				})
 
 				When("the subject is a User", func() {
-					It("that allows the user specified in the project access to the project", func() {
+					It("allows the user specified in the project access to the project", func() {
 						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -228,6 +223,58 @@ var _ = Describe("ProjectController", func() {
 					})
 				})
 
+				When("the subject is a Group", func() {
+					var groupName string
+
+					BeforeEach(func() {
+						groupName = "my-group"
+
+						project = &marketplacev1.Project{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "my-project",
+							},
+							Spec: marketplacev1.ProjectSpec{
+								Access: []marketplacev1.SubjectRef{
+									{
+										Kind:      "Group",
+										Name:      groupName,
+										Namespace: "some-namespace",
+									},
+								},
+							},
+						}
+
+						err := fakeClient.Update(context.TODO(), project)
+						Expect(err).NotTo(HaveOccurred())
+					})
+
+					It("allows the group specified in the project access to the project", func() {
+						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						Expect(err).NotTo(HaveOccurred())
+
+						role := &rbacv1.RoleBinding{}
+						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+							Name:      project.Name + "-rolebinding",
+							Namespace: project.Name,
+						}, role)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(role.Name).To(Equal("my-project-rolebinding"))
+						Expect(role.ObjectMeta.Namespace).To(Equal("my-project"))
+
+						Expect(role.Subjects).To(HaveLen(1))
+						subject1 := role.Subjects[0]
+						Expect(subject1.Kind).To(Equal("Group"))
+						Expect(subject1.Name).To(Equal(groupName))
+						Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+
+						roleRef := role.RoleRef
+						Expect(roleRef.Kind).To(Equal("Role"))
+						Expect(roleRef.Name).To(Equal("my-project-role"))
+						Expect(roleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+					})
+				})
+
 				It("owned by the project", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
@@ -249,7 +296,6 @@ var _ = Describe("ProjectController", func() {
 
 		Describe("update", func() {
 			Describe("update a role binding", func() {
-
 				It("that can be updated", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())

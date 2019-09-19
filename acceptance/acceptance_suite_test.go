@@ -23,9 +23,10 @@ import (
 )
 
 type Env struct {
-	UaaLocation     string `env:"UAA_LOCATION"`
-	ClusterLocation string `env:"CLUSTER_LOCATION"`
-	CodyPassword    string `env:"CODY_PASSWORD"`
+	UaaLocation        string `env:"UAA_LOCATION"`
+	ClusterAPILocation string `env:"CLUSTER_API_LOCATION"`
+	CodyPassword       string `env:"CODY_PASSWORD"`
+	ClusterName        string `env:"CLUSTER_NAME"`
 }
 
 const (

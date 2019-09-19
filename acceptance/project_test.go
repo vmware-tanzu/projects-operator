@@ -20,9 +20,9 @@ var _ = Describe("Project Resources", func() {
 		alana = GetContextForAlana()
 
 		aliceToken := GetToken(Params.UaaLocation, "alice", Params.CodyPassword)
-		alice = GetContextFor(Params.ClusterLocation, "marketplace-project-ci", aliceToken)
+		alice = GetContextFor(Params.ClusterAPILocation, Params.ClusterName, aliceToken)
 		codyToken := GetToken(Params.UaaLocation, "cody", Params.CodyPassword)
-		cody = GetContextFor(Params.ClusterLocation, "marketplace-project-ci", codyToken)
+		cody = GetContextFor(Params.ClusterAPILocation, Params.ClusterName, codyToken)
 
 		projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
 	})
@@ -124,6 +124,59 @@ var _ = Describe("Project Resources", func() {
 		})
 	})
 
+	When("Alana creates a project for a Group", func() {
+		var projectResource string
+
+		BeforeEach(func() {
+			projectResource = fmt.Sprintf(`
+                apiVersion: marketplace.pivotal.io/v1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access:
+                  - kind: Group
+                    name: ldap-experts`, projectName)
+
+			message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
+			Expect(err).NotTo(HaveOccurred(), message)
+		})
+
+		AfterEach(func() {
+			Eventually(alana.TryKubectl("get", "namespace", projectName, "--output", "jsonpath={.status.phase}")).
+				Should(Equal("Active"))
+
+			_, err := alana.Kubectl("delete", "-f", AsFile(projectResource))
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(alana.TryKubectl("get", "namespace", projectName)).
+				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
+		})
+
+		It("members of the Group to add resources to it", func() {
+			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", "test-map-cody")).
+				Should(ContainSubstring("created"))
+
+			Eventually(cody.TryKubectl("-n", projectName, "get", "configmaps,serviceaccounts")).
+				Should(SatisfyAll(
+					ContainSubstring("test-map-cody"),
+				))
+		})
+
+		It("does not allow members of the Group to add arbitary resources into it", func() {
+			Consistently(cody.TryKubectl("-n", projectName, "create", "quota", "test-quota-cody"), 5*time.Second).
+				Should(ContainSubstring("forbidden"))
+
+			Consistently(alice.TryKubectl("-n", projectName, "create", "quota", "test-quota-aalice"), 5*time.Second).
+				Should(ContainSubstring("forbidden"))
+		})
+
+		It("does not allow non members of the Group to add resources to it", func() {
+			Consistently(alice.TryKubectl("-n", projectName, "create", "serviceaccount", "test-sa-alice"), 5*time.Second).
+				Should(ContainSubstring("forbidden"))
+		})
+	})
+
 	When("Alana creates a project for ServiceAccounts created in a namespace", func() {
 		var (
 			projectResource  string
@@ -131,7 +184,6 @@ var _ = Describe("Project Resources", func() {
 			serviceAccount   KubeContext
 		)
 		BeforeEach(func() {
-
 			accountNamespace = "users" + projectName
 
 			message, err := alana.Kubectl("create", "namespace", accountNamespace)
@@ -140,7 +192,7 @@ var _ = Describe("Project Resources", func() {
 			serviceAccountName := fmt.Sprintf("service-account-acceptance-test-%d", time.Now().UnixNano())
 			token := CreateServiceAccount(alana, serviceAccountName, accountNamespace)
 
-			serviceAccount = GetContextFor(Params.ClusterLocation, "marketplace-project-ci", token)
+			serviceAccount = GetContextFor(Params.ClusterAPILocation, Params.ClusterName, token)
 
 			projectResource = fmt.Sprintf(`
                 apiVersion: marketplace.pivotal.io/v1
@@ -172,7 +224,6 @@ var _ = Describe("Project Resources", func() {
 	})
 
 	It("does not allow unknown service types", func() {
-
 		projectResource := `
                 apiVersion: marketplace.pivotal.io/v1
                 kind: Project
@@ -186,7 +237,6 @@ var _ = Describe("Project Resources", func() {
 		message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
 
 		Expect(err).To(HaveOccurred(), message)
-		Expect(message).To(ContainSubstring("spec.access.kind in body should be one of [ServiceAccount User]"))
-
+		Expect(message).To(ContainSubstring("spec.access.kind in body should be one of [ServiceAccount User Group]"))
 	})
 })

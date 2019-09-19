@@ -29,7 +29,7 @@ type ProjectSpec struct {
 	Access []SubjectRef `json:"access"`
 }
 
-// +kubebuilder:validation:Enum=ServiceAccount;User
+// +kubebuilder:validation:Enum=ServiceAccount;User;Group
 type KindEnum string
 
 type SubjectRef struct {

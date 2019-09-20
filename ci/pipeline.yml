@@ -19,6 +19,12 @@ jobs:
       CLUSTER_API_LOCATION: {{CLUSTER_API_LOCATION}}
       CLUSTER_NAME: marketplace-project-ci
       CODY_PASSWORD: {{CODY_PASSWORD}}
+- name: release
+  plan:
+  - get: version
+    trigger: true
+  - get: marketplace-project
+    passed: [acceptance]
   - task: assemble-build-artefact
     config:
       platform: linux
@@ -39,6 +45,33 @@ jobs:
   - put: gcr-repository
     params:
       build: marketplace-project
+      tag_file: version/number
+  - put: marketplace-project
+    params:
+      only_tag: true
+      tag: version/number
+
+
+- name: bump-major
+  plan:
+    - get: version
+      params: {bump: major}
+    - put: version
+      params: {file: version/number}
+
+- name: bump-minor
+  plan:
+    - get: version
+      params: {bump: minor}
+    - put: version
+      params: {file: version/number}
+
+- name: bump-patch
+  plan:
+    - get: version
+      params: {bump: patch}
+    - put: version
+      params: {file: version/number}
 
 resources:
 - name: marketplace-project
@@ -62,6 +95,14 @@ resources:
     bucket: marketplace-build-artefacts
     json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
     regexp: project/projects.tgz
+
+- name: version
+  type: semver
+  source:
+    driver: gcs
+    bucket: marketplace-build-artefacts
+    json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
+    key: versions/project
 
 resource_types:
   - name: google-cloud-storage

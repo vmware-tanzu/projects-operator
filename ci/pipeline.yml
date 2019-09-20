@@ -49,8 +49,10 @@ jobs:
       tag_file: version/number
   - put: marketplace-project
     params:
+      repository: marketplace-project
       only_tag: true
       tag: version/number
+      tag_prefix: v
 
 
 - name: bump-major

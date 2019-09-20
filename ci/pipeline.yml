@@ -87,6 +87,7 @@ resources:
 
 - name: gcr-repository
   type: docker-image
+  icon: docker
   source:
     repository: gcr.io/cf-ism-0/marketplace-project
     username: _json_key
@@ -94,6 +95,7 @@ resources:
 
 - name: build-artefacts
   type: google-cloud-storage
+  icon: harddisk
   source:
     bucket: marketplace-build-artefacts
     json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
@@ -101,11 +103,13 @@ resources:
 
 - name: version
   type: semver
+  icon: one-up
   source:
     driver: gcs
     bucket: marketplace-build-artefacts
     json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
     key: versions/project
+    initial_version: 0.0.1
 
 resource_types:
   - name: google-cloud-storage

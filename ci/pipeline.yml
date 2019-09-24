@@ -47,6 +47,7 @@ jobs:
     params:
       build: marketplace-project
       tag_file: version/number
+      tag_as_latest: true
   - put: marketplace-project
     params:
       repository: marketplace-project

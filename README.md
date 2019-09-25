@@ -19,6 +19,8 @@ spec:
     name: cody
   - kind: ServiceAccount
     name: some-robot
+  - kind: Group
+    name: ldap-experts
 ```
 
 ##### Limitations

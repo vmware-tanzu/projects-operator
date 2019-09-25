@@ -19,7 +19,9 @@ then
   userPassword="$(kubectl -n $NAMESPACE get secret openldap-user-secret -o json | jq -r '.data.password' | base64 --decode)"
 else
   echo "openldap-user-secret Secret not found, creating"
-  userPassword="$(cat /dev/urandom | env LC_CTYPE=C tr -dc a-z | head -c 32 | base64)"
+  userPassword="$(cat /dev/urandom | env LC_CTYPE=C tr -dc a-z | head -c 32)"
+
+base64Password="$(echo $userPassword | base64)"
 
 cat <<-EOF | kubectl -n $NAMESPACE apply -f -
 apiVersion: v1
@@ -28,7 +30,7 @@ metadata:
   name: openldap-user-secret
 type: Opaque
 data:
-  password: $userPassword
+  password: $base64Password
 EOF
 fi
 

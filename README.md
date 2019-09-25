@@ -19,6 +19,7 @@ spec:
     name: cody
   - kind: ServiceAccount
     name: some-robot
+    namespace: some-namespace
   - kind: Group
     name: ldap-experts
 ```

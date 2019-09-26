@@ -82,7 +82,7 @@ resources:
   type: git
   icon: github-face
   source:
-    private_key: {{CONCOURSE_DEPLOY_KEY}}
+    private_key: {{MARKETPLACE_PROJECT_DEPLOY_KEY}}
     uri: git@github.com:pivotal/marketplace-project
     branch: master
 

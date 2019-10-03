@@ -125,8 +125,6 @@ resources:
     private_key: {{MARKETPLACE_PROJECT_DEPLOY_KEY}}
     uri: git@github.com:pivotal/marketplace-project
     branch: master
-    ignore_paths:
-    - ci/
 
 - name: gcr-repository
   type: registry-image

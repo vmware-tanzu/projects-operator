@@ -1,0 +1,31 @@
+replicaCount: 1
+
+image:
+  repository: gcr.io/cf-ism-0/marketplace-project
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 30Mi
+  requests:
+    cpu: 100m
+    memory: 20Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+role:
+  apiGroups: servicecatalog.k8s.io
+  resources: servicebindings,serviceinstances
+  verbs: "*"
+
+global:
+  imagePullSecrets:
+  - name: gcr-image-pull

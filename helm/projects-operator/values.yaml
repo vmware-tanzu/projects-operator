@@ -29,3 +29,8 @@ role:
 global:
   imagePullSecrets:
   - name: gcr-image-pull
+
+kubeRbacProxy:
+  image:
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    version: v0.4.0

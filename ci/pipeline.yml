@@ -32,7 +32,7 @@ jobs:
         type: registry-image
         source:
           repository: ismteam/ci
-          tag: 0.0.8
+          tag: 0.0.9
       inputs:
         - name: marketplace-project
         - name: version
@@ -80,7 +80,7 @@ jobs:
             --dpkg-file ${DPKG_FILENAME}
   - put: build-artefacts
     params:
-      file: archive/projects-*.tgz
+      file: archive/projects-operator-*.tgz
   - put: gcr-repository
     params:
       image: tagged-image/image.tar
@@ -140,7 +140,7 @@ resources:
   source:
     bucket: marketplace-build-artefacts
     json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
-    regexp: project/projects-(.*).tgz
+    regexp: project/projects-operator(.*).tgz
 
 - name: dpkg-list
   type: google-cloud-storage

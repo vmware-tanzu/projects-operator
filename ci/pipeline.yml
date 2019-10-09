@@ -32,7 +32,7 @@ jobs:
         type: registry-image
         source:
           repository: ismteam/ci
-          tag: 0.0.9
+          tag: 0.0.10
       inputs:
         - name: marketplace-project
         - name: version

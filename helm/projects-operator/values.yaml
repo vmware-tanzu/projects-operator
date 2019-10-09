@@ -1,8 +1,8 @@
 replicaCount: 1
 
-image:
-  repository: gcr.io/cf-ism-0/marketplace-project
-  pullPolicy: IfNotPresent
+image: gcr.io/cf-ism-0/marketplace-project:latest
+imagePullPolicy: IfNotPresent
+imagePullSecrets: []
 
 nameOverride: ""
 fullnameOverride: ""
@@ -26,11 +26,5 @@ role:
   resources: servicebindings,serviceinstances
   verbs: "*"
 
-global:
-  imagePullSecrets:
-  - name: gcr-image-pull
-
 kubeRbacProxy:
-  image:
-    repository: gcr.io/kubebuilder/kube-rbac-proxy
-    version: v0.4.0
+  image: gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0

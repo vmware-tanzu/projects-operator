@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	marketplacev1 "github.com/pivotal/projects-operator/api/v1"
+	projectv1 "github.com/pivotal/projects-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,7 +58,7 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
 	_ = r.Log.WithValues("project", req.NamespacedName)
 
-	project := &marketplacev1.Project{}
+	project := &projectv1.Project{}
 
 	if err := r.Client.Get(context.TODO(), req.NamespacedName, project); err != nil {
 		if errors.IsNotFound(err) {
@@ -84,11 +84,11 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&marketplacev1.Project{}).
+		For(&projectv1.Project{}).
 		Complete(r)
 }
 
-func (r *ProjectReconciler) createNamespace(project *marketplacev1.Project) error {
+func (r *ProjectReconciler) createNamespace(project *projectv1.Project) error {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: project.Name,
@@ -108,7 +108,7 @@ func (r *ProjectReconciler) createNamespace(project *marketplacev1.Project) erro
 	return nil
 }
 
-func (r *ProjectReconciler) createRole(project *marketplacev1.Project) error {
+func (r *ProjectReconciler) createRole(project *projectv1.Project) error {
 	role := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      project.Name + "-role",
@@ -137,7 +137,7 @@ func (r *ProjectReconciler) createRole(project *marketplacev1.Project) error {
 	return nil
 }
 
-func (r *ProjectReconciler) createRoleBinding(project *marketplacev1.Project) error {
+func (r *ProjectReconciler) createRoleBinding(project *projectv1.Project) error {
 	subjects := []rbacv1.Subject{}
 	for _, userRef := range project.Spec.Access {
 

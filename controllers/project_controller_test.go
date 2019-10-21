@@ -3,7 +3,7 @@ package controllers_test
 import (
 	"context"
 
-	marketplacev1 "github.com/pivotal/projects-operator/api/v1"
+	projectv1 "github.com/pivotal/projects-operator/api/v1"
 	"github.com/pivotal/projects-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -23,7 +23,7 @@ var _ = Describe("ProjectController", func() {
 		var (
 			reconciler controllers.ProjectReconciler
 			fakeClient client.Client
-			project    *marketplacev1.Project
+			project    *projectv1.Project
 			user1      string
 			user2      string
 			scheme     *runtime.Scheme
@@ -33,7 +33,7 @@ var _ = Describe("ProjectController", func() {
 		BeforeEach(func() {
 			scheme = runtime.NewScheme()
 
-			marketplacev1.AddToScheme(scheme)
+			projectv1.AddToScheme(scheme)
 			corev1.AddToScheme(scheme)
 			rbacv1.AddToScheme(scheme)
 
@@ -145,12 +145,12 @@ var _ = Describe("ProjectController", func() {
 					var serviceAccountName = "service-account"
 
 					BeforeEach(func() {
-						project = &marketplacev1.Project{
+						project = &projectv1.Project{
 							ObjectMeta: metav1.ObjectMeta{
 								Name: "my-project",
 							},
-							Spec: marketplacev1.ProjectSpec{
-								Access: []marketplacev1.SubjectRef{
+							Spec: projectv1.ProjectSpec{
+								Access: []projectv1.SubjectRef{
 									{
 										Kind:      "ServiceAccount",
 										Name:      serviceAccountName,
@@ -229,12 +229,12 @@ var _ = Describe("ProjectController", func() {
 					BeforeEach(func() {
 						groupName = "my-group"
 
-						project = &marketplacev1.Project{
+						project = &projectv1.Project{
 							ObjectMeta: metav1.ObjectMeta{
 								Name: "my-project",
 							},
-							Spec: marketplacev1.ProjectSpec{
-								Access: []marketplacev1.SubjectRef{
+							Spec: projectv1.ProjectSpec{
+								Access: []projectv1.SubjectRef{
 									{
 										Kind:      "Group",
 										Name:      groupName,
@@ -301,7 +301,7 @@ var _ = Describe("ProjectController", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					first := project.Spec.Access[0]
-					project.Spec.Access = []marketplacev1.SubjectRef{first}
+					project.Spec.Access = []projectv1.SubjectRef{first}
 
 					err = fakeClient.Update(context.TODO(), project)
 					Expect(err).NotTo(HaveOccurred())
@@ -334,21 +334,21 @@ func Request(namespace, name string) ctrl.Request {
 	}
 }
 
-func Project(projectName string, users ...string) *marketplacev1.Project {
-	subjectRefs := []marketplacev1.SubjectRef{}
+func Project(projectName string, users ...string) *projectv1.Project {
+	subjectRefs := []projectv1.SubjectRef{}
 
 	for _, user := range users {
-		subjectRefs = append(subjectRefs, marketplacev1.SubjectRef{
+		subjectRefs = append(subjectRefs, projectv1.SubjectRef{
 			Kind: "User",
 			Name: user,
 		})
 	}
 
-	return &marketplacev1.Project{
+	return &projectv1.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: projectName,
 		},
-		Spec: marketplacev1.ProjectSpec{
+		Spec: projectv1.ProjectSpec{
 			Access: subjectRefs,
 		},
 	}

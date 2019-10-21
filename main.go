@@ -21,7 +21,7 @@ import (
 	"os"
 	"strings"
 
-	marketplacev1 "github.com/pivotal/projects-operator/api/v1"
+	projectv1 "github.com/pivotal/projects-operator/api/v1"
 
 	"github.com/pivotal/projects-operator/controllers"
 
@@ -41,7 +41,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
-	_ = marketplacev1.AddToScheme(scheme)
+	_ = projectv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 

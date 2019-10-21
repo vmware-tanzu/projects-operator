@@ -7,7 +7,7 @@ image_resource:
     tag: 0.0.8
 
 inputs:
-- name: marketplace-project
+- name: projects-operator
 
 params:
   CLUSTER_API_LOCATION:
@@ -17,7 +17,7 @@ params:
   UAA_LOCATION:
 
 run:
-  path: marketplace-project/ci/shim
+  path: projects-operator/ci/shim
   args:
      - make
      - acceptance-tests

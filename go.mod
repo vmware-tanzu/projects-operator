@@ -1,10 +1,10 @@
-module github.com/pivotal/marketplace-project
+module github.com/pivotal/projects-operator
 
 go 1.13
 
 require (
 	github.com/Azure/go-autorest/autorest/adal v0.6.0 // indirect
-	github.com/caarlos0/env/v6 v6.0.0
+	github.com/caarlos0/env/v6 v6.1.0
 	github.com/go-logr/logr v0.1.0
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/gophercloud/gophercloud v0.3.0 // indirect

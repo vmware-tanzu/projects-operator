@@ -21,9 +21,9 @@ import (
 	"os"
 	"strings"
 
-	marketplacev1 "github.com/pivotal/marketplace-project/api/v1"
+	marketplacev1 "github.com/pivotal/projects-operator/api/v1"
 
-	"github.com/pivotal/marketplace-project/controllers"
+	"github.com/pivotal/projects-operator/controllers"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"

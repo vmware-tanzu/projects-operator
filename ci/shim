@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 export PATH="$PATH:/root/go/bin"
-cd marketplace-project
+cd projects-operator
 
 if [ -n "$KUBECONFIG_FILE_CONTENTS" ]; then
     mkdir -p "$HOME/.kube"

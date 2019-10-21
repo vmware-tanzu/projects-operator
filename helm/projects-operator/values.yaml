@@ -1,6 +1,6 @@
 replicaCount: 1
 
-image: gcr.io/cf-ism-0/marketplace-project:latest
+image: gcr.io/cf-ism-0/projects-operator:latest
 imagePullPolicy: IfNotPresent
 imagePullSecrets: []
 

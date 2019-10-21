@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caarlos0/env/v6"
+	env "github.com/caarlos0/env/v6"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -84,7 +84,7 @@ func AsFile(content string) string {
 }
 
 func startController() {
-	pathToController, err := Build("github.com/pivotal/marketplace-project")
+	pathToController, err := Build("github.com/pivotal/projects-operator")
 	Expect(err).NotTo(HaveOccurred())
 
 	command := exec.Command(pathToController)

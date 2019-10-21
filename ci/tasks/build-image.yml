@@ -6,10 +6,10 @@ image_resource:
     repository: vito/oci-build-task
 
 params:
-  CONTEXT: marketplace-project
+  CONTEXT: projects-operator
 
 inputs:
-- name: marketplace-project
+- name: projects-operator
 
 outputs:
 - name: image

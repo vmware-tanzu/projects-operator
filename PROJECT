@@ -1,6 +1,6 @@
 version: "2"
 domain: pivotal.io
-repo: marketplace-project
+repo: projects-operator
 resources:
 - group: marketplace
   version: v1

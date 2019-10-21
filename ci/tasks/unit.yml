@@ -7,10 +7,10 @@ image_resource:
     tag: 0.0.8
 
 inputs:
-- name: marketplace-project
+- name: projects-operator
 
 run:
-  path: marketplace-project/ci/shim
+  path: projects-operator/ci/shim
   args:
      - make
      - unit-tests

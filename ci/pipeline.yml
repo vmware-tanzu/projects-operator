@@ -1,18 +1,18 @@
 jobs:
 - name: absolute-unit
   plan:
-  - get: marketplace-project
+  - get: projects-operator
     trigger: true
   - task: unit
-    file: marketplace-project/ci/tasks/unit.yml
+    file: projects-operator/ci/tasks/unit.yml
 
 - name: acceptance
   plan:
-  - get: marketplace-project
+  - get: projects-operator
     trigger: true
     passed: [absolute-unit]
   - task: acceptance
-    file: marketplace-project/ci/tasks/acceptance.yml
+    file: projects-operator/ci/tasks/acceptance.yml
     params:
       KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
       UAA_LOCATION: {{UAA_LOCATION}}
@@ -24,13 +24,13 @@ jobs:
   plan:
   - get: version
     trigger: true
-  - get: marketplace-project
+  - get: projects-operator
     passed: [acceptance]
   - task: assemble-build-artefact
-    file: marketplace-project/ci/tasks/assemble-build-artefact.yml
+    file: projects-operator/ci/tasks/assemble-build-artefact.yml
   - task: build-image
     privileged: true
-    file: marketplace-project/ci/tasks/build-image.yml
+    file: projects-operator/ci/tasks/build-image.yml
   - task: deplab
     privileged: true
     config:
@@ -39,7 +39,7 @@ jobs:
         type: docker-image
         source: {repository: pivotalnavcon/deplab-task}
       inputs:
-      - name: marketplace-project
+      - name: projects-operator
       - name: image
       - name: version
       outputs:
@@ -52,7 +52,7 @@ jobs:
           set -eu pipefail
           DPKG_FILENAME="tagged-image/projects-dpkg-$(cat version/version).txt"
           deplab --image-tar image/image.tar \
-            --git marketplace-project \
+            --git projects-operator \
             --output-tar tagged-image/image.tar \
             --dpkg-file ${DPKG_FILENAME}
   - put: build-artefacts
@@ -65,9 +65,9 @@ jobs:
   - put: dpkg-list
     params:
       file: tagged-image/projects-dpkg-*.txt
-  - put: marketplace-project
+  - put: projects-operator
     params:
-      repository: marketplace-project
+      repository: projects-operator
       only_tag: true
       tag: version/number
       tag_prefix: v
@@ -95,19 +95,19 @@ jobs:
       params: {file: version/number}
 
 resources:
-- name: marketplace-project
+- name: projects-operator
   type: git
   icon: github-face
   source:
-    private_key: {{MARKETPLACE_PROJECT_DEPLOY_KEY}}
-    uri: git@github.com:pivotal/marketplace-project
+    private_key: {{PROJECTS_OPERATOR_DEPLOY_KEY}}
+    uri: git@github.com:pivotal/projects-operator
     branch: master
 
 - name: gcr-repository
   type: registry-image
   icon: docker
   source:
-    repository: gcr.io/cf-ism-0/marketplace-project
+    repository: gcr.io/cf-ism-0/projects-operator
     username: _json_key
     password: {{GCR_SERVICE_ACCOUNT_KEY}}
 

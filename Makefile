@@ -1,6 +1,6 @@
 
 # Image URL to use all building/pushing image targets
-IMG ?= gcr.io/cf-ism-0/marketplace-project:latest
+IMG ?= gcr.io/cf-ism-0/projects-operator:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 GINKGO_ARGS = -r -p -randomizeSuites -randomizeAllSpecs

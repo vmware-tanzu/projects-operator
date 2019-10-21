@@ -1,0 +1,17 @@
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: ismteam/ci
+    tag: 0.0.10
+
+inputs:
+- name: marketplace-project
+- name: version
+
+outputs:
+- name: archive
+
+run:
+  path: marketplace-project/ci/scripts/assemble-build-artefact.sh

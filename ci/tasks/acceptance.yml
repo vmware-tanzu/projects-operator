@@ -4,14 +4,20 @@ image_resource:
   type: registry-image
   source:
     repository: ismteam/ci
-    tag: 0.0.10
+    tag: 0.0.8
 
 inputs:
 - name: marketplace-project
-- name: version
 
-outputs:
-- name: archive
+params:
+  CLUSTER_API_LOCATION:
+  CLUSTER_NAME:
+  CODY_PASSWORD:
+  KUBECONFIG_FILE_CONTENTS:
+  UAA_LOCATION:
 
 run:
-  path: marketplace-project/ci/scripts/assemble-build-artefact.sh
+  path: marketplace-project/ci/shim
+  args:
+     - make
+     - acceptance-tests

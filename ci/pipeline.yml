@@ -117,7 +117,7 @@ resources:
   source:
     bucket: marketplace-build-artefacts
     json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
-    regexp: project/projects-operator(.*).tgz
+    regexp: project/projects-operator-(.*).tgz
 
 - name: dpkg-list
   type: google-cloud-storage

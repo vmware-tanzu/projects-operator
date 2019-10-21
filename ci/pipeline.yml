@@ -19,6 +19,7 @@ jobs:
       CLUSTER_API_LOCATION: {{CLUSTER_API_LOCATION}}
       CLUSTER_NAME: marketplace-project-ci
       CODY_PASSWORD: {{CODY_PASSWORD}}
+
 - name: release
   plan:
   - get: version
@@ -26,34 +27,10 @@ jobs:
   - get: marketplace-project
     passed: [acceptance]
   - task: assemble-build-artefact
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source:
-          repository: ismteam/ci
-          tag: 0.0.10
-      inputs:
-        - name: marketplace-project
-        - name: version
-      outputs:
-        - name: archive
-      run:
-        path: marketplace-project/ci/scripts/assemble-build-artefact.sh
+    file: marketplace-project/ci/tasks/assemble-build-artefact.yml
   - task: build-image
     privileged: true
-    config:
-      platform: linux
-      image_resource:
-        type: registry-image
-        source: {repository: vito/oci-build-task}
-      params:
-        CONTEXT: marketplace-project
-      inputs:
-        - name: marketplace-project
-      outputs:
-        - name: image
-      run: {path: build}
+    file: marketplace-project/ci/tasks/build-image.yml
   - task: deplab
     privileged: true
     config:

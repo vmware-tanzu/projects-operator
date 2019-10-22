@@ -4,7 +4,7 @@ image_resource:
   type: registry-image
   source:
     repository: ismteam/ci
-    tag: 0.0.10
+    tag: latest
 
 inputs:
 - name: projects-operator

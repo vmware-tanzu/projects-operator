@@ -53,6 +53,9 @@ type ProjectReconciler struct {
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=watch;list;create;get;update;patch
 // +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=servicebindings,verbs=*
 // +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=serviceinstances,verbs=*
+// +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=clusterservicebrokers,verbs=*
+// +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=clusterserviceclasses,verbs=*
+// +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=clusterserviceplans,verbs=*
 
 func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()

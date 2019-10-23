@@ -23,7 +23,7 @@ affinity: {}
 
 role:
   apiGroups: servicecatalog.k8s.io
-  resources: servicebindings,serviceinstances
+  resources: servicebindings,serviceinstances,clusterservicebrokers,clusterserviceclasses,clusterserviceplans
   verbs: "*"
 
 kubeRbacProxy:

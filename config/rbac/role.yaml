@@ -62,6 +62,24 @@ rules:
 - apiGroups:
   - servicecatalog.k8s.io
   resources:
+  - clusterservicebrokers
+  verbs:
+  - '*'
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
+  - clusterserviceclasses
+  verbs:
+  - '*'
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
+  - clusterserviceplans
+  verbs:
+  - '*'
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
   - servicebindings
   verbs:
   - '*'

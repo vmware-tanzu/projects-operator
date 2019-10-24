@@ -2,9 +2,7 @@ package acceptance_test
 
 import (
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -42,7 +40,6 @@ var (
 )
 
 func TestAcceptance(t *testing.T) {
-
 	SetDefaultEventuallyTimeout(time.Minute)
 
 	BeforeSuite(func() {
@@ -99,42 +96,6 @@ func stopController() {
 	controllerSession.Terminate()
 }
 
-func GetContextFor(api, cluster, token string) KubeContext {
-	extraArgs := []string{"--insecure-skip-tls-verify", "--cluster=" + cluster, "--token=" + token, "--server=" + api}
-	return KubeContext{extraArgs}
-}
-
-func GetContextForAlana() KubeContext {
-	return KubeContext{[]string{}}
-}
-
-type KubeContext struct {
-	extraArgs []string
-}
-
-func (c KubeContext) Kubectl(args ...string) (string, error) {
-	allArgs := append(c.extraArgs, args...)
-	return runKubectl(allArgs...)
-}
-
-func (c KubeContext) TryKubectl(args ...string) func() string {
-	f := func() string {
-		s, _ := c.Kubectl(args...)
-		return s
-	}
-	return f
-}
-
-func runKubectl(args ...string) (string, error) {
-	outBuf := NewBuffer()
-	command := exec.Command("kubectl", args...)
-	command.Stdout = io.MultiWriter(GinkgoWriter, outBuf)
-	command.Stderr = io.MultiWriter(GinkgoWriter, outBuf)
-	err := command.Run()
-
-	return string(outBuf.Contents()), err
-}
-
 func RunMake(task string) {
 	command := exec.Command("make", task)
 	command.Dir = filepath.Join("..")
@@ -168,21 +129,4 @@ func GetToken(uaaLocation, user, password string) string {
 	Expect(responseMap).To(HaveKey("id_token"))
 
 	return responseMap["id_token"].(string)
-}
-
-func CreateServiceAccount(context KubeContext, serviceAccountName, namespace string) string {
-
-	message, err := context.Kubectl("-n", namespace, "create", "serviceaccount", serviceAccountName)
-	Expect(err).NotTo(HaveOccurred(), message)
-
-	secretName, err := context.Kubectl("-n", namespace, "get", "serviceaccount", serviceAccountName, "-o", "jsonpath={.secrets[0].name}")
-	Expect(err).NotTo(HaveOccurred(), message)
-
-	secret, err := context.Kubectl("-n", namespace, "get", "secret", secretName, "-o", "jsonpath={.data.token}")
-	Expect(err).NotTo(HaveOccurred(), secret)
-
-	token, err := base64.StdEncoding.DecodeString(secret)
-	Expect(err).NotTo(HaveOccurred(), message)
-
-	return string(token)
 }

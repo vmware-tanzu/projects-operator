@@ -4,48 +4,42 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pivotal/projects-operator/testhelpers"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Project Resources", func() {
+var _ = Describe("Projects Operator and CRD", func() {
 	var (
 		projectName string
-		alana       KubeContext
-		alice       KubeContext
-		cody        KubeContext
+
+		alana testhelpers.KubeActor
+		alice testhelpers.KubeActor
+		cody  testhelpers.KubeActor
 	)
 
 	BeforeEach(func() {
-		alana = GetContextForAlana()
+		alana = testhelpers.NewKubeDefaultActor()
 
+		//TODO default namespace
 		aliceToken := GetToken(Params.UaaLocation, "alice", Params.CodyPassword)
-		alice = GetContextFor(Params.ClusterAPILocation, Params.ClusterName, aliceToken)
+		alice = testhelpers.NewKubeActor("alice", aliceToken)
 		codyToken := GetToken(Params.UaaLocation, "cody", Params.CodyPassword)
-		cody = GetContextFor(Params.ClusterAPILocation, Params.ClusterName, codyToken)
+		cody = testhelpers.NewKubeActor("cody", codyToken)
 
 		projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
 	})
 
-	It("does not allow Cody to add resources by default", func() {
-		message, err := cody.Kubectl("create", "configmap", "test-map")
-
-		Expect(err).To(HaveOccurred())
-		Expect(message).To(ContainSubstring(`"cody" cannot create resource "configmaps"`))
+	When("alice and cody have not been given access to a Project", func() {
+		It("does not permit them to interact with allowed resources", func() {
+			output, err := cody.RunKubeCtl("create", "configmap", "test-map")
+			Expect(err).To(HaveOccurred())
+			Expect(output).To(ContainSubstring(`"cody" cannot create resource "configmaps"`))
+		})
 	})
 
-	It("does not allow Cody to create projects", func() {
-		message, err := cody.Kubectl("create", "-f", AsFile(fmt.Sprintf(`
-            apiVersion: marketplace.pivotal.io/v1
-            kind: Project
-            metadata:
-              name: %s`, projectName)))
-
-		Expect(err).To(HaveOccurred())
-		Expect(message).To(ContainSubstring(`User "cody" cannot create resource "projects"`))
-	})
-
-	When("Alana creates a project for Users", func() {
+	When("alice and cody have been given User access to a Project", func() {
 		var projectResource string
 
 		BeforeEach(func() {
@@ -61,50 +55,56 @@ var _ = Describe("Project Resources", func() {
                   - kind: User
                     name: alice`, projectName)
 
-			message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
-			Expect(err).NotTo(HaveOccurred(), message)
+			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})
 
 		AfterEach(func() {
-			Eventually(alana.TryKubectl("get", "namespace", projectName, "--output", "jsonpath={.status.phase}")).
-				Should(Equal("Active"))
+			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
 
-			_, err := alana.Kubectl("delete", "-f", AsFile(projectResource))
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(alana.TryKubectl("get", "namespace", projectName)).
-				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
-		})
-
-		It("allows Cody and Alice to add allowed resource into it", func() {
-			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", "test-map-cody")).
-				Should(ContainSubstring("created"))
-
-			Eventually(alice.TryKubectl("-n", projectName, "create", "serviceaccount", "test-sa-alice")).
-				Should(ContainSubstring("created"))
-
-			Eventually(cody.TryKubectl("-n", projectName, "get", "configmaps,serviceaccounts")).
-				Should(SatisfyAll(
-					ContainSubstring("test-map-cody"),
-					ContainSubstring("test-sa-alice"),
+			Eventually(func() string {
+				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				return output
+			}).Should(
+				ContainSubstring(
+					fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
 				))
 		})
 
-		It("does not allow Cody and Alice to add arbitary resources into it", func() {
-			Eventually(cody.TryKubectl("-n", projectName, "create", "quota", "test-quota-cody")).
-				Should(ContainSubstring("forbidden"))
+		It("permits alice and cody to interact with the allowed resources", func() {
+			Eventually(func() string {
+				output, _ := alice.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-alice")
+				return output
+			}).Should(ContainSubstring("created"))
 
-			Eventually(alice.TryKubectl("-n", projectName, "create", "quota", "test-quota-aalice")).
-				Should(ContainSubstring("forbidden"))
+			Eventually(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "create", "serviceaccount", "test-sa-cody")
+				return output
+			}).Should(ContainSubstring("created"))
+
+			Eventually(func() string {
+				output, _ := alice.RunKubeCtl("-n", projectName, "get", "configmaps,serviceaccounts")
+				return output
+			}).Should(SatisfyAll(
+				ContainSubstring("test-map-alice"),
+				ContainSubstring("test-sa-cody"),
+			))
 		})
 
-		It("allows Alana can revoke access to a project from cody", func() {
-			configmapName := fmt.Sprintf("configmap-%d", time.Now().UnixNano())
+		It("does not permit alice or cody to interact with arbitrary resources", func() {
+			Consistently(func() string {
+				output, _ := alice.RunKubeCtl("-n", projectName, "create", "quota", "test-quota-alice")
+				return output
+			}).Should(ContainSubstring("forbidden"))
 
-			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", configmapName)).
-				Should(ContainSubstring("created"))
+			Consistently(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "get", "quota")
+				return output
+			}).Should(ContainSubstring("forbidden"))
+		})
 
-			projectResource = fmt.Sprintf(`
+		When("alana revokes access to a project from cody", func() {
+			BeforeEach(func() {
+				projectResource = fmt.Sprintf(`
                 apiVersion: marketplace.pivotal.io/v1
                 kind: Project
                 metadata:
@@ -114,17 +114,19 @@ var _ = Describe("Project Resources", func() {
                   - kind: User
                     name: alice`, projectName)
 
-			message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
-			Expect(err).NotTo(HaveOccurred(), message)
+				alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			})
 
-			Eventually(func() string {
-				m, _ := cody.Kubectl("-n", projectName, "get", "configmap", configmapName)
-				return m
-			}).Should(ContainSubstring(`"cody" cannot get resource "configmaps"`))
+			It("prevents cody from interacting with the allowed resources", func() {
+				Eventually(func() string {
+					output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps")
+					return output
+				}).Should(ContainSubstring(`User "cody" cannot list resource "configmaps"`))
+			})
 		})
 	})
 
-	When("Alana creates a project for a Group", func() {
+	When("the ldap-experts group has been given Group access to a Project", func() {
 		var projectResource string
 
 		BeforeEach(func() {
@@ -138,61 +140,70 @@ var _ = Describe("Project Resources", func() {
                   - kind: Group
                     name: ldap-experts`, projectName)
 
-			message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
-			Expect(err).NotTo(HaveOccurred(), message)
+			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})
 
 		AfterEach(func() {
-			Eventually(alana.TryKubectl("get", "namespace", projectName, "--output", "jsonpath={.status.phase}")).
-				Should(Equal("Active"))
+			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
 
-			_, err := alana.Kubectl("delete", "-f", AsFile(projectResource))
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(alana.TryKubectl("get", "namespace", projectName)).
-				Should(ContainSubstring(fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName)))
-		})
-
-		It("members of the Group to add resources to it", func() {
-			Eventually(cody.TryKubectl("-n", projectName, "create", "configmap", "test-map-cody")).
-				Should(ContainSubstring("created"))
-
-			Eventually(cody.TryKubectl("-n", projectName, "get", "configmaps,serviceaccounts")).
-				Should(SatisfyAll(
-					ContainSubstring("test-map-cody"),
+			Eventually(func() string {
+				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				return output
+			}).Should(
+				ContainSubstring(
+					fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
 				))
 		})
 
-		It("does not allow members of the Group to add arbitary resources into it", func() {
-			Consistently(cody.TryKubectl("-n", projectName, "create", "quota", "test-quota-cody"), 5*time.Second).
-				Should(ContainSubstring("forbidden"))
+		It("permits members of the Group to interact with the allowed resources", func() {
+			Eventually(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-cody")
+				return output
+			}).Should(ContainSubstring("created"))
 
-			Consistently(alice.TryKubectl("-n", projectName, "create", "quota", "test-quota-aalice"), 5*time.Second).
-				Should(ContainSubstring("forbidden"))
+			Eventually(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps,serviceaccounts")
+				return output
+			}).Should(SatisfyAll(
+				ContainSubstring("test-map-cody"),
+			))
 		})
 
-		It("does not allow non members of the Group to add resources to it", func() {
-			Consistently(alice.TryKubectl("-n", projectName, "create", "serviceaccount", "test-sa-alice"), 5*time.Second).
-				Should(ContainSubstring("forbidden"))
+		It("does not permit members of the Group to interact with arbitrary resources", func() {
+			Consistently(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "create", "quota", "test-quota-quota")
+				return output
+			}).Should(ContainSubstring("forbidden"))
+
+			Consistently(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "get", "quota")
+				return output
+			}).Should(ContainSubstring("forbidden"))
+		})
+
+		It("does not permit non-members of the Group to interact with arbitrary resources", func() {
+			Consistently(func() string {
+				output, _ := alice.RunKubeCtl("-n", projectName, "get", "quota")
+				return output
+			}).Should(ContainSubstring("forbidden"))
 		})
 	})
 
-	When("Alana creates a project for ServiceAccounts created in a namespace", func() {
+	When("a ServiceAccount has been given access to a Project", func() {
 		var (
-			projectResource  string
-			accountNamespace string
-			serviceAccount   KubeContext
+			projectResource string
+			saNamespace     string
+			sa              testhelpers.KubeActor
 		)
+
 		BeforeEach(func() {
-			accountNamespace = "users" + projectName
+			saNamespace = "users" + projectName
+			alana.MustRunKubectl("create", "namespace", saNamespace)
 
-			message, err := alana.Kubectl("create", "namespace", accountNamespace)
-			Expect(err).NotTo(HaveOccurred(), message)
+			saName := fmt.Sprintf("service-account-acceptance-test-%d", time.Now().UnixNano())
+			saToken := testhelpers.CreateServiceAccount(saName, saNamespace)
 
-			serviceAccountName := fmt.Sprintf("service-account-acceptance-test-%d", time.Now().UnixNano())
-			token := CreateServiceAccount(alana, serviceAccountName, accountNamespace)
-
-			serviceAccount = GetContextFor(Params.ClusterAPILocation, Params.ClusterName, token)
+			sa = testhelpers.NewKubeActor(saName, saToken)
 
 			projectResource = fmt.Sprintf(`
                 apiVersion: marketplace.pivotal.io/v1
@@ -203,27 +214,33 @@ var _ = Describe("Project Resources", func() {
                   access:
                   - kind: ServiceAccount
                     name: %s
-                    namespace: %s`, projectName, serviceAccountName, accountNamespace)
+                    namespace: %s`, projectName, saName, saNamespace)
 
-			message, err = alana.Kubectl("apply", "-f", AsFile(projectResource))
-			Expect(err).NotTo(HaveOccurred(), message)
+			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})
 
 		AfterEach(func() {
-			message, err := alana.Kubectl("delete", "namespace", accountNamespace)
-			Expect(err).NotTo(HaveOccurred(), message)
+			alana.MustRunKubectl("delete", "namespace", saNamespace)
+			alana.MustRunKubectl("delete", "project", projectName)
 
-			message, err = alana.Kubectl("delete", "projects", projectName)
-			Expect(err).NotTo(HaveOccurred(), message)
+			Eventually(func() string {
+				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				return output
+			}).Should(
+				ContainSubstring(
+					fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
+				))
 		})
 
-		It("allows a ServiceAccount to add a resource into it", func() {
-			Eventually(serviceAccount.TryKubectl("-n", projectName, "create", "configmap", "test-map-serviceaccount")).
-				Should(ContainSubstring("created"))
+		It("permits the ServiceAccount to interact with the allowed resources", func() {
+			Eventually(func() string {
+				output, _ := sa.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-sa")
+				return output
+			}).Should(ContainSubstring("created"))
 		})
 	})
 
-	It("does not allow unknown service types", func() {
+	It("does not allow unknown access types", func() {
 		projectResource := `
                 apiVersion: marketplace.pivotal.io/v1
                 kind: Project
@@ -234,9 +251,26 @@ var _ = Describe("Project Resources", func() {
                   - kind: SomeUnknownKind
                     name: alice`
 
-		message, err := alana.Kubectl("apply", "-f", AsFile(projectResource))
-
+		message, err := alana.RunKubeCtl("apply", "-f", AsFile(projectResource))
 		Expect(err).To(HaveOccurred(), message)
 		Expect(message).To(ContainSubstring("spec.access.kind in body should be one of [ServiceAccount User Group]"))
+	})
+
+	It("does not allow alice or cody to create projects", func() {
+		projectResource := fmt.Sprintf(`
+                apiVersion: marketplace.pivotal.io/v1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access:
+                  - kind: User
+                    name: cody
+                  - kind: User
+                    name: alice`, "project")
+
+		output, err := cody.RunKubeCtl("create", "-f", AsFile(projectResource))
+		Expect(err).To(HaveOccurred())
+		Expect(output).To(ContainSubstring(`User "cody" cannot create resource "projects"`))
 	})
 })

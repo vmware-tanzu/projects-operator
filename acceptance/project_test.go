@@ -14,9 +14,11 @@ var _ = Describe("Projects Operator and CRD", func() {
 	var (
 		projectName string
 
-		alana testhelpers.KubeActor
-		alice testhelpers.KubeActor
-		cody  testhelpers.KubeActor
+		// Note that these users have a corresponding identity in LDAP
+		// see the README.md for further info
+		alana testhelpers.KubeActor // an "admin/operator"
+		alice testhelpers.KubeActor // a "developer"
+		cody  testhelpers.KubeActor // a "developer"
 	)
 
 	BeforeEach(func() {

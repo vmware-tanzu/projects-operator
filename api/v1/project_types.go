@@ -16,6 +16,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,7 +27,8 @@ import (
 type ProjectSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Access []SubjectRef `json:"access"`
+	Access  []SubjectRef            `json:"access"`
+	RoleRef *corev1.ObjectReference `json:"roleRef"`
 }
 
 // +kubebuilder:validation:Enum=ServiceAccount;User;Group

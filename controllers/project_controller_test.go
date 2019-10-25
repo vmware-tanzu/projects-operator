@@ -3,16 +3,18 @@ package controllers_test
 import (
 	"context"
 
-	projectv1 "github.com/pivotal/projects-operator/api/v1"
-	"github.com/pivotal/projects-operator/controllers"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	projectv1 "github.com/pivotal/projects-operator/api/v1"
+	"github.com/pivotal/projects-operator/controllers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -137,6 +139,37 @@ var _ = Describe("ProjectController", func() {
 					ownerReference := role.ObjectMeta.OwnerReferences[0]
 					Expect(ownerReference.Name).To(Equal(project.Name))
 					Expect(ownerReference.Kind).To(Equal("Project"))
+				})
+			})
+
+			Describe("when cluster role from project spec", func() {
+				It("uses it to access the project", func() {
+					project.Spec.RoleRef = &corev1.ObjectReference{Name: "some-cluster-role"}
+					Expect(fakeClient.Update(context.TODO(), project)).NotTo(HaveOccurred())
+
+					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					Expect(err).NotTo(HaveOccurred())
+
+					role := &rbacv1.Role{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      project.Name + "-role",
+						Namespace: project.Name,
+					}, role)
+					Expect(err).To(HaveOccurred())
+					Expect(errors.IsNotFound(err)).To(BeTrue())
+
+					binding := &rbacv1.RoleBinding{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      project.Name + "-rolebinding",
+						Namespace: project.Name,
+					}, binding)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(binding.RoleRef).To(Equal(
+						rbacv1.RoleRef{
+							Kind:     "ClusterRole",
+							Name:     "some-cluster-role",
+							APIGroup: "rbac.authorization.k8s.io",
+						}))
 				})
 			})
 

@@ -25,11 +25,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	projectv1 "github.com/pivotal/projects-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	projectv1 "github.com/pivotal/projects-operator/api/v1"
 )
 
 type RoleConfiguration struct {
@@ -73,9 +74,10 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.createNamespace(project); err != nil {
 		return ctrl.Result{}, err
 	}
-
-	if err := r.createRole(project); err != nil {
-		return ctrl.Result{}, err
+	if project.Spec.RoleRef == nil {
+		if err := r.createRole(project); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	if err := r.createRoleBinding(project); err != nil {
@@ -168,10 +170,19 @@ func (r *ProjectReconciler) createRoleBinding(project *projectv1.Project) error 
 
 	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, roleBinding, func() error {
 		roleBinding.Subjects = subjects
-		roleBinding.RoleRef = rbacv1.RoleRef{
-			Kind:     "Role",
-			Name:     project.Name + "-role",
-			APIGroup: "rbac.authorization.k8s.io",
+		if project.Spec.RoleRef == nil {
+			roleBinding.RoleRef = rbacv1.RoleRef{
+				Kind:     "Role",
+				Name:     project.Name + "-role",
+				APIGroup: "rbac.authorization.k8s.io",
+			}
+		} else {
+			roleBinding.RoleRef = rbacv1.RoleRef{
+				Kind:     "ClusterRole",
+				Name:     project.Spec.RoleRef.Name,
+				APIGroup: "rbac.authorization.k8s.io",
+			}
+
 		}
 		return nil
 	})

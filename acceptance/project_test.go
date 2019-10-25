@@ -24,7 +24,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 	BeforeEach(func() {
 		alana = testhelpers.NewKubeDefaultActor()
 
-		//TODO default namespace
+		// TODO default namespace
 		aliceToken := GetToken(Params.UaaLocation, "alice", Params.CodyPassword)
 		alice = testhelpers.NewKubeActor("alice", aliceToken)
 		codyToken := GetToken(Params.UaaLocation, "cody", Params.CodyPassword)
@@ -62,6 +62,117 @@ var _ = Describe("Projects Operator and CRD", func() {
 
 		AfterEach(func() {
 			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
+
+			Eventually(func() string {
+				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				return output
+			}).Should(
+				ContainSubstring(
+					fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
+				))
+		})
+
+		It("permits alice and cody to interact with the allowed resources", func() {
+			Eventually(func() string {
+				output, _ := alice.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-alice")
+				return output
+			}).Should(ContainSubstring("created"))
+
+			Eventually(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "create", "serviceaccount", "test-sa-cody")
+				return output
+			}).Should(ContainSubstring("created"))
+
+			Eventually(func() string {
+				output, _ := alice.RunKubeCtl("-n", projectName, "get", "configmaps,serviceaccounts")
+				return output
+			}).Should(SatisfyAll(
+				ContainSubstring("test-map-alice"),
+				ContainSubstring("test-sa-cody"),
+			))
+		})
+
+		It("does not permit alice or cody to interact with arbitrary resources", func() {
+			Consistently(func() string {
+				output, _ := alice.RunKubeCtl("-n", projectName, "create", "quota", "test-quota-alice")
+				return output
+			}).Should(ContainSubstring("forbidden"))
+
+			Consistently(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "get", "quota")
+				return output
+			}).Should(ContainSubstring("forbidden"))
+		})
+
+		When("alana revokes access to a project from cody", func() {
+			BeforeEach(func() {
+				projectResource = fmt.Sprintf(`
+                apiVersion: marketplace.pivotal.io/v1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access:
+                  - kind: User
+                    name: alice`, projectName)
+
+				alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			})
+
+			It("prevents cody from interacting with the allowed resources", func() {
+				Eventually(func() string {
+					output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps")
+					return output
+				}).Should(ContainSubstring(`User "cody" cannot list resource "configmaps"`))
+			})
+		})
+	})
+
+	When("alice and cody have been given User access to a Project with a ClusterRole", func() {
+		var projectResource string
+		var clusterRole string
+
+		BeforeEach(func() {
+			clusterRole = fmt.Sprintf(`
+				apiVersion: rbac.authorization.k8s.io/v1
+				kind: ClusterRole
+				metadata:
+				  name: my-cluster-role
+				rules:
+				  - apiGroups:
+					  - ""
+					resources:
+					  - serviceaccount
+					  - configmap
+					verbs:
+					  - get
+					  - list
+					  - watch
+					  - create
+					  - delete
+					  - update`)
+			alana.MustRunKubectl("apply", "-f", AsFile(clusterRole))
+			projectResource = fmt.Sprintf(`
+                apiVersion: marketplace.pivotal.io/v1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access:
+                  - kind: User
+                    name: cody
+                  - kind: User
+                    name: alice
+                  roleRef:
+                    name: my-cluster-role
+                    kind: ClusterRole`, projectName)
+
+			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+		})
+
+		AfterEach(func() {
+			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
+			alana.MustRunKubectl("delete", "-f", AsFile(clusterRole))
 
 			Eventually(func() string {
 				output, _ := alana.RunKubeCtl("get", "namespace", projectName)

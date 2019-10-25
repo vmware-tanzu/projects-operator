@@ -37,7 +37,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 		It("does not permit them to interact with allowed resources", func() {
 			output, err := cody.RunKubeCtl("create", "configmap", "test-map")
 			Expect(err).To(HaveOccurred())
-			Expect(output).To(ContainSubstring(`"cody" cannot create resource "configmaps"`))
+			Expect(output).To(ContainSubstring(`User "cody" cannot create resource "configmaps"`))
 		})
 	})
 
@@ -239,6 +239,42 @@ var _ = Describe("Projects Operator and CRD", func() {
 				output, _ := sa.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-sa")
 				return output
 			}).Should(ContainSubstring("created"))
+		})
+	})
+
+	When("Alana creates and then deletes the project", func() {
+		BeforeEach(func() {
+			projectResource := fmt.Sprintf(`
+                apiVersion: marketplace.pivotal.io/v1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access:
+                  - kind: User
+                    name: cody
+                  - kind: User
+                    name: alice`, projectName)
+
+			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
+		})
+
+		It("removes the corresponding namespace and leaves Cody and Alice unable to add resources", func() {
+			Eventually(func() string {
+				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				return output
+			}).Should(ContainSubstring(
+				fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
+			))
+
+			message, err := cody.RunKubeCtl("create", "configmap", "test-map")
+			Expect(err).To(HaveOccurred())
+			Expect(message).To(ContainSubstring(`User "cody" cannot create resource "configmaps"`))
+
+			message, err = alice.RunKubeCtl("create", "configmap", "test-map")
+			Expect(err).To(HaveOccurred())
+			Expect(message).To(ContainSubstring(`User "alice" cannot create resource "configmaps"`))
 		})
 	})
 

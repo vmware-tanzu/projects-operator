@@ -128,7 +128,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 		})
 	})
 
-	When("alice and cody have been given User access to a Project with a ClusterRole", func() {
+	PWhen("alice and cody have been given User access to a Project with a ClusterRole", func() {
 		var projectResource string
 		var clusterRole string
 
@@ -162,10 +162,7 @@ var _ = Describe("Projects Operator and CRD", func() {
                   - kind: User
                     name: cody
                   - kind: User
-                    name: alice
-                  roleRef:
-                    name: my-cluster-role
-                    kind: ClusterRole`, projectName)
+                    name: alice`, projectName)
 
 			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})

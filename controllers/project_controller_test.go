@@ -52,10 +52,11 @@ var _ = Describe("ProjectController", func() {
 			}
 
 			reconciler = controllers.ProjectReconciler{
-				Log:        ctrl.Log.WithName("controllers").WithName("Project"),
-				Client:     fakeClient,
-				Scheme:     scheme,
-				RoleConfig: roleConfig,
+				Log:            ctrl.Log.WithName("controllers").WithName("Project"),
+				Client:         fakeClient,
+				Scheme:         scheme,
+				RoleConfig:     roleConfig,
+				ClusterRoleRef: nil,
 			}
 		})
 
@@ -144,7 +145,13 @@ var _ = Describe("ProjectController", func() {
 
 			Describe("when cluster role from project spec", func() {
 				It("uses it to access the project", func() {
-					project.Spec.RoleRef = &corev1.ObjectReference{Name: "some-cluster-role"}
+					desiredRoleRef := rbacv1.RoleRef{
+						Kind:     "ClusterRole",
+						Name:     "some-cluster-role",
+						APIGroup: "rbac.authorization.k8s.io",
+					}
+
+					reconciler.ClusterRoleRef = &desiredRoleRef
 					Expect(fakeClient.Update(context.TODO(), project)).NotTo(HaveOccurred())
 
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))

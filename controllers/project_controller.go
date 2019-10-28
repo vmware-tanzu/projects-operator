@@ -42,9 +42,10 @@ type RoleConfiguration struct {
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
-	Log        logr.Logger
-	Scheme     *runtime.Scheme
-	RoleConfig RoleConfiguration
+	Log            logr.Logger
+	Scheme         *runtime.Scheme
+	RoleConfig     RoleConfiguration
+	ClusterRoleRef *rbacv1.RoleRef
 }
 
 // +kubebuilder:rbac:groups=marketplace.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -74,7 +75,8 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.createNamespace(project); err != nil {
 		return ctrl.Result{}, err
 	}
-	if project.Spec.RoleRef == nil {
+
+	if r.ClusterRoleRef == nil {
 		if err := r.createRole(project); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -170,19 +172,14 @@ func (r *ProjectReconciler) createRoleBinding(project *projectv1.Project) error 
 
 	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, roleBinding, func() error {
 		roleBinding.Subjects = subjects
-		if project.Spec.RoleRef == nil {
+		if r.ClusterRoleRef == nil {
 			roleBinding.RoleRef = rbacv1.RoleRef{
 				Kind:     "Role",
 				Name:     project.Name + "-role",
 				APIGroup: "rbac.authorization.k8s.io",
 			}
 		} else {
-			roleBinding.RoleRef = rbacv1.RoleRef{
-				Kind:     "ClusterRole",
-				Name:     project.Spec.RoleRef.Name,
-				APIGroup: "rbac.authorization.k8s.io",
-			}
-
+			roleBinding.RoleRef = *r.ClusterRoleRef
 		}
 		return nil
 	})

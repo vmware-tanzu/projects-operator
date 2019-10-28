@@ -20,7 +20,6 @@ limitations under the License.
 package v1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -90,11 +89,6 @@ func (in *ProjectSpec) DeepCopyInto(out *ProjectSpec) {
 		in, out := &in.Access, &out.Access
 		*out = make([]SubjectRef, len(*in))
 		copy(*out, *in)
-	}
-	if in.RoleRef != nil {
-		in, out := &in.RoleRef, &out.RoleRef
-		*out = new(corev1.ObjectReference)
-		**out = **in
 	}
 }
 

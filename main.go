@@ -21,6 +21,8 @@ import (
 	"os"
 	"strings"
 
+	v1 "k8s.io/api/rbac/v1"
+
 	projectv1 "github.com/pivotal/projects-operator/api/v1"
 
 	"github.com/pivotal/projects-operator/controllers"
@@ -68,9 +70,10 @@ func main() {
 	apigroupsEnv, apiGroupsExist := os.LookupEnv("ROLE_APIGROUPS")
 	resourcesEnv, resourcesExist := os.LookupEnv("ROLE_RESOURCES")
 	verbsEnv, verbsExist := os.LookupEnv("ROLE_VERBS")
+	clusterRoleEnv, clusterRoleExist := os.LookupEnv("CLUSTER_ROLE_REF")
 
-	if !apiGroupsExist || !resourcesExist || !verbsExist {
-		err = errors.New("ROLE_APIGROUPS, ROLE_RESOURCES and ROLE_VERBS envs must be set")
+	if (!apiGroupsExist || !resourcesExist || !verbsExist) || !clusterRoleExist {
+		err = errors.New("ROLE_APIGROUPS, ROLE_RESOURCES and ROLE_VERBS envs OR CLUSTER_ROLE_REF env must be set")
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
 	}
@@ -78,11 +81,17 @@ func main() {
 	apiGroups := strings.Split(strings.Trim(apigroupsEnv, ""), ",")
 	resources := strings.Split(resourcesEnv, ",")
 	verbs := strings.Split(verbsEnv, ",")
+	clusterRole := clusterRoleEnv
 
 	if err = (&controllers.ProjectReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Project"),
 		Scheme: scheme,
+		ClusterRoleRef: &v1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     clusterRole,
+		},
 		RoleConfig: controllers.RoleConfiguration{
 			APIGroups: apiGroups,
 			Resources: resources,

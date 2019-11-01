@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -30,9 +29,9 @@ const (
 // *** general helpers *** //
 
 func PrintTestSetup() {
-	//TODO: make this print cluster name,
-	clusterContext := strings.TrimSpace(NewKubeDefaultActor().MustRunKubectl("config", "current-context"))
-	fmt.Printf("Running tests against the '%s' cluster\n", clusterContext)
+	fmt.Println("Running tests against the following cluster")
+	output := NewKubeDefaultActor().MustRunKubectl("cluster-info")
+	fmt.Println(output)
 }
 
 func CleanCustomResources() {

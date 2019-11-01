@@ -21,13 +21,13 @@ import (
 var _ = Describe("ProjectController", func() {
 	Describe("Reconcile", func() {
 		var (
-			reconciler controllers.ProjectReconciler
-			fakeClient client.Client
-			project    *projectv1.Project
-			user1      string
-			user2      string
-			scheme     *runtime.Scheme
-			roleConfig controllers.RoleConfiguration
+			reconciler  controllers.ProjectReconciler
+			fakeClient  client.Client
+			project     *projectv1.Project
+			user1       string
+			user2       string
+			scheme      *runtime.Scheme
+			roleConfigs controllers.RoleConfigurations
 		)
 
 		BeforeEach(func() {
@@ -43,17 +43,23 @@ var _ = Describe("ProjectController", func() {
 
 			fakeClient = fake.NewFakeClientWithScheme(scheme, project)
 
-			roleConfig = controllers.RoleConfiguration{
+			roleConfig1 := controllers.RoleConfiguration{
 				APIGroups: []string{"*"},
 				Resources: []string{"configmap"},
 				Verbs:     []string{"*"},
 			}
+			roleConfig2 := controllers.RoleConfiguration{
+				APIGroups: []string{"*"},
+				Resources: []string{"serviceaccount"},
+				Verbs:     []string{"get"},
+			}
+			roleConfigs = controllers.RoleConfigurations{roleConfig1, roleConfig2}
 
 			reconciler = controllers.ProjectReconciler{
-				Log:        ctrl.Log.WithName("controllers").WithName("Project"),
-				Client:     fakeClient,
-				Scheme:     scheme,
-				RoleConfig: roleConfig,
+				Log:         ctrl.Log.WithName("controllers").WithName("Project"),
+				Client:      fakeClient,
+				Scheme:      scheme,
+				RoleConfigs: roleConfigs,
 			}
 		})
 
@@ -71,7 +77,6 @@ var _ = Describe("ProjectController", func() {
 
 		Describe("creation", func() {
 			Describe("creates a namespace", func() {
-
 				It("with given project name", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
@@ -116,10 +121,16 @@ var _ = Describe("ProjectController", func() {
 
 					Expect(role.Name).To(Equal("my-project-role"))
 					Expect(role.ObjectMeta.Namespace).To(Equal("my-project"))
-					rule := role.Rules[0]
-					Expect(rule.APIGroups).To(ConsistOf(roleConfig.APIGroups))
-					Expect(rule.Resources).To(ConsistOf(roleConfig.Resources))
-					Expect(rule.Verbs).To(ConsistOf(roleConfig.Verbs))
+					Expect(role.Rules).To(HaveLen(2))
+
+					rule1 := role.Rules[0]
+					rule2 := role.Rules[1]
+					Expect(rule1.APIGroups).To(ConsistOf(roleConfigs[0].APIGroups))
+					Expect(rule1.Resources).To(ConsistOf(roleConfigs[0].Resources))
+					Expect(rule1.Verbs).To(ConsistOf(roleConfigs[0].Verbs))
+					Expect(rule2.APIGroups).To(ConsistOf(roleConfigs[1].APIGroups))
+					Expect(rule2.Resources).To(ConsistOf(roleConfigs[1].Resources))
+					Expect(rule2.Verbs).To(ConsistOf(roleConfigs[1].Verbs))
 				})
 
 				It("owned by the project", func() {

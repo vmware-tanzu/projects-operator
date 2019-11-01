@@ -38,12 +38,14 @@ type RoleConfiguration struct {
 	Verbs     []string
 }
 
+type RoleConfigurations []RoleConfiguration
+
 // ProjectReconciler reconciles a Project object
 type ProjectReconciler struct {
 	client.Client
-	Log        logr.Logger
-	Scheme     *runtime.Scheme
-	RoleConfig RoleConfiguration
+	Log         logr.Logger
+	Scheme      *runtime.Scheme
+	RoleConfigs RoleConfigurations
 }
 
 // +kubebuilder:rbac:groups=marketplace.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -123,13 +125,14 @@ func (r *ProjectReconciler) createRole(project *projectv1.Project) error {
 		return err
 	}
 	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, role, func() error {
-		role.Rules = []rbacv1.PolicyRule{
-			{
-				APIGroups: r.RoleConfig.APIGroups,
-				Resources: r.RoleConfig.Resources,
-				Verbs:     r.RoleConfig.Verbs,
-			},
+		for _, roleConfig := range r.RoleConfigs {
+			role.Rules = append(role.Rules, rbacv1.PolicyRule{
+				APIGroups: roleConfig.APIGroups,
+				Resources: roleConfig.Resources,
+				Verbs:     roleConfig.Verbs,
+			})
 		}
+
 		return nil
 	})
 	if err != nil {

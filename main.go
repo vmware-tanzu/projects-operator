@@ -18,6 +18,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 	"strings"
 
@@ -37,6 +38,18 @@ var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
+
+var requiredEnvVars = []string{
+	"ROLE_1_APIGROUPS",
+	"ROLE_1_RESOURCES",
+	"ROLE_1_VERBS",
+	"ROLE_2_APIGROUPS",
+	"ROLE_2_RESOURCES",
+	"ROLE_2_VERBS",
+	"ROLE_3_APIGROUPS",
+	"ROLE_3_RESOURCES",
+	"ROLE_3_VERBS",
+}
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
@@ -65,29 +78,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	apigroupsEnv, apiGroupsExist := os.LookupEnv("ROLE_APIGROUPS")
-	resourcesEnv, resourcesExist := os.LookupEnv("ROLE_RESOURCES")
-	verbsEnv, verbsExist := os.LookupEnv("ROLE_VERBS")
-
-	if !apiGroupsExist || !resourcesExist || !verbsExist {
-		err = errors.New("ROLE_APIGROUPS, ROLE_RESOURCES and ROLE_VERBS envs must be set")
+	if requiredEnvVarsMissing() {
+		err = errors.New("ROLE_{1,2,3}_APIGROUPS, ROLE_{1,2,3}_RESOURCES and ROLE_{1,2,3}_VERBS envs must be set")
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
 	}
 
-	apiGroups := strings.Split(strings.Trim(apigroupsEnv, ""), ",")
-	resources := strings.Split(resourcesEnv, ",")
-	verbs := strings.Split(verbsEnv, ",")
+	roleConfigs := controllers.RoleConfigurations{}
+	for i := 0; i < 3; i++ {
+		apiGroupsEnv := os.Getenv(fmt.Sprintf("ROLE_%d_APIGROUPS", i+1))
+		resourcesEnv := os.Getenv(fmt.Sprintf("ROLE_%d_RESOURCES", i+1))
+		verbsEnv := os.Getenv(fmt.Sprintf("ROLE_%d_VERBS", i+1))
+
+		roleConfigs = append(roleConfigs, controllers.RoleConfiguration{
+			APIGroups: strings.Split(strings.Trim(apiGroupsEnv, ""), ","),
+			Resources: strings.Split(resourcesEnv, ","),
+			Verbs:     strings.Split(verbsEnv, ","),
+		})
+	}
 
 	if err = (&controllers.ProjectReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Project"),
-		Scheme: scheme,
-		RoleConfig: controllers.RoleConfiguration{
-			APIGroups: apiGroups,
-			Resources: resources,
-			Verbs:     verbs,
-		},
+		Client:      mgr.GetClient(),
+		Log:         ctrl.Log.WithName("controllers").WithName("Project"),
+		Scheme:      scheme,
+		RoleConfigs: roleConfigs,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
@@ -99,4 +113,14 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func requiredEnvVarsMissing() bool {
+	for _, requiredEnvVar := range requiredEnvVars {
+		if _, present := os.LookupEnv(requiredEnvVar); !present {
+			return true
+		}
+	}
+
+	return false
 }

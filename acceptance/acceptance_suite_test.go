@@ -28,9 +28,17 @@ type Env struct {
 }
 
 const (
-	testRoleApiGroupEnv = "*"
-	testRoleResourceEnv = "configmaps,serviceaccounts"
-	testRoleVerbEnv     = "*"
+	testRole1ApiGroupEnv = "*"
+	testRole1ResourceEnv = "configmaps,serviceaccounts"
+	testRole1VerbEnv     = "create"
+
+	testRole2ApiGroupEnv = "*"
+	testRole2ResourceEnv = "configmaps"
+	testRole2VerbEnv     = "get,list,watch"
+
+	testRole3ApiGroupEnv = "*"
+	testRole3ResourceEnv = "serviceaccounts"
+	testRole3VerbEnv     = "list"
 )
 
 var (
@@ -85,7 +93,19 @@ func startController() {
 	Expect(err).NotTo(HaveOccurred())
 
 	command := exec.Command(pathToController)
-	command.Env = []string{"ROLE_APIGROUPS=" + testRoleApiGroupEnv, "ROLE_RESOURCES=" + testRoleResourceEnv, "ROLE_VERBS=" + testRoleVerbEnv}
+	command.Env = []string{
+		"ROLE_1_APIGROUPS=" + testRole1ApiGroupEnv,
+		"ROLE_1_RESOURCES=" + testRole1ResourceEnv,
+		"ROLE_1_VERBS=" + testRole1VerbEnv,
+
+		"ROLE_2_APIGROUPS=" + testRole2ApiGroupEnv,
+		"ROLE_2_RESOURCES=" + testRole2ResourceEnv,
+		"ROLE_2_VERBS=" + testRole2VerbEnv,
+
+		"ROLE_3_APIGROUPS=" + testRole3ApiGroupEnv,
+		"ROLE_3_RESOURCES=" + testRole3ResourceEnv,
+		"ROLE_3_VERBS=" + testRole3VerbEnv,
+	}
 	controllerSession, err = Start(command, GinkgoWriter, GinkgoWriter)
 	Eventually(controllerSession.Err).Should(Say("starting manager"))
 

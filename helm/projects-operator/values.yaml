@@ -22,17 +22,17 @@ tolerations: []
 affinity: {}
 
 role1:
-  apiGroups: servicecatalog.k8s.io
-  resources: servicebindings,serviceinstances
+  apiGroups: "*"
+  resources: ""
   verbs: "*"
 role2:
-  apiGroups: servicecatalog.k8s.io
-  resources: clusterservicebrokers,clusterserviceclasses,clusterserviceplans
-  verbs: "list"
+  apiGroups: "*"
+  resources: ""
+  verbs: "*"
 role3:
   apiGroups: "*"
-  resources: secrets
-  verbs: "get"
+  resources: ""
+  verbs: "*"
 
 kubeRbacProxy:
   image: gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0

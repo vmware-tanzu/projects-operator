@@ -101,7 +101,7 @@ resources:
   source:
     private_key: {{PROJECTS_OPERATOR_DEPLOY_KEY}}
     uri: git@github.com:pivotal/projects-operator
-    branch: master
+    branch: multi-role-rules-for-alpha
 
 - name: gcr-repository
   type: registry-image

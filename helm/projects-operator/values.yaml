@@ -29,10 +29,6 @@ role2:
   apiGroups: "*"
   resources: ""
   verbs: "*"
-role3:
-  apiGroups: "*"
-  resources: ""
-  verbs: "*"
 
 kubeRbacProxy:
   image: gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0

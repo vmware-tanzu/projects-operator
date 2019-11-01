@@ -47,12 +47,6 @@ spec:
               value: {{ .Values.role2.resources }}
             - name: ROLE_2_VERBS
               value: "{{ .Values.role2.verbs }}"
-            - name: ROLE_3_APIGROUPS
-              value: {{ .Values.role3.apiGroups }}
-            - name: ROLE_3_RESOURCES
-              value: {{ .Values.role3.resources }}
-            - name: ROLE_3_VERBS
-              value: "{{ .Values.role3.verbs }}"
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           name: manager

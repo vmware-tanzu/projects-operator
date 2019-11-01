@@ -46,9 +46,6 @@ var requiredEnvVars = []string{
 	"ROLE_2_APIGROUPS",
 	"ROLE_2_RESOURCES",
 	"ROLE_2_VERBS",
-	"ROLE_3_APIGROUPS",
-	"ROLE_3_RESOURCES",
-	"ROLE_3_VERBS",
 }
 
 func init() {
@@ -85,7 +82,7 @@ func main() {
 	}
 
 	roleConfigs := controllers.RoleConfigurations{}
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 2; i++ {
 		apiGroupsEnv := os.Getenv(fmt.Sprintf("ROLE_%d_APIGROUPS", i+1))
 		resourcesEnv := os.Getenv(fmt.Sprintf("ROLE_%d_RESOURCES", i+1))
 		verbsEnv := os.Getenv(fmt.Sprintf("ROLE_%d_VERBS", i+1))

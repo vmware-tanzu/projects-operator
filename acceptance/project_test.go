@@ -37,7 +37,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 		It("does not permit them to interact with allowed resources", func() {
 			output, err := cody.RunKubeCtl("create", "configmap", "test-map")
 			Expect(err).To(HaveOccurred())
-			Expect(output).To(ContainSubstring(`User "cody" cannot create resource "configmaps"`))
+			Expect(output).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "configmaps"`, userName("cody"))))
 		})
 	})
 
@@ -53,9 +53,9 @@ var _ = Describe("Projects Operator and CRD", func() {
                 spec:
                   access:
                   - kind: User
-                    name: cody
+                    name: %s
                   - kind: User
-                    name: alice`, projectName)
+                    name: %s`, projectName, userName("cody"), userName("alice"))
 
 			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})
@@ -114,7 +114,7 @@ var _ = Describe("Projects Operator and CRD", func() {
                 spec:
                   access:
                   - kind: User
-                    name: alice`, projectName)
+                    name: %s`, projectName, userName("alice"))
 
 				alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
 			})
@@ -123,115 +123,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 				Eventually(func() string {
 					output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps")
 					return output
-				}).Should(ContainSubstring(`User "cody" cannot list resource "configmaps"`))
-			})
-		})
-	})
-
-	PWhen("alice and cody have been given User access to a Project with a ClusterRole", func() {
-		var projectResource string
-		var clusterRole string
-
-		BeforeEach(func() {
-			clusterRole = fmt.Sprintf(`
-				apiVersion: rbac.authorization.k8s.io/v1
-				kind: ClusterRole
-				metadata:
-				  name: my-cluster-role
-				rules:
-				  - apiGroups:
-					  - ""
-					resources:
-					  - serviceaccount
-					  - configmap
-					verbs:
-					  - get
-					  - list
-					  - watch
-					  - create
-					  - delete
-					  - update`)
-			alana.MustRunKubectl("apply", "-f", AsFile(clusterRole))
-			projectResource = fmt.Sprintf(`
-                apiVersion: marketplace.pivotal.io/v1
-                kind: Project
-                metadata:
-                 name: %s
-                spec:
-                  access:
-                  - kind: User
-                    name: cody
-                  - kind: User
-                    name: alice`, projectName)
-
-			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
-		})
-
-		AfterEach(func() {
-			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
-			alana.MustRunKubectl("delete", "-f", AsFile(clusterRole))
-
-			Eventually(func() string {
-				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
-				return output
-			}).Should(
-				ContainSubstring(
-					fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
-				))
-		})
-
-		It("permits alice and cody to interact with the allowed resources", func() {
-			Eventually(func() string {
-				output, _ := alice.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-alice")
-				return output
-			}).Should(ContainSubstring("created"))
-
-			Eventually(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "create", "serviceaccount", "test-sa-cody")
-				return output
-			}).Should(ContainSubstring("created"))
-
-			Eventually(func() string {
-				output, _ := alice.RunKubeCtl("-n", projectName, "get", "configmaps,serviceaccounts")
-				return output
-			}).Should(SatisfyAll(
-				ContainSubstring("test-map-alice"),
-				ContainSubstring("test-sa-cody"),
-			))
-		})
-
-		It("does not permit alice or cody to interact with arbitrary resources", func() {
-			Consistently(func() string {
-				output, _ := alice.RunKubeCtl("-n", projectName, "create", "quota", "test-quota-alice")
-				return output
-			}).Should(ContainSubstring("forbidden"))
-
-			Consistently(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "get", "quota")
-				return output
-			}).Should(ContainSubstring("forbidden"))
-		})
-
-		When("alana revokes access to a project from cody", func() {
-			BeforeEach(func() {
-				projectResource = fmt.Sprintf(`
-                apiVersion: marketplace.pivotal.io/v1
-                kind: Project
-                metadata:
-                 name: %s
-                spec:
-                  access:
-                  - kind: User
-                    name: alice`, projectName)
-
-				alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
-			})
-
-			It("prevents cody from interacting with the allowed resources", func() {
-				Eventually(func() string {
-					output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps")
-					return output
-				}).Should(ContainSubstring(`User "cody" cannot list resource "configmaps"`))
+				}).Should(ContainSubstring(fmt.Sprintf(`User "%s" cannot list resource "configmaps"`, userName("cody"))))
 			})
 		})
 	})
@@ -360,9 +252,9 @@ var _ = Describe("Projects Operator and CRD", func() {
                 spec:
                   access:
                   - kind: User
-                    name: cody
+                    name: %s
                   - kind: User
-                    name: alice`, projectName)
+                    name: %s`, projectName, userName("cody"), userName("alice"))
 
 			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
 			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
@@ -378,16 +270,16 @@ var _ = Describe("Projects Operator and CRD", func() {
 
 			message, err := cody.RunKubeCtl("create", "configmap", "test-map")
 			Expect(err).To(HaveOccurred())
-			Expect(message).To(ContainSubstring(`User "cody" cannot create resource "configmaps"`))
+			Expect(message).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "configmaps"`, userName("cody"))))
 
 			message, err = alice.RunKubeCtl("create", "configmap", "test-map")
 			Expect(err).To(HaveOccurred())
-			Expect(message).To(ContainSubstring(`User "alice" cannot create resource "configmaps"`))
+			Expect(message).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "configmaps"`, userName("alice"))))
 		})
 	})
 
 	It("does not allow unknown access types", func() {
-		projectResource := `
+		projectResource := fmt.Sprintf(`
                 apiVersion: marketplace.pivotal.io/v1
                 kind: Project
                 metadata:
@@ -395,7 +287,7 @@ var _ = Describe("Projects Operator and CRD", func() {
                 spec:
                   access:
                   - kind: SomeUnknownKind
-                    name: alice`
+                    name: %s`, userName("alice"))
 
 		message, err := alana.RunKubeCtl("apply", "-f", AsFile(projectResource))
 		Expect(err).To(HaveOccurred(), message)
@@ -411,12 +303,19 @@ var _ = Describe("Projects Operator and CRD", func() {
                 spec:
                   access:
                   - kind: User
-                    name: cody
+                    name: %s
                   - kind: User
-                    name: alice`, "project")
+                    name: %s`, "project", userName("cody"), userName("alice"))
 
 		output, err := cody.RunKubeCtl("create", "-f", AsFile(projectResource))
 		Expect(err).To(HaveOccurred())
-		Expect(output).To(ContainSubstring(`User "cody" cannot create resource "projects"`))
+		Expect(output).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "projects"`, userName("cody"))))
 	})
 })
+
+func userName(user string) string {
+	if Params.OIDCPrefix == "" {
+		return user
+	}
+	return Params.OIDCPrefix + ":" + user
+}

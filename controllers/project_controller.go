@@ -18,17 +18,15 @@ package controllers
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	projectv1 "github.com/pivotal/projects-operator/api/v1"
 )
@@ -44,8 +42,7 @@ type ProjectReconciler struct {
 	client.Client
 	Log            logr.Logger
 	Scheme         *runtime.Scheme
-	RoleConfig     RoleConfiguration
-	ClusterRoleRef *rbacv1.RoleRef
+	ClusterRoleRef rbacv1.RoleRef
 }
 
 // +kubebuilder:rbac:groups=marketplace.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -53,6 +50,8 @@ type ProjectReconciler struct {
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=watch;list;create;get;update;patch
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=watch;list;create;get;update;patch
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=watch;list;create;get;update;patch
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=watch;list;create;get;update;patch
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=watch;list;create;get;update;patch
 // +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=servicebindings,verbs=*
 // +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=serviceinstances,verbs=*
 // +kubebuilder:rbac:groups=servicecatalog.k8s.io,resources=clusterservicebrokers,verbs=*
@@ -65,7 +64,7 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	project := &projectv1.Project{}
 
-	if err := r.Client.Get(context.TODO(), req.NamespacedName, project); err != nil {
+	if err := r.Client.Get(context.Background(), req.NamespacedName, project); err != nil {
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
@@ -76,10 +75,12 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	if r.ClusterRoleRef == nil {
-		if err := r.createRole(project); err != nil {
-			return ctrl.Result{}, err
-		}
+	if err := r.createClusterRole(project); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.createClusterRoleBinding(project); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	if err := r.createRoleBinding(project); err != nil {
@@ -106,7 +107,7 @@ func (r *ProjectReconciler) createNamespace(project *projectv1.Project) error {
 		return err
 	}
 
-	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, namespace, func() error { return nil })
+	status, err := controllerutil.CreateOrUpdate(context.Background(), r, namespace, func() error { return nil })
 	if err != nil {
 		return err
 	}
@@ -115,23 +116,35 @@ func (r *ProjectReconciler) createNamespace(project *projectv1.Project) error {
 	return nil
 }
 
-func (r *ProjectReconciler) createRole(project *projectv1.Project) error {
-	role := &rbacv1.Role{
+func (r *ProjectReconciler) createClusterRole(project *projectv1.Project) error {
+	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      project.Name + "-role",
-			Namespace: project.Name,
+			Name: clusterRoleName(project),
 		},
 	}
-
-	if err := controllerutil.SetControllerReference(project, role, r.Scheme); err != nil {
+	if err := controllerutil.SetControllerReference(project, clusterRole, r.Scheme); err != nil {
 		return err
 	}
-	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, role, func() error {
-		role.Rules = []rbacv1.PolicyRule{
+
+	status, err := controllerutil.CreateOrUpdate(context.Background(), r, clusterRole, func() error {
+		clusterRole.Rules = []rbacv1.PolicyRule{
 			{
-				APIGroups: r.RoleConfig.APIGroups,
-				Resources: r.RoleConfig.Resources,
-				Verbs:     r.RoleConfig.Verbs,
+				APIGroups: []string{
+					"marketplace.pivotal.io",
+				},
+				Resources: []string{
+					"projects",
+				},
+				ResourceNames: []string{
+					project.Name,
+				},
+				Verbs: []string{
+					"get",
+					"update",
+					"delete",
+					"patch",
+					"watch",
+				},
 			},
 		}
 		return nil
@@ -139,13 +152,71 @@ func (r *ProjectReconciler) createRole(project *projectv1.Project) error {
 	if err != nil {
 		return err
 	}
-	r.Log.Info("creating/updating resource", "type", "role", "status", status)
+
+	r.Log.Info("creating/updating resource", "type", "clusterrole", "status", status)
+
+	return nil
+}
+
+func (r *ProjectReconciler) createClusterRoleBinding(project *projectv1.Project) error {
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: project.Name + "-clusterrolebinding",
+		},
+	}
+	if err := controllerutil.SetControllerReference(project, clusterRoleBinding, r.Scheme); err != nil {
+		return err
+	}
+
+	status, err := controllerutil.CreateOrUpdate(context.Background(), r, clusterRoleBinding, func() error {
+		clusterRoleBinding.Subjects = subjects(project)
+		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     clusterRoleName(project),
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	r.Log.Info("creating/updating resource", "type", "clusterrolebinding", "status", status)
 
 	return nil
 }
 
 func (r *ProjectReconciler) createRoleBinding(project *projectv1.Project) error {
-	subjects := []rbacv1.Subject{}
+	roleBinding := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      project.Name + "-rolebinding",
+			Namespace: project.Name,
+		},
+	}
+	if err := controllerutil.SetControllerReference(project, roleBinding, r.Scheme); err != nil {
+		return err
+	}
+
+	status, err := controllerutil.CreateOrUpdate(context.Background(), r, roleBinding, func() error {
+		roleBinding.Subjects = subjects(project)
+		roleBinding.RoleRef = r.ClusterRoleRef
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	r.Log.Info("creating/updating resource", "type", "rolebinding", "status", status)
+
+	return nil
+}
+
+func clusterRoleName(project *projectv1.Project) string {
+	return project.Name + "-clusterrole"
+}
+
+func subjects(project *projectv1.Project) []rbacv1.Subject {
+	var subjects []rbacv1.Subject
 	for _, userRef := range project.Spec.Access {
 
 		apiGroup := ""
@@ -159,34 +230,5 @@ func (r *ProjectReconciler) createRoleBinding(project *projectv1.Project) error 
 			APIGroup:  apiGroup,
 		})
 	}
-
-	roleBinding := &rbacv1.RoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      project.Name + "-rolebinding",
-			Namespace: project.Name,
-		},
-	}
-	if err := controllerutil.SetControllerReference(project, roleBinding, r.Scheme); err != nil {
-		return err
-	}
-
-	status, err := controllerutil.CreateOrUpdate(context.TODO(), r, roleBinding, func() error {
-		roleBinding.Subjects = subjects
-		if r.ClusterRoleRef == nil {
-			roleBinding.RoleRef = rbacv1.RoleRef{
-				Kind:     "Role",
-				Name:     project.Name + "-role",
-				APIGroup: "rbac.authorization.k8s.io",
-			}
-		} else {
-			roleBinding.RoleRef = *r.ClusterRoleRef
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	r.Log.Info("creating/updating resource", "type", "rolebinding", "status", status)
-
-	return nil
+	return subjects
 }

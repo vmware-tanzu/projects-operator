@@ -37,10 +37,19 @@ spec:
             cpu: 100m
             memory: 20Mi
         env:
-        - name: ROLE_APIGROUPS
-          value: "servicecatalog.k8s.io"
-        - name: ROLE_RESOURCES
-          value: "servicebindings,serviceinstances"
-        - name: ROLE_VERBS
-          value: "*"
+        - name: CLUSTER_ROLE_REF
+          value: ""
       terminationGracePeriodSeconds: 10
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: manager-cluster-role-ref-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ""
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: system

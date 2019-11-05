@@ -21,8 +21,12 @@ unit-tests:
 	ginkgo ${GINKGO_ARGS} -skipPackage acceptance
 
 # Cannot yet -randomizeAllSpecs the acceptance tests
-acceptance-tests:
+acceptance-tests: setup-test-data
 	ginkgo -r acceptance
+
+# Install a cluster role for acceptance tests
+setup-test-data:
+	kubectl apply -f acceptance/testdata
 
 # Build manager binary
 manager: generate fmt vet

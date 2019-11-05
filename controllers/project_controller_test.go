@@ -5,7 +5,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -23,13 +22,13 @@ import (
 var _ = Describe("ProjectController", func() {
 	Describe("Reconcile", func() {
 		var (
-			reconciler controllers.ProjectReconciler
-			fakeClient client.Client
-			project    *projectv1.Project
-			user1      string
-			user2      string
-			scheme     *runtime.Scheme
-			roleConfig controllers.RoleConfiguration
+			reconciler     controllers.ProjectReconciler
+			fakeClient     client.Client
+			project        *projectv1.Project
+			user1          string
+			user2          string
+			scheme         *runtime.Scheme
+			clusterRoleRef rbacv1.RoleRef
 		)
 
 		BeforeEach(func() {
@@ -45,18 +44,17 @@ var _ = Describe("ProjectController", func() {
 
 			fakeClient = fake.NewFakeClientWithScheme(scheme, project)
 
-			roleConfig = controllers.RoleConfiguration{
-				APIGroups: []string{"*"},
-				Resources: []string{"configmap"},
-				Verbs:     []string{"*"},
+			clusterRoleRef = rbacv1.RoleRef{
+				APIGroup: "rbac.authorization.k8s.io/v1",
+				Kind:     "ClusterRole",
+				Name:     "some-cluster-role",
 			}
 
 			reconciler = controllers.ProjectReconciler{
 				Log:            ctrl.Log.WithName("controllers").WithName("Project"),
 				Client:         fakeClient,
 				Scheme:         scheme,
-				RoleConfig:     roleConfig,
-				ClusterRoleRef: nil,
+				ClusterRoleRef: clusterRoleRef,
 			}
 		})
 
@@ -74,7 +72,6 @@ var _ = Describe("ProjectController", func() {
 
 		Describe("creation", func() {
 			Describe("creates a namespace", func() {
-
 				It("with given project name", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
@@ -105,78 +102,51 @@ var _ = Describe("ProjectController", func() {
 				})
 			})
 
-			Describe("creates a role", func() {
-				It("to access the project", func() {
+			Describe("creates a cluster role", func() {
+				It("with given project name", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
-					role := &rbacv1.Role{}
+					clusterRole := &rbacv1.ClusterRole{}
 					err = fakeClient.Get(context.TODO(), client.ObjectKey{
-						Name:      project.Name + "-role",
-						Namespace: project.Name,
-					}, role)
+						Name: project.Name + "-clusterrole",
+					}, clusterRole)
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(role.Name).To(Equal("my-project-role"))
-					Expect(role.ObjectMeta.Namespace).To(Equal("my-project"))
-					rule := role.Rules[0]
-					Expect(rule.APIGroups).To(ConsistOf(roleConfig.APIGroups))
-					Expect(rule.Resources).To(ConsistOf(roleConfig.Resources))
-					Expect(rule.Verbs).To(ConsistOf(roleConfig.Verbs))
+					Expect(clusterRole.Name).To(Equal("my-project-clusterrole"))
 				})
 
 				It("owned by the project", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
-					role := &rbacv1.Role{}
+					clusterRole := &rbacv1.ClusterRole{}
 					err = fakeClient.Get(context.TODO(), client.ObjectKey{
-						Name:      project.Name + "-role",
-						Namespace: project.Name,
-					}, role)
+						Name: project.Name + "-clusterrole",
+					}, clusterRole)
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(role.ObjectMeta.OwnerReferences).To(HaveLen(1))
-					ownerReference := role.ObjectMeta.OwnerReferences[0]
+					Expect(clusterRole.ObjectMeta.OwnerReferences).To(HaveLen(1))
+					ownerReference := clusterRole.ObjectMeta.OwnerReferences[0]
 					Expect(ownerReference.Name).To(Equal(project.Name))
 					Expect(ownerReference.Kind).To(Equal("Project"))
 				})
-			})
 
-			Describe("when cluster role from project spec", func() {
-				It("uses it to access the project", func() {
-					desiredRoleRef := rbacv1.RoleRef{
-						Kind:     "ClusterRole",
-						Name:     "some-cluster-role",
-						APIGroup: "rbac.authorization.k8s.io",
-					}
-
-					reconciler.ClusterRoleRef = &desiredRoleRef
-					Expect(fakeClient.Update(context.TODO(), project)).NotTo(HaveOccurred())
-
+				It("has rules to access the project", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
-					role := &rbacv1.Role{}
+					clusterRole := &rbacv1.ClusterRole{}
 					err = fakeClient.Get(context.TODO(), client.ObjectKey{
-						Name:      project.Name + "-role",
-						Namespace: project.Name,
-					}, role)
-					Expect(err).To(HaveOccurred())
-					Expect(errors.IsNotFound(err)).To(BeTrue())
-
-					binding := &rbacv1.RoleBinding{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
-						Name:      project.Name + "-rolebinding",
-						Namespace: project.Name,
-					}, binding)
+						Name: project.Name + "-clusterrole",
+					}, clusterRole)
 					Expect(err).NotTo(HaveOccurred())
-					Expect(binding.RoleRef).To(Equal(
-						rbacv1.RoleRef{
-							Kind:     "ClusterRole",
-							Name:     "some-cluster-role",
-							APIGroup: "rbac.authorization.k8s.io",
-						}))
+
+					Expect(clusterRole.Rules).To(HaveLen(1))
+					Expect(clusterRole.Rules[0].APIGroups[0]).To(Equal("marketplace.pivotal.io"))
+					Expect(clusterRole.Rules[0].Resources[0]).To(Equal("projects"))
+					Expect(clusterRole.Rules[0].ResourceNames[0]).To(Equal(project.Name))
+					Expect(clusterRole.Rules[0].Verbs).To(Equal([]string{"get", "update", "delete", "patch", "watch"}))
 				})
 			})
 
@@ -204,7 +174,7 @@ var _ = Describe("ProjectController", func() {
 						Expect(err).NotTo(HaveOccurred())
 					})
 
-					It("allows the user specified in the project access to the project", func() {
+					It("allows the user specified in the project access to the namespace", func() {
 						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -224,15 +194,36 @@ var _ = Describe("ProjectController", func() {
 						Expect(subject1.Namespace).To(Equal("some-namespace"))
 						Expect(subject1.APIGroup).To(Equal(""))
 
-						roleRef := role.RoleRef
-						Expect(roleRef.Kind).To(Equal("Role"))
-						Expect(roleRef.Name).To(Equal("my-project-role"))
-						Expect(roleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+						Expect(role.RoleRef).To(Equal(clusterRoleRef))
+					})
+
+					It("allows the user specified in the project access to the project", func() {
+						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						Expect(err).NotTo(HaveOccurred())
+
+						clusterRole := &rbacv1.ClusterRoleBinding{}
+						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+							Name: project.Name + "-clusterrolebinding",
+						}, clusterRole)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(clusterRole.Name).To(Equal("my-project-clusterrolebinding"))
+
+						subject1 := clusterRole.Subjects[0]
+						Expect(subject1.Kind).To(Equal("ServiceAccount"))
+						Expect(subject1.Name).To(Equal(serviceAccountName))
+						Expect(subject1.APIGroup).To(Equal(""))
+
+						Expect(clusterRole.RoleRef).To(Equal(rbacv1.RoleRef{
+							APIGroup: "rbac.authorization.k8s.io",
+							Kind:     "ClusterRole",
+							Name:     project.Name + "-clusterrole",
+						}))
 					})
 				})
 
 				When("the subject is a User", func() {
-					It("allows the user specified in the project access to the project", func() {
+					It("allows the user specified in the project access to the namespace", func() {
 						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -256,10 +247,31 @@ var _ = Describe("ProjectController", func() {
 						Expect(subject2.Name).To(Equal(user2))
 						Expect(subject2.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 
-						roleRef := role.RoleRef
-						Expect(roleRef.Kind).To(Equal("Role"))
-						Expect(roleRef.Name).To(Equal("my-project-role"))
-						Expect(roleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+						Expect(role.RoleRef).To(Equal(clusterRoleRef))
+					})
+
+					It("allows the user specified in the project access to the project", func() {
+						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						Expect(err).NotTo(HaveOccurred())
+
+						clusterRole := &rbacv1.ClusterRoleBinding{}
+						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+							Name: project.Name + "-clusterrolebinding",
+						}, clusterRole)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(clusterRole.Name).To(Equal("my-project-clusterrolebinding"))
+
+						subject1 := clusterRole.Subjects[0]
+						Expect(subject1.Kind).To(Equal("User"))
+						Expect(subject1.Name).To(Equal(user1))
+						Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+
+						Expect(clusterRole.RoleRef).To(Equal(rbacv1.RoleRef{
+							APIGroup: "rbac.authorization.k8s.io",
+							Kind:     "ClusterRole",
+							Name:     project.Name + "-clusterrole",
+						}))
 					})
 				})
 
@@ -288,7 +300,7 @@ var _ = Describe("ProjectController", func() {
 						Expect(err).NotTo(HaveOccurred())
 					})
 
-					It("allows the group specified in the project access to the project", func() {
+					It("allows the group specified in the project access to the namespace", func() {
 						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
@@ -308,10 +320,31 @@ var _ = Describe("ProjectController", func() {
 						Expect(subject1.Name).To(Equal(groupName))
 						Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 
-						roleRef := role.RoleRef
-						Expect(roleRef.Kind).To(Equal("Role"))
-						Expect(roleRef.Name).To(Equal("my-project-role"))
-						Expect(roleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+						Expect(role.RoleRef).To(Equal(clusterRoleRef))
+					})
+
+					It("allows the group specified in the project access to the project", func() {
+						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						Expect(err).NotTo(HaveOccurred())
+
+						clusterRole := &rbacv1.ClusterRoleBinding{}
+						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+							Name: project.Name + "-clusterrolebinding",
+						}, clusterRole)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(clusterRole.Name).To(Equal("my-project-clusterrolebinding"))
+
+						subject1 := clusterRole.Subjects[0]
+						Expect(subject1.Kind).To(Equal("Group"))
+						Expect(subject1.Name).To(Equal(groupName))
+						Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+
+						Expect(clusterRole.RoleRef).To(Equal(rbacv1.RoleRef{
+							APIGroup: "rbac.authorization.k8s.io",
+							Kind:     "ClusterRole",
+							Name:     project.Name + "-clusterrole",
+						}))
 					})
 				})
 
@@ -328,6 +361,17 @@ var _ = Describe("ProjectController", func() {
 
 					Expect(role.ObjectMeta.OwnerReferences).To(HaveLen(1))
 					ownerReference := role.ObjectMeta.OwnerReferences[0]
+					Expect(ownerReference.Name).To(Equal(project.Name))
+					Expect(ownerReference.Kind).To(Equal("Project"))
+
+					clusterRole := &rbacv1.ClusterRoleBinding{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name + "-clusterrolebinding",
+					}, clusterRole)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(clusterRole.ObjectMeta.OwnerReferences).To(HaveLen(1))
+					ownerReference = clusterRole.ObjectMeta.OwnerReferences[0]
 					Expect(ownerReference.Name).To(Equal(project.Name))
 					Expect(ownerReference.Kind).To(Equal("Project"))
 				})
@@ -350,13 +394,26 @@ var _ = Describe("ProjectController", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					updatedRole := &rbacv1.RoleBinding{}
-					_ = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
 						Name:      project.Name + "-rolebinding",
 						Namespace: project.Name,
 					}, updatedRole)
+					Expect(err).NotTo(HaveOccurred())
 
 					Expect(updatedRole.Subjects).To(HaveLen(1))
 					subject1 := updatedRole.Subjects[0]
+					Expect(subject1.Kind).To(Equal("User"))
+					Expect(subject1.Name).To(Equal(user1))
+					Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+
+					updatedClusterRole := &rbacv1.ClusterRoleBinding{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name + "-clusterrolebinding",
+					}, updatedClusterRole)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(updatedClusterRole.Subjects).To(HaveLen(1))
+					subject1 = updatedClusterRole.Subjects[0]
 					Expect(subject1.Kind).To(Equal("User"))
 					Expect(subject1.Name).To(Equal(user1))
 					Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))

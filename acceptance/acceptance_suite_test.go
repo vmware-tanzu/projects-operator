@@ -25,12 +25,11 @@ type Env struct {
 	ClusterAPILocation string `env:"CLUSTER_API_LOCATION"`
 	CodyPassword       string `env:"CODY_PASSWORD"`
 	ClusterName        string `env:"CLUSTER_NAME"`
+	OIDCPrefix         string `env:"OIDC_PREFIX"`
 }
 
 const (
-	testRoleApiGroupEnv = "*"
-	testRoleResourceEnv = "configmaps,serviceaccounts"
-	testRoleVerbEnv     = "*"
+	testClusterRoleRef = "acceptance-test-clusterrole"
 )
 
 var (
@@ -85,7 +84,7 @@ func startController() {
 	Expect(err).NotTo(HaveOccurred())
 
 	command := exec.Command(pathToController)
-	command.Env = []string{"ROLE_APIGROUPS=" + testRoleApiGroupEnv, "ROLE_RESOURCES=" + testRoleResourceEnv, "ROLE_VERBS=" + testRoleVerbEnv}
+	command.Env = []string{"CLUSTER_ROLE_REF=" + testClusterRoleRef}
 	controllerSession, err = Start(command, GinkgoWriter, GinkgoWriter)
 	Eventually(controllerSession.Err).Should(Say("starting manager"))
 

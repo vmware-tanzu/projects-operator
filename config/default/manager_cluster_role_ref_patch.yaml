@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        env:
+        # Change the value of the field below to your cluster role
+        - name: CLUSTER_ROLE_REF
+          value: ""
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: manager-cluster-role-ref-binding
+roleRef:
+  # Change the value of the field below to your cluster role
+  name: ""

@@ -21,9 +21,9 @@ import (
 )
 
 const (
-	brokerUsername    = "admin"
-	brokerPassword    = "password"
-	marketplaceSystem = "marketplace-system"
+	brokerUsername                  = "admin"
+	brokerPassword                  = "password"
+	DeveloperConsoleSystemNamespace = "pdc-system"
 )
 
 // *** general helpers *** //
@@ -52,12 +52,12 @@ func DeployTestBroker(brokerPort int) TestBroker {
 	// Ensure there are no leftover/stale overview-broker deployments
 	// i.e. from previous test runs
 	Eventually(func() string {
-		return NewKubeDefaultActor().MustRunKubectl("get", "pod", "-l", "app=overview-broker", "-n", marketplaceSystem)
+		return NewKubeDefaultActor().MustRunKubectl("get", "pod", "-l", "app=overview-broker", "-n", DeveloperConsoleSystemNamespace)
 	}).Should(ContainSubstring("No resources found."))
 
 	RunMake("deploy-test-broker")
-	NewKubeDefaultActor().MustRunKubectl("wait", "--for=condition=available", "deployment/overview-broker-deployment", "-n", marketplaceSystem)
-	brokerIP := NewKubeDefaultActor().MustRunKubectl("get", "service", "overview-broker", "-o", "jsonpath={.spec.clusterIP}", "-n", marketplaceSystem)
+	NewKubeDefaultActor().MustRunKubectl("wait", "--for=condition=available", "deployment/overview-broker-deployment", "-n", DeveloperConsoleSystemNamespace)
+	brokerIP := NewKubeDefaultActor().MustRunKubectl("get", "service", "overview-broker", "-o", "jsonpath={.spec.clusterIP}", "-n", DeveloperConsoleSystemNamespace)
 
 	proxySession := setupProxyAccessToBroker(brokerPort)
 
@@ -77,13 +77,13 @@ func DeleteTestBroker(testBroker TestBroker) {
 
 func printBrokerLogs() {
 	fmt.Printf("\n\nPrinting broker logs:\n\n")
-	fmt.Printf(NewKubeDefaultActor().MustRunKubectl("logs", "deployment/overview-broker-deployment", "-n", marketplaceSystem))
+	fmt.Printf(NewKubeDefaultActor().MustRunKubectl("logs", "deployment/overview-broker-deployment", "-n", DeveloperConsoleSystemNamespace))
 }
 
 // *** proxy helpers *** //
 
 func setupProxyAccessToBroker(brokerPort int) *Session {
-	cmd := exec.Command("kubectl", "-n", marketplaceSystem, "port-forward", "service/overview-broker", fmt.Sprintf("%d:8080", brokerPort))
+	cmd := exec.Command("kubectl", "-n", DeveloperConsoleSystemNamespace, "port-forward", "service/overview-broker", fmt.Sprintf("%d:8080", brokerPort))
 
 	proxySession, err := Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).NotTo(HaveOccurred())
@@ -99,7 +99,7 @@ func teardownProxyAccessToBroker(proxySession *Session) {
 
 func RunMake(task string) {
 	command := exec.Command("make", task)
-	command.Dir = pathToMarketplace()
+	command.Dir = pathToProjectsOperator()
 	command.Stdout = GinkgoWriter
 	command.Stderr = GinkgoWriter
 	Expect(command.Run()).To(Succeed())
@@ -115,7 +115,7 @@ func RunCLI(pathToCLI string, args []string) string {
 	return string(outBuf.Contents())
 }
 
-func pathToMarketplace() string {
+func pathToProjectsOperator() string {
 	_, b, _, _ := runtime.Caller(0)
 	basepath := filepath.Dir(b)
 	return filepath.Join(basepath, "..")
@@ -214,7 +214,7 @@ func (ka KubeActor) RunPmCLI(pathToCLI string, args ...string) (string, error) {
 
 func (ka KubeActor) CreateProject(projectName string) {
 	ka.MustKubeCtlApply(fmt.Sprintf(`
-apiVersion: marketplace.pivotal.io/v1
+apiVersion: developerconsole.pivotal.io/v1
 kind: Project
 metadata:
   name: %s

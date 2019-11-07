@@ -9,7 +9,7 @@ make run
 
 Apply the projects yaml with a project name and a list of users/serviceaccounts who have access.
 ```
-apiVersion: marketplace.pivotal.io/v1
+apiVersion: developerconsole.pivotal.io/v1
 kind: Project
 metadata:
   name: project-sample
@@ -26,7 +26,7 @@ spec:
 
 ##### Limitations
 
-Right now projects is hardcoded for usage by Marketplace to retrict users to a set of ServiceCatalog resources. This will be removed in the future. 
+Right now projects is hardcoded for usage by Developer Console to restrict users to a set of ServiceCatalog resources. This will be removed in the future. 
 In order to configure arbitary resources you must change the following configuration:
 1. The controller environment vars for [role permissions](https://github.com/pivotal/projects-operator/blob/master/config/manager/manager.yaml#L40-L45).
 1. The controller's [own permissions](https://github.com/pivotal/projects-operator/blob/master/controllers/project_controller.go#L54-L55) since the controller must have permission to resources it creates.
@@ -44,7 +44,7 @@ To run the acceptance tests you must have a pks k8s cluster using OIDC pointing 
 
 ### Development
 
-The following dependencies need to be installed in order to hack on marketplace:
+The following dependencies need to be installed in order to hack on the projects operator:
 
 * [Go](https://golang.org/doc/install)
   * [ginkgo](https://github.com/onsi/ginkgo)

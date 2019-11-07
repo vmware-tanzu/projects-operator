@@ -46,7 +46,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 
 		BeforeEach(func() {
 			projectResource = fmt.Sprintf(`
-                apiVersion: marketplace.pivotal.io/v1
+                apiVersion: developerconsole.pivotal.io/v1
                 kind: Project
                 metadata:
                  name: %s
@@ -106,7 +106,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 		When("alana revokes access to a project from cody", func() {
 			BeforeEach(func() {
 				projectResource = fmt.Sprintf(`
-                apiVersion: marketplace.pivotal.io/v1
+                apiVersion: developerconsole.pivotal.io/v1
                 kind: Project
                 metadata:
                  name: %s
@@ -132,7 +132,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 
 		BeforeEach(func() {
 			projectResource = fmt.Sprintf(`
-                apiVersion: marketplace.pivotal.io/v1
+                apiVersion: developerconsole.pivotal.io/v1
                 kind: Project
                 metadata:
                  name: %s
@@ -207,7 +207,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 			sa = testhelpers.NewKubeActor(saName, saToken)
 
 			projectResource = fmt.Sprintf(`
-                apiVersion: marketplace.pivotal.io/v1
+                apiVersion: developerconsole.pivotal.io/v1
                 kind: Project
                 metadata:
                  name: %s
@@ -244,7 +244,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 	When("Alana creates and then deletes the project", func() {
 		BeforeEach(func() {
 			projectResource := fmt.Sprintf(`
-                apiVersion: marketplace.pivotal.io/v1
+                apiVersion: developerconsole.pivotal.io/v1
                 kind: Project
                 metadata:
                  name: %s
@@ -279,7 +279,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 
 	It("does not allow unknown access types", func() {
 		projectResource := `
-                apiVersion: marketplace.pivotal.io/v1
+                apiVersion: developerconsole.pivotal.io/v1
                 kind: Project
                 metadata:
                  name: project
@@ -295,7 +295,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 
 	It("does not allow alice or cody to create projects", func() {
 		projectResource := fmt.Sprintf(`
-                apiVersion: marketplace.pivotal.io/v1
+                apiVersion: developerconsole.pivotal.io/v1
                 kind: Project
                 metadata:
                  name: %s

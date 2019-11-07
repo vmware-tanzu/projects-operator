@@ -17,7 +17,7 @@ jobs:
       KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
       UAA_LOCATION: {{UAA_LOCATION}}
       CLUSTER_API_LOCATION: {{CLUSTER_API_LOCATION}}
-      CLUSTER_NAME: marketplace-project-ci
+      CLUSTER_NAME: ci-projects-operator
       CODY_PASSWORD: {{CODY_PASSWORD}}
 
 - name: release

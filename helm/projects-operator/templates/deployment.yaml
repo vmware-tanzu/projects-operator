@@ -36,15 +36,15 @@ spec:
             - /manager
           env:
             - name: ROLE_1_APIGROUPS
-              value: {{ .Values.role1.apiGroups }}
+              value: "{{ .Values.role1.apiGroups }}"
             - name: ROLE_1_RESOURCES
-              value: {{ .Values.role1.resources }}
+              value: "{{ .Values.role1.resources }}"
             - name: ROLE_1_VERBS
               value: "{{ .Values.role1.verbs }}"
             - name: ROLE_2_APIGROUPS
-              value: {{ .Values.role2.apiGroups }}
+              value: "{{ .Values.role2.apiGroups }}"
             - name: ROLE_2_RESOURCES
-              value: {{ .Values.role2.resources }}
+              value: "{{ .Values.role2.resources }}"
             - name: ROLE_2_VERBS
               value: "{{ .Values.role2.verbs }}"
           image: "{{ .Values.image }}"

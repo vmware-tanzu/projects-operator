@@ -68,7 +68,7 @@ func main() {
 
 	clusterRole, clusterRoleExist := os.LookupEnv("CLUSTER_ROLE_REF")
 	if !clusterRoleExist {
-		err = errors.New("ROLE_APIGROUPS, ROLE_RESOURCES and ROLE_VERBS envs OR CLUSTER_ROLE_REF env must be set")
+		err = errors.New("CLUSTER_ROLE_REF env must be set")
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
 	}

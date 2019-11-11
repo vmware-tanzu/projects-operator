@@ -26,8 +26,8 @@ spec:
 
 ##### Limitations
 
-Right now projects is hardcoded for usage by Marketplace to retrict users to a set of ServiceCatalog resources. This will be removed in the future. 
-In order to configure arbitary resources you must change the following configuration:
+Right now projects is hardcoded for usage by Marketplace to restrict users to a set of ServiceCatalog resources. This will be removed in the future. 
+In order to configure arbitrary resources you must change the following configuration:
 1. The controller environment vars for [role permissions](https://github.com/pivotal/projects-operator/blob/master/config/manager/manager.yaml#L40-L45).
 1. The controller's [own permissions](https://github.com/pivotal/projects-operator/blob/master/controllers/project_controller.go#L54-L55) since the controller must have permission to resources it creates.
 
@@ -41,6 +41,8 @@ To run the acceptance tests you must have a pks k8s cluster using OIDC pointing 
   1. `export CLUSTER_API_LOCATION=<CLUSTER>`
   1. `export CLUSTER_NAME=<CLUSTER_NAME>`
   1. `export CODY_PASSWORD=<PASSWORD_ABOVE>`
+  1. `export OIDC_USER_PREFIX=<OIDC_USER_PREFIX>` (optional)
+  1. `export OIDC_GROUP_PREFIX=<OIDC_GROUP_PREFIX>` (optional)
 
 ### Development
 

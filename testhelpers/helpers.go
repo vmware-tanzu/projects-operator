@@ -184,10 +184,9 @@ func (ka KubeActor) MustKubeCtlApply(yaml string) string {
 	command.Env = []string{"KUBECONFIG=" + ka.KubeConfigPath}
 	command.Stdin = bytes.NewBufferString(yaml)
 
-	contents := string(outBuf.Contents())
-	Expect(command.Run()).To(Succeed(), contents)
+	Expect(command.Run()).To(Succeed())
 
-	return contents
+	return string(outBuf.Contents())
 }
 
 func (ka KubeActor) RunKubeCtl(args ...string) (string, error) {

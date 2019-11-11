@@ -35,12 +35,8 @@ spec:
           command:
             - /manager
           env:
-            - name: ROLE_APIGROUPS
-              value: {{ .Values.role.apiGroups }}
-            - name: ROLE_RESOURCES
-              value: {{ .Values.role.resources }}
-            - name: ROLE_VERBS
-              value: "{{ .Values.role.verbs }}"
+            - name: CLUSTER_ROLE_REF
+              value: {{ .Values.clusterRoleRef}}
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           name: manager

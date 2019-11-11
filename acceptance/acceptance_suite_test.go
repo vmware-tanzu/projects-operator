@@ -3,6 +3,7 @@ package acceptance_test
 import (
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,6 +14,8 @@ import (
 	"time"
 
 	env "github.com/caarlos0/env/v6"
+
+	"github.com/pivotal/projects-operator/testhelpers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -25,11 +28,26 @@ type Env struct {
 	ClusterAPILocation string `env:"CLUSTER_API_LOCATION"`
 	CodyPassword       string `env:"CODY_PASSWORD"`
 	ClusterName        string `env:"CLUSTER_NAME"`
-	OIDCPrefix         string `env:"OIDC_PREFIX"`
+	OIDCUserPrefix     string `env:"OIDC_USER_PREFIX"`
+	OIDCGroupPrefix    string `env:"OIDC_GROUP_PREFIX"`
 }
 
 const (
-	testClusterRoleRef = "acceptance-test-clusterrole"
+	testClusterRoleRef      = "acceptance-test-clusterrole"
+	testClusterRoleTemplate = `
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: "%s"
+rules:
+  - apiGroups:
+      - "*"
+    resources:
+      - configmaps
+      - serviceaccounts
+    verbs:
+      - "*"
+`
 )
 
 var (
@@ -49,6 +67,7 @@ func TestAcceptance(t *testing.T) {
 
 		RunMake("install")
 		RunMake("clean-crs")
+		testhelpers.NewKubeDefaultActor().MustKubeCtlApply(fmt.Sprintf(testClusterRoleTemplate, testClusterRoleRef))
 		startController()
 	})
 
@@ -62,6 +81,7 @@ func TestAcceptance(t *testing.T) {
 
 	AfterSuite(func() {
 		stopController()
+		testhelpers.NewKubeDefaultActor().MustRunKubectl("delete", "clusterrole", testClusterRoleRef)
 	})
 
 	RegisterFailHandler(Fail)

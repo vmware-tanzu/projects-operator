@@ -27,6 +27,7 @@ var _ = Describe("Projects Operator and CRD", func() {
 		// TODO default namespace
 		aliceToken := GetToken(Params.UaaLocation, "alice", Params.CodyPassword)
 		alice = testhelpers.NewKubeActor("alice", aliceToken)
+
 		codyToken := GetToken(Params.UaaLocation, "cody", Params.CodyPassword)
 		cody = testhelpers.NewKubeActor("cody", codyToken)
 
@@ -140,7 +141,7 @@ var _ = Describe("Projects Operator and CRD", func() {
                 spec:
                   access:
                   - kind: Group
-                    name: ldap-experts`, projectName)
+                    name: %s`, projectName, groupName("ldap-experts"))
 
 			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})
@@ -314,8 +315,15 @@ var _ = Describe("Projects Operator and CRD", func() {
 })
 
 func userName(user string) string {
-	if Params.OIDCPrefix == "" {
+	if Params.OIDCUserPrefix == "" {
 		return user
 	}
-	return Params.OIDCPrefix + ":" + user
+	return Params.OIDCUserPrefix + ":" + user
+}
+
+func groupName(group string) string {
+	if Params.OIDCGroupPrefix == "" {
+		return group
+	}
+	return Params.OIDCGroupPrefix + ":" + group
 }

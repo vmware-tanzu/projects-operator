@@ -130,7 +130,7 @@ func (r *ProjectReconciler) createClusterRole(project *projectv1.Project) error 
 		clusterRole.Rules = []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{
-					"marketplace.pivotal.io",
+					"developerconsole.pivotal.io",
 				},
 				Resources: []string{
 					"projects",

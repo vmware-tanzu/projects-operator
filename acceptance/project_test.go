@@ -85,11 +85,10 @@ var _ = Describe("Projects Operator and CRD", func() {
 			}).Should(ContainSubstring("created"))
 
 			Eventually(func() string {
-				output, _ := alice.RunKubeCtl("-n", projectName, "get", "configmaps,serviceaccounts")
+				output, _ := alice.RunKubeCtl("-n", projectName, "get", "configmaps")
 				return output
 			}).Should(SatisfyAll(
 				ContainSubstring("test-map-alice"),
-				ContainSubstring("test-sa-cody"),
 			))
 		})
 

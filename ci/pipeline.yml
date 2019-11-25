@@ -20,19 +20,19 @@ jobs:
       CLUSTER_NAME: ci-projects-operator
       CODY_PASSWORD: {{CODY_PASSWORD}}
 
-- name: release
+- name: build
   plan:
-  - get: version
-    trigger: true
-  - get: projects-operator
-    passed: [acceptance]
-  - task: assemble-build-artefact
-    file: projects-operator/ci/tasks/assemble-build-artefact.yml
+  - in_parallel:
+    - get: projects-operator
+      trigger: true
+      passed: [acceptance]
+    - get: version
+      params:
+        pre: dev
   - task: build-image
     privileged: true
     file: projects-operator/ci/tasks/build-image.yml
   - task: deplab
-    privileged: true
     config:
       platform: linux
       image_resource:
@@ -55,23 +55,74 @@ jobs:
             --git projects-operator \
             --output-tar tagged-image/image.tar \
             --dpkg-file ${DPKG_FILENAME}
-  - put: build-artefacts
-    params:
-      file: archive/projects-operator-*.tgz
-  - put: gcr-repository
-    params:
-      image: tagged-image/image.tar
-      additional_tags: version/number
-  - put: dpkg-list
-    params:
-      file: tagged-image/projects-dpkg-*.txt
-  - put: projects-operator
-    params:
-      repository: projects-operator
-      only_tag: true
-      tag: version/number
-      tag_prefix: v
+  - task: package-helm-chart
+    file: projects-operator/ci/tasks/assemble-build-artefact.yml
+  - in_parallel:
+    - put: version
+      params:
+        file: version/version
+    - put: build-artefacts
+      params:
+        file: archive/projects-operator-*.tgz
+    - put: gcr-repository
+      params:
+        image: tagged-image/image.tar
+        additional_tags: version/number
+    - put: dpkg-list
+      params:
+        file: tagged-image/projects-dpkg-*.txt
 
+# - name: release
+#   plan:
+#   - get: version
+#     trigger: true
+#   - get: projects-operator
+#     passed: [acceptance]
+#   - task: assemble-build-artefact
+#     file: projects-operator/ci/tasks/assemble-build-artefact.yml
+#   - task: build-image
+#     privileged: true
+#     file: projects-operator/ci/tasks/build-image.yml
+#   - task: deplab
+#     privileged: true
+#     config:
+#       platform: linux
+#       image_resource:
+#         type: docker-image
+#         source: {repository: pivotalnavcon/deplab-task}
+#       inputs:
+#       - name: projects-operator
+#       - name: image
+#       - name: version
+#       outputs:
+#       - name: tagged-image
+#       run:
+#         path: /bin/bash
+#         args:
+#         - -ec
+#         - |
+#           set -eu pipefail
+#           DPKG_FILENAME="tagged-image/projects-dpkg-$(cat version/version).txt"
+#           deplab --image-tar image/image.tar \
+#             --git projects-operator \
+#             --output-tar tagged-image/image.tar \
+#             --dpkg-file ${DPKG_FILENAME}
+#   - put: build-artefacts
+#     params:
+#       file: archive/projects-operator-*.tgz
+#   - put: gcr-repository
+#     params:
+#       image: tagged-image/image.tar
+#       additional_tags: version/number
+#   - put: dpkg-list
+#     params:
+#       file: tagged-image/projects-dpkg-*.txt
+#   - put: projects-operator
+#     params:
+#       repository: projects-operator
+#       only_tag: true
+#       tag: version/number
+#       tag_prefix: v
 
 - name: bump-major
   plan:

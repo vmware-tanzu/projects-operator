@@ -50,7 +50,7 @@ jobs:
         - -ec
         - |
           set -eu pipefail
-          DPKG_FILENAME="tagged-image/projects-dpkg-$(cat version/version).txt"
+          DPKG_FILENAME="tagged-image/projects-operator-dpkg-$(cat version/version).txt"
           deplab --image-tar image/image.tar \
             --git projects-operator \
             --output-tar tagged-image/image.tar \
@@ -70,7 +70,7 @@ jobs:
         additional_tags: version/number
     - put: dpkg-list
       params:
-        file: tagged-image/projects-dpkg-*.txt
+        file: tagged-image/projects-operator-dpkg-*.txt
 
 # - name: release
 #   plan:

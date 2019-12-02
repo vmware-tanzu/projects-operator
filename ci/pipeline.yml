@@ -61,7 +61,7 @@ jobs:
     - put: version
       params:
         file: version/version
-    - put: build-artefacts
+    - put: build-artefacts-dev
       params:
         file: archive/projects-operator-*.tgz
     - put: gcr-repository
@@ -162,30 +162,30 @@ resources:
     username: _json_key
     password: {{GCR_SERVICE_ACCOUNT_KEY}}
 
-- name: build-artefacts
+- name: build-artefacts-dev
   type: google-cloud-storage
   icon: harddisk
   source:
-    bucket: marketplace-build-artefacts
-    json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
-    regexp: project/projects-operator-(.*).tgz
+    bucket: pdc-projects-operator-dev
+    json_key: {{GCS_SERVICE_ACCOUNT_PROJECTS_DEV}}
+    regexp: projects-operator-(.*).tgz
 
 - name: dpkg-list
   type: google-cloud-storage
   icon: format-list-bulleted
   source:
-    bucket: marketplace-build-artefacts
-    json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
-    regexp: project/projects-dpkg-(.*).txt
+    bucket: pdc-osl-files
+    json_key: {{GCS_SERVICE_ACCOUNT_PDC_OSL_FILES}}
+    regexp: projects-operator-dpkg-(.*).txt
 
 - name: version
   type: semver
   icon: one-up
   source:
     driver: gcs
-    bucket: marketplace-build-artefacts
-    json_key: {{GCS_SERVICE_ACCOUNT_KEY}}
-    key: versions/project
+    bucket: pdc-version-files
+    json_key: {{GCS_SERVICE_ACCOUNT_PDC_VERSION_FILES}}
+    key: projects-operator
     initial_version: 0.0.1
 
 resource_types:

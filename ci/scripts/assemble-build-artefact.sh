@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=$(cat version/number)
+VERSION=$(cat version/version)
 
 sed -i s/version:.*/version:\ ${VERSION}/ projects-operator/helm/projects-operator/Chart.yaml
 sed -i s/appVersion:.*/appVersion:\ ${VERSION}/ projects-operator/helm/projects-operator/Chart.yaml

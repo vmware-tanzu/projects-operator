@@ -1,3 +1,16 @@
+groups:
+- name: main
+  jobs:
+  - absolute-unit
+  - acceptance
+  - build
+  - promote-final
+- name: bump
+  jobs:
+  - bump-major
+  - bump-minor
+  - bump-patch
+
 jobs:
 - name: absolute-unit
   plan:
@@ -28,7 +41,7 @@ jobs:
       passed: [acceptance]
     - get: version
       params:
-        pre: dev
+        pre: build
   - task: build-image
     privileged: true
     file: projects-operator/ci/tasks/build-image.yml
@@ -50,11 +63,13 @@ jobs:
         - -ec
         - |
           set -eu pipefail
-          DPKG_FILENAME="tagged-image/projects-operator-dpkg-$(cat version/version).txt"
+
+          projects_operator_version=$(cat version/version)
+
           deplab --image-tar image/image.tar \
             --git projects-operator \
             --output-tar tagged-image/image.tar \
-            --dpkg-file ${DPKG_FILENAME}
+            --dpkg-file "tagged-image/projects-operator-dpkg-${projects_operator_version}.txt"
   - task: package-helm-chart
     file: projects-operator/ci/tasks/assemble-build-artefact.yml
   - in_parallel:
@@ -67,83 +82,48 @@ jobs:
     - put: gcr-repository
       params:
         image: tagged-image/image.tar
-        additional_tags: version/number
+        additional_tags: version/version
     - put: dpkg-list
       params:
         file: tagged-image/projects-operator-dpkg-*.txt
 
-# - name: release
-#   plan:
-#   - get: version
-#     trigger: true
-#   - get: projects-operator
-#     passed: [acceptance]
-#   - task: assemble-build-artefact
-#     file: projects-operator/ci/tasks/assemble-build-artefact.yml
-#   - task: build-image
-#     privileged: true
-#     file: projects-operator/ci/tasks/build-image.yml
-#   - task: deplab
-#     privileged: true
-#     config:
-#       platform: linux
-#       image_resource:
-#         type: docker-image
-#         source: {repository: pivotalnavcon/deplab-task}
-#       inputs:
-#       - name: projects-operator
-#       - name: image
-#       - name: version
-#       outputs:
-#       - name: tagged-image
-#       run:
-#         path: /bin/bash
-#         args:
-#         - -ec
-#         - |
-#           set -eu pipefail
-#           DPKG_FILENAME="tagged-image/projects-dpkg-$(cat version/version).txt"
-#           deplab --image-tar image/image.tar \
-#             --git projects-operator \
-#             --output-tar tagged-image/image.tar \
-#             --dpkg-file ${DPKG_FILENAME}
-#   - put: build-artefacts
-#     params:
-#       file: archive/projects-operator-*.tgz
-#   - put: gcr-repository
-#     params:
-#       image: tagged-image/image.tar
-#       additional_tags: version/number
-#   - put: dpkg-list
-#     params:
-#       file: tagged-image/projects-dpkg-*.txt
-#   - put: projects-operator
-#     params:
-#       repository: projects-operator
-#       only_tag: true
-#       tag: version/number
-#       tag_prefix: v
+- name: promote-final
+  plan:
+  - in_parallel:
+    - get: version
+      passed: [build]
+    - get: projects-operator
+      passed: [build]
+    - get: build-artefacts-dev
+      passed: [build]
+  - in_parallel:
+    - put: build-artefacts-final
+      params:
+        file: build-artefacts-dev/projects-operator-*.tgz
+    - put: projects-operator
+      params:
+        repository: projects-operator
+        only_tag: true
+        tag: version/version
+        tag_prefix: v
+    - put: version
+      params:
+        bump: patch
 
 - name: bump-major
   plan:
-    - get: version
-      params: {bump: major}
     - put: version
-      params: {file: version/number}
+      params: {bump: major}
 
 - name: bump-minor
   plan:
-    - get: version
-      params: {bump: minor}
     - put: version
-      params: {file: version/number}
+      params: {bump: minor}
 
 - name: bump-patch
   plan:
-    - get: version
-      params: {bump: patch}
     - put: version
-      params: {file: version/number}
+      params: {bump: patch}
 
 resources:
 - name: projects-operator
@@ -168,6 +148,14 @@ resources:
   source:
     bucket: pdc-projects-operator-dev
     json_key: {{GCS_SERVICE_ACCOUNT_PROJECTS_DEV}}
+    regexp: projects-operator-(.*).tgz
+
+- name: build-artefacts-final
+  type: google-cloud-storage
+  icon: harddisk
+  source:
+    bucket: pdc-projects-operator-final
+    json_key: {{GCS_SERVICE_ACCOUNT_PROJECTS_FINAL}}
     regexp: projects-operator-(.*).tgz
 
 - name: dpkg-list

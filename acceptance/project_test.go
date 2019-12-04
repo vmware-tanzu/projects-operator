@@ -189,6 +189,27 @@ var _ = Describe("Projects Operator and CRD", func() {
 				return output
 			}).Should(ContainSubstring("forbidden"))
 		})
+
+		When("alana revokes access to a project from the ldap-experts group", func() {
+			BeforeEach(func() {
+				projectResource = fmt.Sprintf(`
+                apiVersion: developerconsole.pivotal.io/v1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access: []`, projectName)
+
+				alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			})
+
+			It("prevents members of the group from interacting with the allowed resources", func() {
+				Eventually(func() string {
+					output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps")
+					return output
+				}).Should(ContainSubstring(fmt.Sprintf(`User "%s" cannot list resource "configmaps"`, userName("cody"))))
+			})
+		})
 	})
 
 	When("a ServiceAccount has been given access to a Project", func() {

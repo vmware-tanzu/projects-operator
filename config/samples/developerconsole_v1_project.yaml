@@ -1,7 +1,8 @@
 apiVersion: developerconsole.pivotal.io/v1
 kind: Project
 metadata:
-  name: project-sample
+  name: cody-project
 spec:
-  # Add fields here
-  foo: bar
+  access:
+  - kind: User
+    name: cody

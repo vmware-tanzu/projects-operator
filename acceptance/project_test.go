@@ -299,6 +299,73 @@ var _ = Describe("Projects CRD", func() {
 		})
 	})
 
+	When("an object inside the project namespace won't delete", func() {
+		BeforeEach(func() {
+			projectResource := fmt.Sprintf(`
+                apiVersion: developerconsole.pivotal.io/v1alpha1
+                kind: Project
+                metadata:
+                  name: %s
+                spec:
+                  access:
+                  - kind: User
+                    name: %s`, projectName, userName("cody"))
+
+			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+
+			podResource := fmt.Sprint(`
+                apiVersion: v1
+                kind: Pod
+                metadata:
+                  name: pod-that-wont-delete
+                  finalizers:
+                  - pdc/dont-delete
+                spec:
+                  containers:
+                  - image: busybox
+                    name: busybox`)
+
+			Eventually(func() string {
+				output, _ := cody.RunKubeCtl("-n", projectName, "apply", "-f", AsFile(podResource))
+				return output
+			}).Should(ContainSubstring("created"))
+		})
+
+		It("prevents the deletion of the project until the object is cleaned up", func() {
+			alana.MustRunKubectl("delete", "project", projectName, "--wait=false")
+
+			Consistently(func() string {
+				output := alana.MustRunKubectl("get", "projects")
+				return output
+			}).Should(ContainSubstring(projectName))
+			Consistently(func() string {
+				output := alana.MustRunKubectl("get", "namespaces")
+				return output
+			}).Should(ContainSubstring(projectName))
+
+			podResource := fmt.Sprint(`
+                apiVersion: v1
+                kind: Pod
+                metadata:
+                  name: pod-that-wont-delete
+                  finalizers: []
+                spec:
+                  containers:
+                  - image: busybox
+                    name: busybox`)
+			alana.MustRunKubectl("-n", projectName, "apply", "-f", AsFile(podResource))
+
+			Eventually(func() string {
+				output := alana.MustRunKubectl("get", "projects")
+				return output
+			}).ShouldNot(ContainSubstring(projectName))
+			Eventually(func() string {
+				output := alana.MustRunKubectl("get", "namespaces")
+				return output
+			}).ShouldNot(ContainSubstring(projectName))
+		})
+	})
+
 	It("does not allow unknown access types", func() {
 		projectResource := fmt.Sprintf(`
                 apiVersion: developerconsole.pivotal.io/v1alpha1

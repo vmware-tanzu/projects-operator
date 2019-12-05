@@ -46,6 +46,7 @@ rules:
     resources:
       - configmaps
       - serviceaccounts
+      - pods
     verbs:
       - "*"
 `

@@ -16,6 +16,10 @@ package controllers
 
 import (
 	"context"
+	"time"
+
+	"github.com/pivotal/projects-operator/pkg/finalizer"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -67,6 +71,27 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
+	if !project.ObjectMeta.DeletionTimestamp.IsZero() {
+		_ = r.Client.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: project.Name}})
+		for {
+			namespace := &corev1.Namespace{}
+			if err := r.Client.Get(context.Background(), types.NamespacedName{Name: project.Name}, namespace); err != nil {
+				if errors.IsNotFound(err) {
+					status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
+						finalizer.RemoveFinalizer(project, "wait-for-namespace-to-be-deleted")
+						return nil
+					})
+					if err != nil {
+						return ctrl.Result{}, nil
+					}
+					r.Log.Info("creating/updating resource", "type", "project", "status", status)
+					return ctrl.Result{}, nil
+				}
+				time.Sleep(time.Second)
+			}
+		}
+	}
+
 	if err := r.createNamespace(project); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -82,6 +107,15 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.createRoleBinding(project); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
+		finalizer.AddFinalizer(project, "wait-for-namespace-to-be-deleted")
+		return nil
+	})
+	if err != nil {
+		return ctrl.Result{}, nil
+	}
+	r.Log.Info("creating/updating resource", "type", "project", "status", status)
 
 	return ctrl.Result{}, nil
 }

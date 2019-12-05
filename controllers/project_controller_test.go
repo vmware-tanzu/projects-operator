@@ -16,6 +16,9 @@ package controllers_test
 
 import (
 	"context"
+	"time"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -86,6 +89,20 @@ var _ = Describe("ProjectController", func() {
 		})
 
 		Describe("creation", func() {
+			Describe("updates the project", func() {
+				It("adds a finalizer for waiting for namespace deletion", func() {
+					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					Expect(err).NotTo(HaveOccurred())
+
+					updatedProject := &projectv1alpha1.Project{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name,
+					}, updatedProject)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(updatedProject.Finalizers).To(ConsistOf("wait-for-namespace-to-be-deleted"))
+				})
+			})
+
 			Describe("creates a namespace", func() {
 				It("with given project name", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
@@ -432,6 +449,34 @@ var _ = Describe("ProjectController", func() {
 					Expect(subject1.Kind).To(Equal("User"))
 					Expect(subject1.Name).To(Equal(user1))
 					Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
+				})
+			})
+
+			Describe("finalizer removal", func() {
+				It("deletes the namespace and removes the finalizer when a deletion timestamp is present", func() {
+					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					Expect(err).NotTo(HaveOccurred())
+
+					project.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+
+					err = fakeClient.Update(context.TODO(), project)
+					Expect(err).NotTo(HaveOccurred())
+
+					_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+					Expect(err).NotTo(HaveOccurred())
+
+					namespace := &corev1.Namespace{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name,
+					}, namespace)
+					Expect(errors.IsNotFound(err)).To(BeTrue())
+
+					updatedProject := &projectv1alpha1.Project{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name,
+					}, updatedProject)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(updatedProject.Finalizers).To(BeEmpty())
 				})
 			})
 		})

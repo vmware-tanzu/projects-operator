@@ -24,6 +24,14 @@ spec:
     name: ldap-experts
 ```
 
+### Uninstalling
+
+The helm chart can be uninstalled with:
+```
+kubectl delete -f config/crd/bases
+```
+Note that the `Project` CRD will be left on the cluster as will any CRs for the `Project` CRD. These can be deleted manually if desired.
+
 ##### Limitations
 
 Right now projects is hardcoded for usage by Developer Console to restrict users to a set of ServiceCatalog resources. This will be removed in the future. 

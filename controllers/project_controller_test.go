@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	projectv1 "github.com/pivotal/projects-operator/api/v1"
+	projectv1alpha1 "github.com/pivotal/projects-operator/api/v1alpha1"
 	"github.com/pivotal/projects-operator/controllers"
 
 	. "github.com/onsi/ginkgo"
@@ -24,7 +24,7 @@ var _ = Describe("ProjectController", func() {
 		var (
 			reconciler     controllers.ProjectReconciler
 			fakeClient     client.Client
-			project        *projectv1.Project
+			project        *projectv1alpha1.Project
 			user1          string
 			user2          string
 			scheme         *runtime.Scheme
@@ -34,7 +34,7 @@ var _ = Describe("ProjectController", func() {
 		BeforeEach(func() {
 			scheme = runtime.NewScheme()
 
-			projectv1.AddToScheme(scheme)
+			projectv1alpha1.AddToScheme(scheme)
 			corev1.AddToScheme(scheme)
 			rbacv1.AddToScheme(scheme)
 
@@ -155,12 +155,12 @@ var _ = Describe("ProjectController", func() {
 					var serviceAccountName = "service-account"
 
 					BeforeEach(func() {
-						project = &projectv1.Project{
+						project = &projectv1alpha1.Project{
 							ObjectMeta: metav1.ObjectMeta{
 								Name: "my-project",
 							},
-							Spec: projectv1.ProjectSpec{
-								Access: []projectv1.SubjectRef{
+							Spec: projectv1alpha1.ProjectSpec{
+								Access: []projectv1alpha1.SubjectRef{
 									{
 										Kind:      "ServiceAccount",
 										Name:      serviceAccountName,
@@ -281,12 +281,12 @@ var _ = Describe("ProjectController", func() {
 					BeforeEach(func() {
 						groupName = "my-group"
 
-						project = &projectv1.Project{
+						project = &projectv1alpha1.Project{
 							ObjectMeta: metav1.ObjectMeta{
 								Name: "my-project",
 							},
-							Spec: projectv1.ProjectSpec{
-								Access: []projectv1.SubjectRef{
+							Spec: projectv1alpha1.ProjectSpec{
+								Access: []projectv1alpha1.SubjectRef{
 									{
 										Kind:      "Group",
 										Name:      groupName,
@@ -385,7 +385,7 @@ var _ = Describe("ProjectController", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					first := project.Spec.Access[0]
-					project.Spec.Access = []projectv1.SubjectRef{first}
+					project.Spec.Access = []projectv1alpha1.SubjectRef{first}
 
 					err = fakeClient.Update(context.TODO(), project)
 					Expect(err).NotTo(HaveOccurred())
@@ -431,21 +431,21 @@ func Request(namespace, name string) ctrl.Request {
 	}
 }
 
-func Project(projectName string, users ...string) *projectv1.Project {
-	subjectRefs := []projectv1.SubjectRef{}
+func Project(projectName string, users ...string) *projectv1alpha1.Project {
+	subjectRefs := []projectv1alpha1.SubjectRef{}
 
 	for _, user := range users {
-		subjectRefs = append(subjectRefs, projectv1.SubjectRef{
+		subjectRefs = append(subjectRefs, projectv1alpha1.SubjectRef{
 			Kind: "User",
 			Name: user,
 		})
 	}
 
-	return &projectv1.Project{
+	return &projectv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: projectName,
 		},
-		Spec: projectv1.ProjectSpec{
+		Spec: projectv1alpha1.ProjectSpec{
 			Access: subjectRefs,
 		},
 	}

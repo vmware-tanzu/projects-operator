@@ -9,7 +9,7 @@ make run
 
 Apply the projects yaml with a project name and a list of users/serviceaccounts who have access.
 ```
-apiVersion: developerconsole.pivotal.io/v1
+apiVersion: developerconsole.pivotal.io/v1alpha1
 kind: Project
 metadata:
   name: project-sample

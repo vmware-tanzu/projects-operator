@@ -22,7 +22,7 @@ import (
 
 	v1 "k8s.io/api/rbac/v1"
 
-	projectv1 "github.com/pivotal/projects-operator/api/v1"
+	projectv1alpha1 "github.com/pivotal/projects-operator/api/v1alpha1"
 
 	"github.com/pivotal/projects-operator/controllers"
 
@@ -42,7 +42,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
-	_ = projectv1.AddToScheme(scheme)
+	_ = projectv1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 

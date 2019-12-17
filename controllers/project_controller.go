@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	projectv1 "github.com/pivotal/projects-operator/api/v1"
+	projectv1alpha1 "github.com/pivotal/projects-operator/api/v1alpha1"
 )
 
 type RoleConfiguration struct {
@@ -55,7 +55,7 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
 	_ = r.Log.WithValues("project", req.NamespacedName)
 
-	project := &projectv1.Project{}
+	project := &projectv1alpha1.Project{}
 
 	if err := r.Client.Get(context.Background(), req.NamespacedName, project); err != nil {
 		if errors.IsNotFound(err) {
@@ -85,11 +85,11 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&projectv1.Project{}).
+		For(&projectv1alpha1.Project{}).
 		Complete(r)
 }
 
-func (r *ProjectReconciler) createNamespace(project *projectv1.Project) error {
+func (r *ProjectReconciler) createNamespace(project *projectv1alpha1.Project) error {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: project.Name,
@@ -109,7 +109,7 @@ func (r *ProjectReconciler) createNamespace(project *projectv1.Project) error {
 	return nil
 }
 
-func (r *ProjectReconciler) createClusterRole(project *projectv1.Project) error {
+func (r *ProjectReconciler) createClusterRole(project *projectv1alpha1.Project) error {
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleName(project),
@@ -151,7 +151,7 @@ func (r *ProjectReconciler) createClusterRole(project *projectv1.Project) error 
 	return nil
 }
 
-func (r *ProjectReconciler) createClusterRoleBinding(project *projectv1.Project) error {
+func (r *ProjectReconciler) createClusterRoleBinding(project *projectv1alpha1.Project) error {
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: project.Name + "-clusterrolebinding",
@@ -179,7 +179,7 @@ func (r *ProjectReconciler) createClusterRoleBinding(project *projectv1.Project)
 	return nil
 }
 
-func (r *ProjectReconciler) createRoleBinding(project *projectv1.Project) error {
+func (r *ProjectReconciler) createRoleBinding(project *projectv1alpha1.Project) error {
 	roleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      project.Name + "-rolebinding",
@@ -204,11 +204,11 @@ func (r *ProjectReconciler) createRoleBinding(project *projectv1.Project) error 
 	return nil
 }
 
-func clusterRoleName(project *projectv1.Project) string {
+func clusterRoleName(project *projectv1alpha1.Project) string {
 	return project.Name + "-clusterrole"
 }
 
-func subjects(project *projectv1.Project) []rbacv1.Subject {
+func subjects(project *projectv1alpha1.Project) []rbacv1.Subject {
 	var subjects []rbacv1.Subject
 	for _, userRef := range project.Spec.Access {
 

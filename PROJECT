@@ -3,5 +3,5 @@ domain: pivotal.io
 repo: projects-operator
 resources:
 - group: developerconsole
-  version: v1
+  version: v1alpha1
   kind: Project

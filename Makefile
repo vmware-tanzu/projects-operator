@@ -82,4 +82,5 @@ endif
 clean-crs:
 	kubectl delete projects --all
 
-lint: fmt vet
+lint:
+	golangci-lint run --timeout 2m30s --verbose

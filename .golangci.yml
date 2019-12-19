@@ -1,0 +1,24 @@
+---
+linters:
+  disable-all: true
+  enable:
+  - deadcode
+  - depguard
+  - goconst
+  - gocritic
+  - goimports
+  - gosimple
+  - govet
+  - ineffassign
+  - interfacer
+  - misspell
+  - staticcheck
+  - structcheck
+  - typecheck
+  - unconvert
+  - unused
+  - varcheck
+linters-settings:
+  goconst:
+    min-len: "2"
+    min-occurrences: 3

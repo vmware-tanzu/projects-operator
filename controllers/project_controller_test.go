@@ -64,6 +64,7 @@ var _ = Describe("ProjectController", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				err = fakeClient.Delete(context.TODO(), project)
+				Expect(err).NotTo(HaveOccurred())
 
 				_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
 				Expect(err).NotTo(HaveOccurred())

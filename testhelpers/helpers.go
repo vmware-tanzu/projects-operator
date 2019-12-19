@@ -76,8 +76,8 @@ func DeleteTestBroker(testBroker TestBroker) {
 }
 
 func printBrokerLogs() {
-	fmt.Printf("\n\nPrinting broker logs:\n\n")
-	fmt.Printf(NewKubeDefaultActor().MustRunKubectl("logs", "deployment/overview-broker-deployment", "-n", DeveloperConsoleSystemNamespace))
+	fmt.Print("\n\nPrinting broker logs:\n\n")
+	fmt.Print(NewKubeDefaultActor().MustRunKubectl("logs", "deployment/overview-broker-deployment", "-n", DeveloperConsoleSystemNamespace))
 }
 
 // *** proxy helpers *** //

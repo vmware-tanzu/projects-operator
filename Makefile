@@ -14,7 +14,7 @@ endif
 
 all: manager
 
-test: unit-tests acceptance-tests
+test: lint unit-tests acceptance-tests
 
 # skip integration/acceptance tests
 unit-tests:

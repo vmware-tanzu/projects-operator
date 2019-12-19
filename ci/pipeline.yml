@@ -79,7 +79,7 @@ jobs:
     - put: build-artefacts-dev
       params:
         file: archive/projects-operator-*.tgz
-    - put: gcr-repository
+    - put: project-operator-image
       params:
         image: tagged-image/image.tar
         additional_tags: version/version
@@ -96,6 +96,10 @@ jobs:
       passed: [build]
     - get: build-artefacts-dev
       passed: [build]
+    - get: project-operator-image
+      passed: [build]
+      params:
+        format: oci
   - in_parallel:
     - put: build-artefacts-final
       params:
@@ -109,6 +113,9 @@ jobs:
     - put: version
       params:
         bump: patch
+    - put: project-operator-image-stable
+      params:
+        image: project-operator-image/image.tar
 
 - name: bump-major
   plan:
@@ -134,13 +141,22 @@ resources:
     uri: git@github.com:pivotal/projects-operator
     branch: master
 
-- name: gcr-repository
+- name: project-operator-image
   type: registry-image
   icon: docker
   source:
     repository: gcr.io/cf-ism-0/projects-operator
     username: _json_key
     password: {{GCR_SERVICE_ACCOUNT_KEY}}
+
+- name: project-operator-image-stable
+  type: registry-image
+  icon: docker
+  source:
+    repository: gcr.io/cf-ism-0/projects-operator
+    username: _json_key
+    password: {{GCR_SERVICE_ACCOUNT_KEY}}
+    tag: stable
 
 - name: build-artefacts-dev
   type: google-cloud-storage

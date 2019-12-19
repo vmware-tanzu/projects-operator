@@ -81,3 +81,5 @@ endif
 #### Custom tasks ####
 clean-crs:
 	kubectl delete projects --all
+
+lint: fmt vet

@@ -16,8 +16,11 @@ jobs:
   plan:
   - get: projects-operator
     trigger: true
-  - task: unit
-    file: projects-operator/ci/tasks/unit.yml
+  - in_parallel:
+    - task: lint
+      file: projects-operator/ci/tasks/lint.yml
+    - task: unit
+      file: projects-operator/ci/tasks/unit.yml
 
 - name: acceptance
   plan:

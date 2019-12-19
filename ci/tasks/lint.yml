@@ -1,0 +1,16 @@
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: ismteam/ci
+    tag: latest
+
+inputs:
+- name: projects-operator
+
+run:
+  path: projects-operator/ci/shim
+  args:
+     - make
+     - lint

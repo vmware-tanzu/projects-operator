@@ -1,6 +1,6 @@
 package testhelpers
 
-// NB: these testhelpers are a copy of the testhelpers from pivotal/marketplace.
+// NB: these testhelpers are a copy of the testhelpers from pivotal/developer-console.
 // Created https://www.pivotaltracker.com/story/show/169344533 in order to extract and de-dup
 
 import (

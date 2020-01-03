@@ -54,7 +54,7 @@ func (in *Project) DeepCopyObject() runtime.Object {
 func (in *ProjectList) DeepCopyInto(out *ProjectList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]Project, len(*in))

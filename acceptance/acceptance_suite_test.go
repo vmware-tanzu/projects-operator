@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"testing"
 	"time"
@@ -103,8 +104,14 @@ func startController() {
 	pathToController, err := Build("github.com/pivotal/projects-operator")
 	Expect(err).NotTo(HaveOccurred())
 
+	usr, err := user.Current()
+	Expect(err).NotTo(HaveOccurred())
+
 	command := exec.Command(pathToController)
-	command.Env = []string{"CLUSTER_ROLE_REF=" + testClusterRoleRef}
+	command.Env = []string{
+		"CLUSTER_ROLE_REF=" + testClusterRoleRef,
+		"HOME=" + usr.HomeDir,
+	}
 	controllerSession, err = Start(command, GinkgoWriter, GinkgoWriter)
 	Eventually(controllerSession.Err).Should(Say("starting manager"))
 

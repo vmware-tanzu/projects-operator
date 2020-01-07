@@ -1,4 +1,3 @@
-
 # Image URL to use all building/pushing image targets
 IMG ?= gcr.io/cf-ism-0/projects-operator:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
@@ -16,59 +15,25 @@ all: manager
 
 test: lint unit-tests acceptance-tests
 
-# skip integration/acceptance tests
 unit-tests:
 	ginkgo ${GINKGO_ARGS} -skipPackage acceptance
 
-# Cannot yet -randomizeAllSpecs the acceptance tests
 acceptance-tests:
 	ginkgo -r acceptance
 
-# Build manager binary
-manager: generate fmt vet
+manager: generate format
 	go build -o bin/manager main.go
 
-# Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet
+run: generate format
 	go run ./main.go
 
-# Install CRDs into a cluster
-install: manifests
-	kubectl apply -f config/crd/bases
+install: generate
+	kubectl apply -f helm/projects-operator/crds
 
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
-	kubectl apply -f config/crd/bases
-	kustomize build config/default | kubectl apply -f -
-
-# Generate manifests e.g. CRD, RBAC etc.
-manifests: controller-gen
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-
-# Run go fmt against code
-fmt:
-	go fmt ./...
-
-# Run go vet against code
-vet:
-	go vet ./...
-
-# Generate code
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=helm/projects-operator/crds
 
-# Build the docker image
-docker-build: test
-	docker build . -t ${IMG}
-	@echo "updating kustomize image patch file for manager resource"
-	sed -i'' -e 's@image: .*@image: '"${IMG}"'@' ./config/default/manager_image_patch.yaml
-
-# Push the docker image
-docker-push:
-	docker push ${IMG}
-
-# find or download controller-gen
-# download controller-gen if necessary
 controller-gen:
 ifeq (, $(shell which controller-gen))
 	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.4
@@ -77,10 +42,12 @@ else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
-
 #### Custom tasks ####
 clean-crs:
 	kubectl delete projects --all
 
 lint:
 	golangci-lint run --timeout 2m30s --verbose
+
+format:
+	golangci-lint run --fix --timeout 2m30s --verbose

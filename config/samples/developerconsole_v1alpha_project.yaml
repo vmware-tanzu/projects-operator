@@ -1,8 +1,0 @@
-apiVersion: developerconsole.pivotal.io/v1alpha1
-kind: Project
-metadata:
-  name: cody-project
-spec:
-  access:
-  - kind: User
-    name: cody

@@ -1,0 +1,7 @@
+apiVersion: developerconsole.pivotal.io/v1alpha1
+kind: ProjectAccess
+metadata:
+  name: projectaccess-sample
+spec:
+  # Add fields here
+  foo: bar

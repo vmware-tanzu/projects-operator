@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Projects Operator and CRD", func() {
+var _ = Describe("Projects CRD", func() {
 	var (
 		projectName string
 

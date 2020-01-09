@@ -32,7 +32,7 @@ install: generate
 
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=helm/projects-operator/crds
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths=./... output:crd:artifacts:config=helm/projects-operator/crds
 
 controller-gen:
 ifeq (, $(shell which controller-gen))

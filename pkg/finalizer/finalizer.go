@@ -25,7 +25,6 @@ func AddFinalizer(obj v1.Object, finalizer string) {
 	}
 
 	obj.SetFinalizers(append(finalizers, finalizer))
-	return
 }
 
 func RemoveFinalizer(obj v1.Object, finalizer string) {
@@ -39,5 +38,4 @@ func RemoveFinalizer(obj v1.Object, finalizer string) {
 	}
 
 	obj.SetFinalizers(newFinalizers)
-	return
 }

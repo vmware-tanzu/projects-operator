@@ -18,15 +18,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/pivotal/projects-operator/pkg/finalizer"
-	"k8s.io/apimachinery/pkg/types"
-
 	"github.com/go-logr/logr"
+	"github.com/pivotal/projects-operator/pkg/finalizer"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -72,24 +71,8 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if !project.ObjectMeta.DeletionTimestamp.IsZero() {
-		_ = r.Client.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: project.Name}})
-		for {
-			namespace := &corev1.Namespace{}
-			if err := r.Client.Get(context.Background(), types.NamespacedName{Name: project.Name}, namespace); err != nil {
-				if errors.IsNotFound(err) {
-					status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
-						finalizer.RemoveFinalizer(project, "wait-for-namespace-to-be-deleted")
-						return nil
-					})
-					if err != nil {
-						return ctrl.Result{}, nil
-					}
-					r.Log.Info("creating/updating resource", "type", "project", "status", status)
-					return ctrl.Result{}, nil
-				}
-				time.Sleep(time.Second)
-			}
-		}
+		err := r.deleteNamespace(project)
+		return ctrl.Result{}, err
 	}
 
 	if err := r.createNamespace(project); err != nil {
@@ -108,16 +91,9 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, err
 	}
 
-	status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
-		finalizer.AddFinalizer(project, "wait-for-namespace-to-be-deleted")
-		return nil
-	})
-	if err != nil {
-		return ctrl.Result{}, nil
-	}
-	r.Log.Info("creating/updating resource", "type", "project", "status", status)
+	err := r.addFinalizer(project)
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, err
 }
 
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -144,6 +120,27 @@ func (r *ProjectReconciler) createNamespace(project *projectv1alpha1.Project) er
 	r.Log.Info("creating/updating resource", "type", "namespace", "status", status)
 
 	return nil
+}
+
+func (r *ProjectReconciler) deleteNamespace(project *projectv1alpha1.Project) error {
+	_ = r.Client.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: project.Name}})
+	for {
+		namespace := &corev1.Namespace{}
+		if err := r.Client.Get(context.Background(), types.NamespacedName{Name: project.Name}, namespace); err != nil {
+			if errors.IsNotFound(err) {
+				status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
+					finalizer.RemoveFinalizer(project, "wait-for-namespace-to-be-deleted")
+					return nil
+				})
+				if err != nil {
+					return err
+				}
+				r.Log.Info("creating/updating resource", "type", "project", "status", status)
+				return nil
+			}
+			time.Sleep(time.Second)
+		}
+	}
 }
 
 func (r *ProjectReconciler) createClusterRole(project *projectv1alpha1.Project) error {
@@ -261,4 +258,16 @@ func subjects(project *projectv1alpha1.Project) []rbacv1.Subject {
 		})
 	}
 	return subjects
+}
+
+func (r *ProjectReconciler) addFinalizer(project *projectv1alpha1.Project) error {
+	status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
+		finalizer.AddFinalizer(project, "wait-for-namespace-to-be-deleted")
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	r.Log.Info("creating/updating resource", "type", "project", "status", status)
+	return nil
 }

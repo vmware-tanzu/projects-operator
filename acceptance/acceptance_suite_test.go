@@ -102,7 +102,7 @@ func AsFile(content string) string {
 }
 
 func startController() {
-	pathToController, err := Build("github.com/pivotal/projects-operator")
+	pathToController, err := Build("github.com/pivotal/projects-operator/cmd/manager")
 	Expect(err).NotTo(HaveOccurred())
 
 	usr, err := user.Current()

@@ -11,7 +11,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: manager
+all: generate format manager webhook
 
 test: lint unit-tests acceptance-tests
 
@@ -21,11 +21,14 @@ unit-tests:
 acceptance-tests:
 	ginkgo -r acceptance
 
-manager: generate format
-	go build -o bin/manager main.go
+manager:
+	go build -o bin/manager cmd/manager/main.go
+
+webhook:
+	go build -o bin/webhook cmd/webhook/main.go
 
 run: generate format
-	go run ./main.go
+	go run ./cmd/manager/main.go
 
 install: generate
 	kubectl apply -f helm/projects-operator/crds

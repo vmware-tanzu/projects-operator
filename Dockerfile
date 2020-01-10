@@ -10,16 +10,20 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY main.go main.go
+COPY cmd/manager/main.go cmd/manager/main.go
+COPY cmd/webhook/main.go cmd/webhook/main.go
 COPY api/ api/
 COPY controllers/ controllers/
 COPY pkg/ pkg/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager cmd/manager/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o webhook cmd/webhook/main.go
 
 # Changed base image to cftiny for OSL compliance
 FROM cloudfoundry/run:tiny
 WORKDIR /
 COPY --from=builder /workspace/manager .
+COPY --from=builder /workspace/webhook .
+
 ENTRYPOINT ["/manager"]

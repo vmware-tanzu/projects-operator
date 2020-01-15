@@ -29,7 +29,7 @@ require (
 	golang.org/x/tools v0.0.0-20200103221440-774c71fcf114 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
-	k8s.io/api v0.17.0
+	k8s.io/api v0.17.1
 	k8s.io/apiextensions-apiserver v0.17.0 // indirect
 	k8s.io/apimachinery v0.17.0
 	k8s.io/client-go v0.17.0

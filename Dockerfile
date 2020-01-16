@@ -25,5 +25,3 @@ FROM cloudfoundry/run:tiny
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY --from=builder /workspace/webhook .
-
-ENTRYPOINT ["/manager"]

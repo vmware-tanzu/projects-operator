@@ -3,8 +3,10 @@ package main_test
 import (
 	"fmt"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/onsi/gomega/gexec"
 
@@ -27,14 +29,21 @@ func TestWebhook(t *testing.T) {
 		CleanupBuildArtifacts()
 	})
 
+	SetDefaultEventuallyTimeout(time.Minute)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Webhook Server Suite")
 }
 
 func startWebhookServer(env ...string) *gexec.Session {
+	usr, err := user.Current()
+	Expect(err).NotTo(HaveOccurred())
+
 	command := exec.Command(pathToWebhook)
 	command.Stdout = GinkgoWriter
 	command.Stderr = GinkgoWriter
+	command.Env = []string{
+		"HOME=" + usr.HomeDir,
+	}
 
 	if len(env) > 0 {
 		command.Env = append(command.Env, env...)

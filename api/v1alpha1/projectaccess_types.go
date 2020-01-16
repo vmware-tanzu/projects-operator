@@ -25,15 +25,13 @@ import (
 type ProjectAccessSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of ProjectAccess. Edit ProjectAccess_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
 }
 
 // ProjectAccessStatus defines the observed state of ProjectAccess
 type ProjectAccessStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Projects []string `json:"projects,omitempty"`
 }
 
 // +kubebuilder:object:root=true

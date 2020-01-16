@@ -223,7 +223,7 @@ var _ = Describe("Projects CRD", func() {
 			saNamespace = "users" + projectName
 			alana.MustRunKubectl("create", "namespace", saNamespace)
 
-			saName := fmt.Sprintf("service-account-acceptance-test-%d", time.Now().UnixNano())
+			saName := fmt.Sprintf("service-account-acceptance-testt%d", time.Now().UnixNano())
 			saToken := testhelpers.CreateServiceAccount(saName, saNamespace)
 
 			sa = testhelpers.NewKubeActor(saName, saToken)

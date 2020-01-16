@@ -33,14 +33,17 @@ spec:
           type: object
         spec:
           description: ProjectAccessSpec defines the desired state of ProjectAccess
-          properties:
-            foo:
-              description: Foo is an example field of ProjectAccess. Edit ProjectAccess_types.go
-                to remove/update
-              type: string
           type: object
         status:
           description: ProjectAccessStatus defines the observed state of ProjectAccess
+          properties:
+            projects:
+              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                of cluster Important: Run "make" to regenerate code after modifying
+                this file'
+              items:
+                type: string
+              type: array
           type: object
       type: object
   version: v1alpha1

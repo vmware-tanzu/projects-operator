@@ -1,0 +1,108 @@
+{{ $tls := fromYaml ( include "projects-operator.gen-webhook-certs" . ) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "projects-operator.fullname" . }}-listwebhook
+  labels:
+    app: {{ template "projects-operator.fullname" . }}-listwebhook
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+spec:
+  selector:
+    app: {{ template "projects-operator.fullname" . }}-listwebhook
+  ports:
+  - name: secure
+    protocol: TCP
+    port: {{ .Values.listwebhook.service.port }}
+    targetPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "projects-operator.fullname" . }}-listwebhook
+  labels:
+    app: {{ template "projects-operator.fullname" . }}-listwebhook
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "projects-operator.fullname" . }}-listwebhook
+  template:
+    metadata:
+      labels:
+        app: {{ template "projects-operator.fullname" . }}-listwebhook
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        releaseRevision: "{{ .Release.Revision }}"
+    spec:
+      serviceAccountName: "{{ .Values.listwebhook.serviceAccount }}"
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
+      containers:
+        - name: listwebhook
+          image: "{{ .Values.image }}"
+          imagePullPolicy: Always
+          command:
+            - /webhook
+          env:
+            - name: TLS_KEY_FILEPATH
+              value: "/etc/certs/key.pem"
+            - name: TLS_CERT_FILEPATH
+              value: "/etc/certs/cert.pem"
+          resources:
+            limits:
+              memory: 50Mi
+              cpu: 300m
+            requests:
+              memory: 00Mi
+              cpu: 300m
+          volumeMounts:
+            - name: listwebhook-cert
+              mountPath: /etc/certs
+              readOnly: true
+            - name: logs
+              mountPath: /tmp
+          securityContext:
+            readOnlyRootFilesystem: true
+      volumes:
+      - name: listwebhook-cert
+        secret:
+          secretName: {{ template "projects-operator.fullname" . }}-listwebhook-cert
+      - name: logs
+        emptyDir: {}
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ template "projects-operator.fullname" . }}-listwebhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: "{{ $tls.caCert }}"
+    service:
+      name: {{ template "projects-operator.fullname" . }}-listwebhook
+      path: /projects
+      namespace: "{{ .Release.Namespace }}"
+  failurePolicy: Fail
+  name: projectaccess.developerconsole.pivotal.io
+  rules:
+  - apiGroups:
+    - developerconsole.pivotal.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - projectaccesses
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ template "projects-operator.fullname" . }}-listwebhook-cert
+data:
+  cert.pem: "{{ $tls.clientCert }}"
+  key.pem: "{{ $tls.clientKey }}"

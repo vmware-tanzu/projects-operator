@@ -4,10 +4,10 @@ import (
 	"net/http"
 )
 
-func NewHandler() http.Handler {
+func NewHandler(projectFetcher ProjectFetcher, projectFilterer ProjectFilterer) http.Handler {
 	mux := http.NewServeMux()
 
-	projectsHandler := NewProjectsHandler()
+	projectsHandler := NewProjectsHandler(projectFetcher, projectFilterer)
 
 	mux.HandleFunc("/projects", projectsHandler.HandleProjects)
 

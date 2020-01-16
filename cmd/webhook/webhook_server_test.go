@@ -11,9 +11,10 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
 	. "github.com/onsi/gomega/gexec"
+	"github.com/pivotal/projects-operator/testhelpers"
 )
 
-var _ = Describe("Webhook Server", func() {
+var _ = PDescribe("Webhook Server", func() {
 	var (
 		tmpDir           string
 		env              []string
@@ -61,12 +62,10 @@ var _ = Describe("Webhook Server", func() {
 			Transport: tr,
 		}
 
-		req, err := http.NewRequest("GET", "https://localhost:8080/projects", nil)
-		Expect(err).NotTo(HaveOccurred())
+		req := testhelpers.NewRequestForWebhookAPI(http.MethodPost, "https://localhost:8080/projects")
 
 		resp, err := client.Do(req)
 		Expect(err).NotTo(HaveOccurred())
-
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	})
 

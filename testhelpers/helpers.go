@@ -6,9 +6,12 @@ package testhelpers
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +21,10 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
 	. "github.com/onsi/gomega/gexec"
+	"github.com/pivotal/projects-operator/api/v1alpha1"
+	admissionv1 "k8s.io/api/admission/v1"
+	authenticationv1 "k8s.io/api/authentication/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -249,4 +256,30 @@ func createKubeConfigCopy() string {
 
 	copiedKubeConfigPath := copiedKubeConfig.Name()
 	return copiedKubeConfigPath
+}
+
+func NewRequestForWebhookAPI(method, path string) *http.Request {
+	u, err := url.Parse(path)
+	Expect(err).NotTo(HaveOccurred())
+
+	projectAccessSpec := v1alpha1.ProjectAccessSpec{}
+	projectAccessSpecJson, err := json.Marshal(projectAccessSpec)
+	Expect(err).NotTo(HaveOccurred())
+
+	arRequest := admissionv1.AdmissionReview{
+		Request: &admissionv1.AdmissionRequest{
+			UserInfo: authenticationv1.UserInfo{
+				Username: "developer",
+				Groups:   []string{"group-a"},
+			},
+			Object: k8sruntime.RawExtension{
+				Raw: projectAccessSpecJson,
+			},
+		},
+	}
+
+	body, err := json.Marshal(arRequest)
+	Expect(err).NotTo(HaveOccurred())
+
+	return &http.Request{Method: method, URL: u, Body: ioutil.NopCloser(bytes.NewBuffer(body))}
 }

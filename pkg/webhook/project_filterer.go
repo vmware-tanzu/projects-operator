@@ -39,7 +39,7 @@ func (f projectFilterer) FilterProjects(projects []v1alpha1.Project, user v1.Use
 				if access.Namespace != "" {
 					namespace = access.Namespace
 				}
-				fullServiceAccountName := fmt.Sprintf("system:serviceaccounts:%s:%s", namespace, access.Name)
+				fullServiceAccountName := fmt.Sprintf("system:serviceaccount:%s:%s", namespace, access.Name)
 				serviceAccountProjectMap[fullServiceAccountName] = append(serviceAccountProjectMap[fullServiceAccountName], project.Name)
 			}
 		}

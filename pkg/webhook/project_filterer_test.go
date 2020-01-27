@@ -107,7 +107,7 @@ var _ = Describe("ProjectFilterer", func() {
 	When("the user matches a project by username matching service-account access", func() {
 		BeforeEach(func() {
 			user = v1.UserInfo{
-				Username: "system:serviceaccounts:namespace-1:service-account-1",
+				Username: "system:serviceaccount:namespace-1:service-account-1",
 			}
 		})
 

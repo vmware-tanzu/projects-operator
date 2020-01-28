@@ -70,6 +70,26 @@ rules:
           - patch
           - update
     - apiGroups:
+          - developerconsole.pivotal.io
+      resources:
+          - projectaccesses
+      verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+    - apiGroups:
+          - developerconsole.pivotal.io
+      resources:
+          - projectaccesses/status
+      verbs:
+          - get
+          - patch
+          - update
+    - apiGroups:
           - rbac.authorization.k8s.io
       resources:
           - clusterroles

@@ -9,7 +9,9 @@ import (
 
 	"github.com/pivotal/projects-operator/api/v1alpha1"
 	"github.com/pivotal/projects-operator/pkg/webhook"
+
 	"k8s.io/apimachinery/pkg/runtime"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

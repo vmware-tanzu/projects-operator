@@ -55,7 +55,7 @@ lint:
 format:
 	golangci-lint run --fix --timeout 2m30s --verbose
 
-#################### PDC HELM ####################
+#################### HELM ####################
 
 helm-install:
 	./scripts/helm-install

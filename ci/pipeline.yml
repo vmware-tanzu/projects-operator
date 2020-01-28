@@ -22,26 +22,12 @@ jobs:
     - task: unit
       file: projects-operator/ci/tasks/unit.yml
 
-- name: acceptance
-  plan:
-  - get: projects-operator
-    trigger: true
-    passed: [absolute-unit]
-  - task: acceptance
-    file: projects-operator/ci/tasks/acceptance.yml
-    params:
-      KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
-      UAA_LOCATION: {{UAA_LOCATION}}
-      CLUSTER_API_LOCATION: {{CLUSTER_API_LOCATION}}
-      CLUSTER_NAME: ci-projects-operator
-      CODY_PASSWORD: {{CODY_PASSWORD}}
-
 - name: build
   plan:
   - in_parallel:
     - get: projects-operator
       trigger: true
-      passed: [acceptance]
+      passed: [absolute-unit]
     - get: version
       params:
         pre: build
@@ -90,19 +76,47 @@ jobs:
       params:
         file: tagged-image/projects-operator-dpkg-*.txt
 
-- name: promote-final
+- name: acceptance
   plan:
   - in_parallel:
-    - get: version
-      passed: [build]
-      params:
-        bump: final
     - get: projects-operator
+      passed: [build]
+      trigger: true
+    - get: version
       passed: [build]
     - get: build-artefacts-dev
       passed: [build]
     - get: project-operator-image
       passed: [build]
+      params:
+        format: oci
+  - task: helm-install
+    file: projects-operator/ci/tasks/helm-install.yml
+    params:
+      KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
+      CHART_PATH: ../build-artefacts-dev/*.tgz
+      REGISTRY_PASSWORD: {{GCR_SERVICE_ACCOUNT_KEY}}
+      CLUSTER_ROLE_REF: acceptance-test-clusterrole
+  - task: acceptance
+    file: projects-operator/ci/tasks/acceptance.yml
+    params:
+      KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
+      UAA_LOCATION: {{UAA_LOCATION}}
+      CLUSTER_API_LOCATION: {{CLUSTER_API_LOCATION}}
+      CLUSTER_NAME: ci-projects-operator
+      CODY_PASSWORD: {{CODY_PASSWORD}}
+
+- name: promote-final
+  plan:
+  - in_parallel:
+    - get: version
+      passed: [acceptance]
+    - get: projects-operator
+      passed: [acceptance]
+    - get: build-artefacts-dev
+      passed: [acceptance]
+    - get: project-operator-image
+      passed: [acceptance]
       params:
         format: oci
   - in_parallel:

@@ -1,5 +1,4 @@
 platform: linux
-
 image_resource:
   type: registry-image
   source:
@@ -8,17 +7,16 @@ image_resource:
 
 inputs:
 - name: projects-operator
+- name: build-artefacts-dev
+- name: project-operator-image
 
 params:
-  CLUSTER_API_LOCATION:
-  CLUSTER_NAME:
-  CODY_PASSWORD:
   KUBECONFIG_FILE_CONTENTS:
-  UAA_LOCATION:
-  CLUSTER_ROLE_REF:
+  CHART_PATH:
+  REGISTRY_PASSWORD:
 
 run:
   path: projects-operator/ci/shim
   args:
-     - make
-     - acceptance-tests
+  - make
+  - helm-install

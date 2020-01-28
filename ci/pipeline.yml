@@ -111,6 +111,8 @@ jobs:
   - in_parallel:
     - get: version
       passed: [acceptance]
+      params:
+        bump: final
     - get: projects-operator
       passed: [acceptance]
     - get: build-artefacts-dev

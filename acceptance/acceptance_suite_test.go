@@ -63,7 +63,6 @@ func TestAcceptance(t *testing.T) {
 			panic(err)
 		}
 
-		RunMake("install")
 		RunMake("clean-crs")
 		testhelpers.NewKubeDefaultActor().MustKubeCtlApply(fmt.Sprintf(testClusterRoleTemplate, testClusterRoleRef))
 	})

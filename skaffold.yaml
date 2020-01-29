@@ -1,0 +1,27 @@
+apiVersion: skaffold/v2alpha1
+kind: Config
+build:
+  tagPolicy:
+    envTemplate:
+      template: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+  artifacts:
+  - image: harbor.emeryville.cf-app.com/dev/projects-operator
+    docker:
+      dockerfile: Dockerfile
+deploy:
+  helm:
+    releases:
+    - name: projects-operator
+      chartPath: helm/projects-operator/
+      values:
+        image: harbor.emeryville.cf-app.com/dev/projects-operator
+      imageStrategy:
+        fqn:
+          property:
+      setValues:
+        clusterRoleRef: acceptance-test-clusterrole
+        imagePullPolicy: Always
+    flags:
+      upgrade:
+      - "--install"
+      - "--recreate-pods"

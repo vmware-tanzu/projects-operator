@@ -2,7 +2,8 @@ replicaCount: 1
 
 image: gcr.io/cf-ism-0/projects-operator:latest
 imagePullPolicy: IfNotPresent
-imagePullSecrets: []
+imagePullSecrets:
+- name: registry-secret
 
 nameOverride: ""
 fullnameOverride: ""

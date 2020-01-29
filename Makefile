@@ -55,6 +55,9 @@ lint:
 format:
 	golangci-lint run --fix --timeout 2m30s --verbose
 
+dev:
+	IMAGE_TAG=$(shell hostname) skaffold dev --force=false
+
 #################### HELM ####################
 
 helm-install:

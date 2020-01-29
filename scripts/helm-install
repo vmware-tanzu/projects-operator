@@ -14,13 +14,6 @@ REGISTRY_USERNAME=${REGISTRY_USERNAME:-_json_key}
 REGISTRY_PASSWORD="${REGISTRY_PASSWORD:-$(lpass show "Shared-Independent Services Marketplace/service-account-keys/gcr-service-account-key" --notes)}"
 REGISTRY_EMAIL=${REGISTRY_EMAIL:-admin@example.com}
 
-check_requisites () {
-  if [ ! -e "$CHART_PATH" ]; then
-    echo "CHART_PATH does not point to a helm chart file or directory"
-    exit 1
-  fi
-}
-
 prepare_cluster_for_helm_install () {
   if ! kubectl get namespace "$NAMESPACE" > /dev/null 2>&1; then
     kubectl create namespace "$NAMESPACE"
@@ -36,7 +29,6 @@ prepare_cluster_for_helm_install () {
 }
 
 main () {
-  # check_requisites
   prepare_cluster_for_helm_install
 
   helm upgrade --install projects-operator $CHART_PATH \

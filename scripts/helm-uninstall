@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -euo pipefail
+
+main () {
+  helm uninstall projects-operator
+  kubectl get crds | awk '{print $1}' | grep developerconsole.pivotal.io | grep project | xargs kubectl delete crd
+}
+
+main

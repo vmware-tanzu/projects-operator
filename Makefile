@@ -62,3 +62,6 @@ dev:
 
 helm-install:
 	./scripts/helm-install
+
+helm-uninstall:
+	./scripts/helm-uninstall

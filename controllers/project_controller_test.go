@@ -22,7 +22,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -165,19 +164,6 @@ var _ = Describe("ProjectController", func() {
 					Expect(ownerReference.Kind).To(Equal("Project"))
 				})
 
-				It("has two rules", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
-					Expect(err).NotTo(HaveOccurred())
-
-					clusterRole := &rbacv1.ClusterRole{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
-						Name: project.Name + "-clusterrole",
-					}, clusterRole)
-					Expect(err).NotTo(HaveOccurred())
-
-					Expect(clusterRole.Rules).To(HaveLen(2))
-				})
-
 				It("has rules to access the project", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
@@ -188,42 +174,11 @@ var _ = Describe("ProjectController", func() {
 					}, clusterRole)
 					Expect(err).NotTo(HaveOccurred())
 
-					var projectRule v1.PolicyRule
-					for _, rule := range clusterRole.Rules {
-						if rule.Resources[0] == "projects" {
-							projectRule = rule
-							break
-						}
-					}
-
-					Expect(projectRule.APIGroups).To(ConsistOf("developerconsole.pivotal.io"))
-					Expect(projectRule.Resources).To(ConsistOf("projects"))
-					Expect(projectRule.ResourceNames).To(ConsistOf(project.Name))
-					Expect(projectRule.Verbs).To(ConsistOf("get", "update", "delete", "patch", "watch"))
-				})
-
-				It("has rules to create, get and delete any projectaccess", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
-					Expect(err).NotTo(HaveOccurred())
-
-					clusterRole := &rbacv1.ClusterRole{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
-						Name: project.Name + "-clusterrole",
-					}, clusterRole)
-					Expect(err).NotTo(HaveOccurred())
-
-					var projectAccessRule v1.PolicyRule
-					for _, rule := range clusterRole.Rules {
-						if rule.Resources[0] == "projectaccesses" {
-							projectAccessRule = rule
-							break
-						}
-					}
-
-					Expect(projectAccessRule.APIGroups).To(ConsistOf("developerconsole.pivotal.io"))
-					Expect(projectAccessRule.Resources).To(ConsistOf("projectaccesses"))
-					Expect(projectAccessRule.ResourceNames).To(BeEmpty())
-					Expect(projectAccessRule.Verbs).To(ConsistOf("get", "create", "delete"))
+					Expect(clusterRole.Rules).To(HaveLen(1))
+					Expect(clusterRole.Rules[0].APIGroups[0]).To(Equal("developerconsole.pivotal.io"))
+					Expect(clusterRole.Rules[0].Resources[0]).To(Equal("projects"))
+					Expect(clusterRole.Rules[0].ResourceNames[0]).To(Equal(project.Name))
+					Expect(clusterRole.Rules[0].Verbs).To(Equal([]string{"get", "update", "delete", "patch", "watch"}))
 				})
 			})
 

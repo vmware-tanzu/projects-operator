@@ -173,19 +173,6 @@ func (r *ProjectReconciler) createClusterRole(project *projectv1alpha1.Project) 
 					"watch",
 				},
 			},
-			{
-				APIGroups: []string{
-					"developerconsole.pivotal.io",
-				},
-				Resources: []string{
-					"projectaccesses",
-				},
-				Verbs: []string{
-					"get",
-					"create",
-					"delete",
-				},
-			},
 		}
 		return nil
 	})

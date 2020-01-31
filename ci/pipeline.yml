@@ -39,7 +39,11 @@ jobs:
       platform: linux
       image_resource:
         type: docker-image
-        source: {repository: pivotalnavcon/deplab-task}
+        source:
+          repository: dev.registry.pivotal.io/navcon/deplab-task
+          tag: latest
+          username: ((PIVNET_USERNAME))
+          password: ((PIVNET_PASSWORD))
       inputs:
       - name: projects-operator
       - name: image

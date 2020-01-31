@@ -123,6 +123,21 @@ rules:
           - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+    name: "{{  template "projects-operator.fullname" . }}-projectaccess-cluster-role"
+rules:
+- apiGroups:
+    - developerconsole.pivotal.io
+  resources:
+    - projectaccesses
+  verbs:
+    - create
+    - get
+    - delete
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
     name: "{{ template "projects-operator.fullname" . }}-leader-election-rolebinding"
@@ -173,3 +188,16 @@ subjects:
   - kind: ServiceAccount
     name: default
     namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+    name: "{{ template "projects-operator.fullname" . }}-projectaccess-authenticated-cluster-rolebinding"
+subjects:
+- kind: Group
+  name: system:authenticated
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: "{{  template "projects-operator.fullname" . }}-projectaccess-cluster-role"
+  apiGroup: rbac.authorization.k8s.io

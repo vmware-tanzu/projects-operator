@@ -20,7 +20,7 @@ import (
 	"github.com/pivotal/projects-operator/pkg/webhook/webhookfakes"
 )
 
-var _ = Describe("ProjectsHandler", func() {
+var _ = Describe("ProjectAccessHandler", func() {
 	var (
 		responseRecorder *httptest.ResponseRecorder
 		h                http.Handler

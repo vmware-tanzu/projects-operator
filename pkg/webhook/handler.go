@@ -7,9 +7,9 @@ import (
 func NewHandler(projectFetcher ProjectFetcher, projectFilterer ProjectFilterer) http.Handler {
 	mux := http.NewServeMux()
 
-	projectsHandler := NewProjectsHandler(projectFetcher, projectFilterer)
+	projectAccessHandler := NewProjectAccessHandler(projectFetcher, projectFilterer)
 
-	mux.HandleFunc("/projects", projectsHandler.HandleProjects)
+	mux.HandleFunc("/projectaccess", projectAccessHandler.HandleProjectAccess)
 
 	return mux
 }

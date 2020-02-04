@@ -10,20 +10,20 @@ import (
 	admissionv1 "k8s.io/api/admission/v1"
 )
 
-type ProjectsHandler struct {
+type ProjectAccessHandler struct {
 	ProjectFetcher  ProjectFetcher
 	ProjectFilterer ProjectFilterer
 }
 
-func NewProjectsHandler(projectFetcher ProjectFetcher, projectFilterer ProjectFilterer) *ProjectsHandler {
-	return &ProjectsHandler{
+func NewProjectAccessHandler(projectFetcher ProjectFetcher, projectFilterer ProjectFilterer) *ProjectAccessHandler {
+	return &ProjectAccessHandler{
 		ProjectFetcher:  projectFetcher,
 		ProjectFilterer: projectFilterer,
 	}
 }
 
-func (h *ProjectsHandler) HandleProjects(w http.ResponseWriter, r *http.Request) {
-	// 1. read request body
+func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *http.Request) {
+	// 1. Read request body
 	var body []byte
 	if r.Body != nil {
 		data, err := ioutil.ReadAll(r.Body)

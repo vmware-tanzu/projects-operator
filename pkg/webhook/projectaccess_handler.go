@@ -3,7 +3,6 @@ package webhook
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-logr/logr"
@@ -28,23 +27,23 @@ func NewProjectAccessHandler(logger logr.Logger, projectFetcher ProjectFetcher, 
 func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("handling projectaccess request")
 
-	// 1. Read request body
-	var body []byte
-	if r.Body != nil {
-		data, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()))
-			return
-		}
-		body = data
+	// 1. Read the body
+	body, err := ensureBody(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()))
+
+		h.logger.Error(err, "error reading body")
+		return
 	}
 
-	// 2. Unmarshal the body into an AdmissionReview
-	arRequest := admissionv1.AdmissionReview{}
-	if err := json.Unmarshal(body, &arRequest); err != nil {
+	// 2. Unmarshal to AdmissionReview
+	arRequest, err := unmarshalToAdmissionReview(body)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, fmt.Sprintf(`{"error unmarshalling request body": "%s"}`, err))
+
+		h.logger.Error(err, "error unmarshaling AdmissionReview")
 		return
 	}
 
@@ -54,6 +53,8 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 	if err := json.Unmarshal(raw, &projectAccess); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, fmt.Sprintf(`{"error unmarshalling ProjectList": "%s"}`, err))
+
+		h.logger.Error(err, "error unmarshaling ProjectAccess from AdmissionReview")
 		return
 	}
 
@@ -65,6 +66,8 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, fmt.Sprintf(`{"error fetching projects": "%s"}`, err.Error()))
+
+		h.logger.Error(err, "error fetching Projects")
 		return
 	}
 
@@ -76,11 +79,13 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, fmt.Sprintf(`{"error creating ProjectAccess patch": "%s"}`, err.Error()))
+
+		h.logger.Error(err, "error creating ProjectAccess patch")
 		return
 	}
 
 	jsonPatchType := admissionv1.PatchTypeJSONPatch
-	arResponse := admissionv1.AdmissionReview{
+	arReview := &admissionv1.AdmissionReview{
 		Response: &admissionv1.AdmissionResponse{
 			Allowed:   true,
 			Patch:     patchBytes,
@@ -88,21 +93,8 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 		},
 	}
 
-	// 8. Marshal it
-	response, err := json.Marshal(arResponse)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, fmt.Sprintf(`{"error marshalling response": "%s"}`, err))
-		return
-	}
-
-	// 9. Write it back
-	_, err = w.Write(response)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, fmt.Sprintf(`{"error writing response": "%s"}`, err))
-		return
-	}
+	// 8. Send AdmissionReview
+	sendReview(w, arReview)
 }
 
 type PatchOperation struct {

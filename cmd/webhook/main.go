@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -15,12 +14,14 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const port = 8080
 
 var (
-	scheme = runtime.NewScheme()
+	scheme        = runtime.NewScheme()
+	webhookLogger = ctrl.Log.WithName("webhook")
 )
 
 func init() {
@@ -29,9 +30,11 @@ func init() {
 }
 
 func main() {
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
 	kubeClient, err := client.New(ctrl.GetConfigOrDie(), client.Options{Scheme: scheme})
 	if err != nil {
-		log.Printf("Failed to build a Kubernetes client: %s", err.Error())
+		webhookLogger.Error(err, "Failed to build a Kubernetes client")
 		os.Exit(1)
 	}
 
@@ -39,21 +42,24 @@ func main() {
 	namespaceFetcher := webhook.NewNamespaceFetcher(kubeClient)
 	projectFilterer := webhook.NewProjectFilterer()
 
-	handler := webhook.NewHandler(namespaceFetcher, projectFetcher, projectFilterer)
+	handler := webhook.NewHandler(webhookLogger.WithName("handler"), namespaceFetcher, projectFetcher, projectFilterer)
 
 	keyPath := os.Getenv("TLS_KEY_FILEPATH")
 	crtPath := os.Getenv("TLS_CERT_FILEPATH")
 
 	_, err = tls.LoadX509KeyPair(crtPath, keyPath)
 	if err != nil {
-		log.Fatalf("Failed to load key pair: %+v", err)
+		webhookLogger.Error(err, "Failed to load key pair")
+		os.Exit(1)
 	}
 
-	log.Println("starting webhook server")
-	log.Fatal(http.ListenAndServeTLS(
+	webhookLogger.Info("starting webhook server")
+	if err = http.ListenAndServeTLS(
 		fmt.Sprintf(":%d", port),
 		crtPath,
 		keyPath,
 		handler,
-	))
+	); err != nil {
+		webhookLogger.Error(err, "ListenAndServe terminated")
+	}
 }

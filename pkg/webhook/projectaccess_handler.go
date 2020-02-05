@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-logr/logr"
 	"github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
 )
@@ -13,16 +14,20 @@ import (
 type ProjectAccessHandler struct {
 	ProjectFetcher  ProjectFetcher
 	ProjectFilterer ProjectFilterer
+	logger          logr.Logger
 }
 
-func NewProjectAccessHandler(projectFetcher ProjectFetcher, projectFilterer ProjectFilterer) *ProjectAccessHandler {
+func NewProjectAccessHandler(logger logr.Logger, projectFetcher ProjectFetcher, projectFilterer ProjectFilterer) *ProjectAccessHandler {
 	return &ProjectAccessHandler{
 		ProjectFetcher:  projectFetcher,
 		ProjectFilterer: projectFilterer,
+		logger:          logger,
 	}
 }
 
 func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("handling projectaccess request")
+
 	// 1. Read request body
 	var body []byte
 	if r.Body != nil {

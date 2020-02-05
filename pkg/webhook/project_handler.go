@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/go-logr/logr"
 	"github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,15 +14,19 @@ import (
 
 type ProjectHandler struct {
 	NamespaceFetcher NamespaceFetcher
+	logger           logr.Logger
 }
 
-func NewProjectHandler(namespaceFetcher NamespaceFetcher) *ProjectHandler {
+func NewProjectHandler(logger logr.Logger, namespaceFetcher NamespaceFetcher) *ProjectHandler {
 	return &ProjectHandler{
 		NamespaceFetcher: namespaceFetcher,
+		logger:           logger,
 	}
 }
 
 func (h *ProjectHandler) HandleProject(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("handling project request")
+
 	// 1. Read request body
 	var body []byte
 	if r.Body != nil {

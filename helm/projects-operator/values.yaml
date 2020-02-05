@@ -27,7 +27,7 @@ clusterRoleRef: "projects-operator-clusterrole-ref-rolebinding"
 kubeRbacProxy:
   image: gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0
 
-listwebhook:
+webhook:
   serviceAccount: default
   service:
     port: 443

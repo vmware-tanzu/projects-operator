@@ -299,6 +299,36 @@ var _ = Describe("Projects CRD", func() {
 		})
 	})
 
+	When("Alana tries to create a project over an existing namespace", func() {
+		BeforeEach(func() {
+			alana.MustRunKubectl("create", "namespace", projectName)
+
+			Eventually(func() error {
+				_, err := alana.RunKubeCtl("get", "namespace", projectName)
+				return err
+			}).Should(Succeed())
+		})
+
+		AfterEach(func() {
+			alana.MustRunKubectl("delete", "namespace", projectName)
+		})
+
+		It("returns an error immediately", func() {
+			projectResource := fmt.Sprintf(`
+                apiVersion: developerconsole.pivotal.io/v1alpha1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access:
+                  - kind: User
+                    name: %s`, projectName, userName("cody"))
+
+			_, err := alana.RunKubeCtl("apply", "-f", AsFile(projectResource))
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
 	When("an object inside the project namespace won't delete", func() {
 		BeforeEach(func() {
 			projectResource := fmt.Sprintf(`

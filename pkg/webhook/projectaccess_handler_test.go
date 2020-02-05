@@ -78,23 +78,23 @@ var _ = Describe("ProjectAccessHandler", func() {
 		fakeProjectFilterer = new(webhookfakes.FakeProjectFilterer)
 		fakeProjectFilterer.FilterProjectsReturns([]string{"my-project-a", "my-project-c"})
 
-		h = NewHandler(fakeProjectFetcher, fakeProjectFilterer)
+		h = NewHandler(nil, fakeProjectFetcher, fakeProjectFilterer)
 	})
 
 	It("handles POST /projectaccess", func() {
-		h.ServeHTTP(responseRecorder, testhelpers.NewRequestForWebhookAPI(http.MethodPost, "/projectaccess"))
+		h.ServeHTTP(responseRecorder, testhelpers.ValidRequestForProjectAccessWebhookAPI(http.MethodPost, "/projectaccess"))
 
 		Expect(responseRecorder.Result().StatusCode).To(Equal(http.StatusOK))
 	})
 
 	It("fetches all projects", func() {
-		h.ServeHTTP(responseRecorder, testhelpers.NewRequestForWebhookAPI(http.MethodPost, "/projectaccess"))
+		h.ServeHTTP(responseRecorder, testhelpers.ValidRequestForProjectAccessWebhookAPI(http.MethodPost, "/projectaccess"))
 
 		Expect(fakeProjectFetcher.GetProjectsCallCount()).To(Equal(1))
 	})
 
 	It("filters the projects for the user", func() {
-		h.ServeHTTP(responseRecorder, testhelpers.NewRequestForWebhookAPI(http.MethodPost, "/projectaccess"))
+		h.ServeHTTP(responseRecorder, testhelpers.ValidRequestForProjectAccessWebhookAPI(http.MethodPost, "/projectaccess"))
 
 		Expect(fakeProjectFilterer.FilterProjectsCallCount()).To(Equal(1))
 
@@ -104,7 +104,7 @@ var _ = Describe("ProjectAccessHandler", func() {
 	})
 
 	It("returns a patched admission review", func() {
-		h.ServeHTTP(responseRecorder, testhelpers.NewRequestForWebhookAPI(http.MethodPost, "/projectaccess"))
+		h.ServeHTTP(responseRecorder, testhelpers.ValidRequestForProjectAccessWebhookAPI(http.MethodPost, "/projectaccess"))
 
 		response, err := ioutil.ReadAll(responseRecorder.Result().Body)
 		Expect(err).NotTo(HaveOccurred())
@@ -128,7 +128,7 @@ var _ = Describe("ProjectAccessHandler", func() {
 		})
 
 		It("returns an internal server error", func() {
-			h.ServeHTTP(responseRecorder, testhelpers.NewRequestForWebhookAPI(http.MethodPost, "/projectaccess"))
+			h.ServeHTTP(responseRecorder, testhelpers.ValidRequestForProjectAccessWebhookAPI(http.MethodPost, "/projectaccess"))
 
 			body, err := ioutil.ReadAll(responseRecorder.Result().Body)
 			Expect(err).NotTo(HaveOccurred())
@@ -140,7 +140,7 @@ var _ = Describe("ProjectAccessHandler", func() {
 
 	When("the request in not json", func() {
 		It("returns an invalid request error", func() {
-			request := testhelpers.NewRequestForWebhookAPI(http.MethodPost, "/projectaccess")
+			request := testhelpers.ValidRequestForProjectAccessWebhookAPI(http.MethodPost, "/projectaccess")
 			request.Body = ioutil.NopCloser(bytes.NewBuffer([]byte("non-json-body")))
 
 			h.ServeHTTP(responseRecorder, request)

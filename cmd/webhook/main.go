@@ -11,6 +11,7 @@ import (
 	"github.com/pivotal/projects-operator/pkg/webhook"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -23,6 +24,7 @@ var (
 )
 
 func init() {
+	_ = clientgoscheme.AddToScheme(scheme)
 	_ = v1alpha1.AddToScheme(scheme)
 }
 
@@ -34,9 +36,10 @@ func main() {
 	}
 
 	projectFetcher := webhook.NewProjectFetcher(kubeClient)
+	namespaceFetcher := webhook.NewNamespaceFetcher(kubeClient)
 	projectFilterer := webhook.NewProjectFilterer()
 
-	handler := webhook.NewHandler(projectFetcher, projectFilterer)
+	handler := webhook.NewHandler(namespaceFetcher, projectFetcher, projectFilterer)
 
 	keyPath := os.Getenv("TLS_KEY_FILEPATH")
 	crtPath := os.Getenv("TLS_CERT_FILEPATH")

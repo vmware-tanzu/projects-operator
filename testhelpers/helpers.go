@@ -24,6 +24,7 @@ import (
 	"github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -258,12 +259,28 @@ func createKubeConfigCopy() string {
 	return copiedKubeConfigPath
 }
 
-func NewRequestForWebhookAPI(method, path string) *http.Request {
-	u, err := url.Parse(path)
+func ValidRequestForProjectWebhookAPI(method, path, projectName string) *http.Request {
+	project := v1alpha1.Project{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: projectName,
+		},
+	}
+	projectJson, err := json.Marshal(project)
 	Expect(err).NotTo(HaveOccurred())
 
-	projectAccessSpec := v1alpha1.ProjectAccessSpec{}
-	projectAccessSpecJson, err := json.Marshal(projectAccessSpec)
+	return requestForWebhookAPI(method, path, projectJson)
+}
+
+func ValidRequestForProjectAccessWebhookAPI(method, path string) *http.Request {
+	projectAccess := v1alpha1.ProjectAccess{}
+	projectAccessJson, err := json.Marshal(projectAccess)
+	Expect(err).NotTo(HaveOccurred())
+
+	return requestForWebhookAPI(method, path, projectAccessJson)
+}
+
+func requestForWebhookAPI(method, path string, raw []byte) *http.Request {
+	u, err := url.Parse(path)
 	Expect(err).NotTo(HaveOccurred())
 
 	arRequest := admissionv1.AdmissionReview{
@@ -273,7 +290,7 @@ func NewRequestForWebhookAPI(method, path string) *http.Request {
 				Groups:   []string{"group-a"},
 			},
 			Object: k8sruntime.RawExtension{
-				Raw: projectAccessSpecJson,
+				Raw: raw,
 			},
 		},
 	}

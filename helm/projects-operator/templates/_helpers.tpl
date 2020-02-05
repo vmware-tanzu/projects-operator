@@ -49,7 +49,7 @@ Generate client key and cert from CA
 */}}
 {{- define "projects-operator.gen-webhook-certs" -}}
 {{- $ca :=  genCA "projects-operator-ca" 365 -}}
-{{- $cert := genSignedCert ( printf "%s-listwebhook.%s.svc" (include "projects-operator.fullname" .) .Release.Namespace ) nil nil 365 $ca -}}
+{{- $cert := genSignedCert ( printf "%s-webhook.%s.svc" (include "projects-operator.fullname" .) .Release.Namespace ) nil nil 365 $ca -}}
 caCert: {{ $ca.Cert | b64enc }}
 clientCert: {{ $cert.Cert | b64enc }}
 clientKey: {{ $cert.Key | b64enc }}

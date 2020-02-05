@@ -324,8 +324,10 @@ var _ = Describe("Projects CRD", func() {
                   - kind: User
                     name: %s`, projectName, userName("cody"))
 
-			_, err := alana.RunKubeCtl("apply", "-f", AsFile(projectResource))
+			reason, err := alana.RunKubeCtl("apply", "-f", AsFile(projectResource))
 			Expect(err).To(HaveOccurred())
+
+			Expect(reason).To(ContainSubstring(fmt.Sprintf("cannot create project over existing namespace '%s'", projectName)))
 		})
 	})
 

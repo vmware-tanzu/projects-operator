@@ -8,6 +8,7 @@ import (
 
 	"github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type ProjectHandler struct {
@@ -70,6 +71,10 @@ func (h *ProjectHandler) HandleProject(w http.ResponseWriter, r *http.Request) {
 	arResponse := admissionv1.AdmissionReview{
 		Response: &admissionv1.AdmissionResponse{
 			Allowed: allowed,
+			Result: &metav1.Status{
+				Status:  "Failure",
+				Message: fmt.Sprintf("cannot create project over existing namespace '%s'", project.ObjectMeta.Name),
+			},
 		},
 	}
 

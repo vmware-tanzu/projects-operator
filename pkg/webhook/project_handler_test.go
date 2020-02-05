@@ -88,6 +88,7 @@ var _ = Describe("ProjectHandler", func() {
 			Expect(json.Unmarshal(response, &admissionReview)).To(Succeed())
 
 			Expect(admissionReview.Response.Allowed).To(BeFalse())
+			Expect(admissionReview.Response.Result.Message).To(Equal("cannot create project over existing namespace 'my-namespace-a'"))
 		})
 	})
 

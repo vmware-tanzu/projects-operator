@@ -59,6 +59,7 @@ func main() {
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		LeaderElection:     enableLeaderElection,
+		LeaderElectionID:   "projects-operator-leader-election",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

@@ -1,4 +1,4 @@
-apiVersion: developerconsole.pivotal.io/v1alpha1
+apiVersion: projects.pivotal.io/v1alpha1
 kind: ProjectAccess
 metadata:
   name: projectaccess-sample

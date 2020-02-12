@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.4
   creationTimestamp: null
-  name: projects.developerconsole.pivotal.io
+  name: projects.projects.pivotal.io
 spec:
-  group: developerconsole.pivotal.io
+  group: projects.pivotal.io
   names:
     kind: Project
     listKind: ProjectList

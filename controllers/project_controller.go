@@ -51,8 +51,8 @@ type ProjectReconciler struct {
 // There is no automatic step to take these rules and copy them into `helm/projects-operator/templates/rbac.yaml`,
 // and so this must be done manually whenever making changes here.
 // We have a chore in the backlog to automate this process: https://www.pivotaltracker.com/story/show/170575295
-// +kubebuilder:rbac:groups=developerconsole.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=developerconsole.pivotal.io,resources=projects/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=projects.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=projects.pivotal.io,resources=projects/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=watch;list;create;get;update;patch
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=watch;list;create;get;update;patch
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=watch;list;create;get;update;patch
@@ -157,7 +157,7 @@ func (r *ProjectReconciler) createClusterRole(project *projectv1alpha1.Project) 
 		clusterRole.Rules = []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{
-					"developerconsole.pivotal.io",
+					"projects.pivotal.io",
 				},
 				Resources: []string{
 					"projects",

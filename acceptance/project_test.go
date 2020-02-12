@@ -47,7 +47,7 @@ var _ = Describe("Projects CRD", func() {
 
 		BeforeEach(func() {
 			projectResource = fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: %s
@@ -107,7 +107,7 @@ var _ = Describe("Projects CRD", func() {
 		When("alana revokes access to a project from cody", func() {
 			BeforeEach(func() {
 				projectResource = fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: %s
@@ -133,7 +133,7 @@ var _ = Describe("Projects CRD", func() {
 
 		BeforeEach(func() {
 			projectResource = fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: %s
@@ -193,7 +193,7 @@ var _ = Describe("Projects CRD", func() {
 		When("alana revokes access to a project from the ldap-experts group", func() {
 			BeforeEach(func() {
 				projectResource = fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: %s
@@ -229,7 +229,7 @@ var _ = Describe("Projects CRD", func() {
 			sa = testhelpers.NewKubeActor(saName, saToken)
 
 			projectResource = fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: %s
@@ -266,7 +266,7 @@ var _ = Describe("Projects CRD", func() {
 	When("Alana creates and then deletes the project", func() {
 		BeforeEach(func() {
 			projectResource := fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: %s
@@ -315,7 +315,7 @@ var _ = Describe("Projects CRD", func() {
 
 		It("returns an error immediately", func() {
 			projectResource := fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: %s
@@ -334,7 +334,7 @@ var _ = Describe("Projects CRD", func() {
 	When("an object inside the project namespace won't delete", func() {
 		BeforeEach(func() {
 			projectResource := fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                   name: %s
@@ -400,7 +400,7 @@ var _ = Describe("Projects CRD", func() {
 
 	It("does not allow unknown access types", func() {
 		projectResource := fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: project
@@ -416,7 +416,7 @@ var _ = Describe("Projects CRD", func() {
 
 	It("does not allow alice or cody to create projects", func() {
 		projectResource := fmt.Sprintf(`
-                apiVersion: developerconsole.pivotal.io/v1alpha1
+                apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
                 metadata:
                  name: %s

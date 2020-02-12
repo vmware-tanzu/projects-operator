@@ -50,7 +50,7 @@ rules:
           - update
           - watch
     - apiGroups:
-          - developerconsole.pivotal.io
+          - projects.pivotal.io
       resources:
           - projects
       verbs:
@@ -62,7 +62,7 @@ rules:
           - update
           - watch
     - apiGroups:
-          - developerconsole.pivotal.io
+          - projects.pivotal.io
       resources:
           - projects/status
       verbs:
@@ -108,7 +108,7 @@ metadata:
     name: "{{  template "projects-operator.fullname" . }}-projectaccess-cluster-role"
 rules:
 - apiGroups:
-    - developerconsole.pivotal.io
+    - projects.pivotal.io
   resources:
     - projectaccesses
   verbs:

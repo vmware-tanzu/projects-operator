@@ -1,10 +1,10 @@
 domain: pivotal.io
 repo: projects-operator
 resources:
-- group: developerconsole
+- group: projects
   kind: Project
   version: v1alpha1
-- group: developerconsole
+- group: projects
   kind: ProjectAccess
   version: v1alpha1
 version: "2"

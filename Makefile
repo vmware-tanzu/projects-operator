@@ -33,9 +33,25 @@ run: generate format
 install: generate
 	kubectl apply -f helm/projects-operator/crds
 
-generate: controller-gen
-	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role paths=./... output:crd:artifacts:config=helm/projects-operator/crds
+generate: generate-deepcopy generate-rbac generate-crd
+	go generate ./...
+
+generate-deepcopy: controller-gen
+	$(CONTROLLER_GEN) \
+		object:headerFile=./hack/boilerplate.go.txt \
+		paths=./api/...
+
+generate-crd: controller-gen
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
+		output:crd:artifacts:config=helm/projects-operator/crds \
+		paths=./...
+
+generate-rbac: controller-gen
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
+		rbac:roleName=manager-role \
+		output:rbac:artifacts:config=helm/projects-operator/templates \
+		paths=./...
+	./scripts/helmify-yaml
 
 controller-gen:
 ifeq (, $(shell which controller-gen))

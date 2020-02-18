@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+sed -i '.temp' 's/manager-role/"{{ template "projects-operator.fullname" . }}-manager-role"/g' helm/projects-operator/templates/role.yaml
+rm helm/projects-operator/templates/*.temp

@@ -48,9 +48,13 @@ generate-crd: controller-gen
 
 generate-rbac: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
-		rbac:roleName=manager-role \
+		rbac:roleName=projects-manager-role \
 		output:rbac:artifacts:config=helm/projects-operator/templates \
-		paths=./...
+		paths=./controllers/...
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
+		rbac:roleName=projectaccesses-manager-role \
+		output:rbac:stdout \
+		paths=./pkg/... > helm/projects-operator/templates/projectaccess-role.yaml
 	./scripts/helmify-yaml
 
 controller-gen:

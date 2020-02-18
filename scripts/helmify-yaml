@@ -2,5 +2,12 @@
 
 set -euo pipefail
 
-sed -i '.temp' 's/manager-role/"{{ template "projects-operator.fullname" . }}-manager-role"/g' helm/projects-operator/templates/role.yaml
+sed -i '.temp' \
+    's/projects-manager-role/"{{ template "projects-operator.fullname" . }}-manager-role"/g' \
+    helm/projects-operator/templates/role.yaml
+
+sed -i '.temp' \
+    's/projectaccesses-manager-role/"{{ template "projects-operator.fullname" . }}-projectaccess-cluster-role"/g' \
+    helm/projects-operator/templates/projectaccess-role.yaml
+
 rm helm/projects-operator/templates/*.temp

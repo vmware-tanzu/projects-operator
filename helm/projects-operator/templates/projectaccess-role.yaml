@@ -1,0 +1,16 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: "{{ template "projects-operator.fullname" . }}-projectaccess-cluster-role"
+rules:
+- apiGroups:
+  - projects.pivotal.io
+  resources:
+  - projectaccesses
+  verbs:
+  - create
+  - delete
+  - get

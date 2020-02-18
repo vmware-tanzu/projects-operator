@@ -55,6 +55,10 @@ generate-rbac: controller-gen
 		rbac:roleName=projectaccesses-manager-role \
 		output:rbac:stdout \
 		paths=./pkg/... > helm/projects-operator/templates/projectaccess-role.yaml
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
+		rbac:roleName=projects-leader-election-role \
+		output:rbac:stdout \
+		paths=./cmd/manager/... > helm/projects-operator/templates/leader-election-role.yaml
 	./scripts/helmify-yaml
 
 controller-gen:

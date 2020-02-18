@@ -1,37 +1,5 @@
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-    name: "{{ template "projects-operator.fullname" . }}-leader-election-role"
-rules:
-    - apiGroups:
-          - ""
-      resources:
-          - configmaps
-      verbs:
-          - get
-          - list
-          - watch
-          - create
-          - update
-          - patch
-          - delete
-    - apiGroups:
-          - ""
-      resources:
-          - configmaps/status
-      verbs:
-          - get
-          - update
-          - patch
-    - apiGroups:
-          - ""
-      resources:
-          - events
-      verbs:
-          - create
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
     name: "{{ template "projects-operator.fullname" . }}-proxy-role"
@@ -55,7 +23,7 @@ metadata:
     name: "{{ template "projects-operator.fullname" . }}-leader-election-rolebinding"
 roleRef:
     apiGroup: rbac.authorization.k8s.io
-    kind: Role
+    kind: ClusterRole
     name: "{{ template "projects-operator.fullname" . }}-leader-election-role"
 subjects:
     - kind: ServiceAccount

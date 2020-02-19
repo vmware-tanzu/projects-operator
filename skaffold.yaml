@@ -5,7 +5,7 @@ build:
     envTemplate:
       template: "{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
   artifacts:
-  - image: harbor.emeryville.cf-app.com/dev/projects-operator
+  - image: harbor.anaheim.cf-app.com/dev/projects-operator
     docker:
       dockerfile: Dockerfile
 deploy:
@@ -14,7 +14,7 @@ deploy:
     - name: projects-operator
       chartPath: helm/projects-operator/
       values:
-        image: harbor.emeryville.cf-app.com/dev/projects-operator
+        image: harbor.anaheim.cf-app.com/dev/projects-operator
       imageStrategy:
         fqn:
           property:

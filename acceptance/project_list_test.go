@@ -14,8 +14,8 @@ var _ = Describe("ProjectAccess CRD", func() {
 	var (
 		// Note that these users have a corresponding identity in LDAP
 		// see the README.md for further info
-		alana testhelpers.KubeActor // an "admin/operator"
-		cody  testhelpers.KubeActor // a "developer"
+		adminUser    testhelpers.KubeActor
+		devUserAlice testhelpers.KubeActor
 
 		projectName       string
 		projectAccessName string
@@ -23,10 +23,10 @@ var _ = Describe("ProjectAccess CRD", func() {
 	)
 
 	BeforeEach(func() {
-		alana = testhelpers.NewKubeDefaultActor()
+		adminUser = testhelpers.NewKubeDefaultActor()
 
-		codyToken := GetToken(Params.UaaLocation, "cody", Params.CodyPassword)
-		cody = testhelpers.NewKubeActor("cody", codyToken)
+		devUserAliceToken := GetToken(Params.UaaLocation, "alice", Params.DeveloperPassword)
+		devUserAlice = testhelpers.NewKubeActor("alice", devUserAliceToken)
 
 		projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
 		projectAccessName = fmt.Sprintf("my-projectaccess-%d", time.Now().UnixNano())
@@ -39,15 +39,15 @@ var _ = Describe("ProjectAccess CRD", func() {
                 spec:
                   access:
                   - kind: User
-                    name: %s`, projectName, userName("cody"))
+                    name: %s`, projectName, userName("alice"))
 
-		alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+		adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
 	})
 
 	AfterEach(func() {
-		alana.MustRunKubectl("delete", "projectaccess", projectAccessName)
+		adminUser.MustRunKubectl("delete", "projectaccess", projectAccessName)
 
-		alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
+		adminUser.MustRunKubectl("delete", "-f", AsFile(projectResource))
 	})
 
 	It("can be created", func() {
@@ -57,22 +57,22 @@ var _ = Describe("ProjectAccess CRD", func() {
                 metadata:
                   name: %s`, projectAccessName)
 
-		_, err := alana.RunKubeCtl("apply", "-f", AsFile(projectAccessResource))
+		_, err := adminUser.RunKubeCtl("apply", "-f", AsFile(projectAccessResource))
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("eventually has its status updated to include a list of projects cody has access to", func() {
+	It("eventually has its status updated to include a list of projects alice has access to", func() {
 		projectAccessResource := fmt.Sprintf(`
                 apiVersion: projects.pivotal.io/v1alpha1
                 kind: ProjectAccess
                 metadata:
                   name: %s`, projectAccessName)
 
-		_, err := cody.RunKubeCtl("apply", "-f", AsFile(projectAccessResource))
+		_, err := devUserAlice.RunKubeCtl("apply", "-f", AsFile(projectAccessResource))
 		Expect(err).NotTo(HaveOccurred())
 
 		Eventually(func() string {
-			output, err := cody.RunKubeCtl("get", "projectaccess", projectAccessName, "-o", "yaml")
+			output, err := devUserAlice.RunKubeCtl("get", "projectaccess", projectAccessName, "-o", "yaml")
 			if err != nil {
 				fmt.Fprint(GinkgoWriter, err.Error())
 			}

@@ -16,33 +16,33 @@ var _ = Describe("Projects CRD", func() {
 
 		// Note that these users have a corresponding identity in LDAP
 		// see the README.md for further info
-		alana testhelpers.KubeActor // an "admin/operator"
-		alice testhelpers.KubeActor // a "developer"
-		cody  testhelpers.KubeActor // a "developer"
+		adminUser    testhelpers.KubeActor
+		devUserAlice testhelpers.KubeActor
+		devUserBob   testhelpers.KubeActor
 	)
 
 	BeforeEach(func() {
-		alana = testhelpers.NewKubeDefaultActor()
+		adminUser = testhelpers.NewKubeDefaultActor()
 
 		// TODO default namespace
-		aliceToken := GetToken(Params.UaaLocation, "alice", Params.CodyPassword)
-		alice = testhelpers.NewKubeActor("alice", aliceToken)
+		devUserAliceToken := GetToken(Params.UaaLocation, "alice", Params.DeveloperPassword)
+		devUserAlice = testhelpers.NewKubeActor("alice", devUserAliceToken)
 
-		codyToken := GetToken(Params.UaaLocation, "cody", Params.CodyPassword)
-		cody = testhelpers.NewKubeActor("cody", codyToken)
+		devUserBobToken := GetToken(Params.UaaLocation, "bob", Params.DeveloperPassword)
+		devUserBob = testhelpers.NewKubeActor("bob", devUserBobToken)
 
 		projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
 	})
 
-	When("alice and cody have not been given access to a Project", func() {
+	When("alice and bob have not been given access to a Project", func() {
 		It("does not permit them to interact with allowed resources", func() {
-			output, err := cody.RunKubeCtl("create", "configmap", "test-map")
+			output, err := devUserBob.RunKubeCtl("create", "configmap", "test-map")
 			Expect(err).To(HaveOccurred())
-			Expect(output).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "configmaps"`, userName("cody"))))
+			Expect(output).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "configmaps"`, userName("bob"))))
 		})
 	})
 
-	When("alice and cody have been given User access to a Project", func() {
+	When("alice and bob have been given User access to a Project", func() {
 		var projectResource string
 
 		BeforeEach(func() {
@@ -56,16 +56,16 @@ var _ = Describe("Projects CRD", func() {
                   - kind: User
                     name: %s
                   - kind: User
-                    name: %s`, projectName, userName("cody"), userName("alice"))
+                    name: %s`, projectName, userName("bob"), userName("alice"))
 
-			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})
 
 		AfterEach(func() {
-			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
+			adminUser.MustRunKubectl("delete", "-f", AsFile(projectResource))
 
 			Eventually(func() string {
-				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				output, _ := adminUser.RunKubeCtl("get", "namespace", projectName)
 				return output
 			}).Should(
 				ContainSubstring(
@@ -73,38 +73,38 @@ var _ = Describe("Projects CRD", func() {
 				))
 		})
 
-		It("permits alice and cody to interact with the allowed resources", func() {
+		It("permits alice and bob to interact with the allowed resources", func() {
 			Eventually(func() string {
-				output, _ := alice.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-alice")
+				output, _ := devUserAlice.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-alice")
 				return output
 			}).Should(ContainSubstring("created"))
 
 			Eventually(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "create", "serviceaccount", "test-sa-cody")
+				output, _ := devUserBob.RunKubeCtl("-n", projectName, "create", "serviceaccount", "test-sa-bob")
 				return output
 			}).Should(ContainSubstring("created"))
 
 			Eventually(func() string {
-				output, _ := alice.RunKubeCtl("-n", projectName, "get", "configmaps")
+				output, _ := devUserAlice.RunKubeCtl("-n", projectName, "get", "configmaps")
 				return output
 			}).Should(SatisfyAll(
 				ContainSubstring("test-map-alice"),
 			))
 		})
 
-		It("does not permit alice or cody to interact with arbitrary resources", func() {
+		It("does not permit alice or bob to interact with arbitrary resources", func() {
 			Consistently(func() string {
-				output, _ := alice.RunKubeCtl("-n", projectName, "create", "quota", "test-quota-alice")
+				output, _ := devUserAlice.RunKubeCtl("-n", projectName, "create", "quota", "test-quota-alice")
 				return output
 			}).Should(ContainSubstring("forbidden"))
 
 			Consistently(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "get", "quota")
+				output, _ := devUserBob.RunKubeCtl("-n", projectName, "get", "quota")
 				return output
 			}).Should(ContainSubstring("forbidden"))
 		})
 
-		When("alana revokes access to a project from cody", func() {
+		When("adminUser revokes access to a project from bob", func() {
 			BeforeEach(func() {
 				projectResource = fmt.Sprintf(`
                 apiVersion: projects.pivotal.io/v1alpha1
@@ -116,14 +116,14 @@ var _ = Describe("Projects CRD", func() {
                   - kind: User
                     name: %s`, projectName, userName("alice"))
 
-				alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+				adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
 			})
 
-			It("prevents cody from interacting with the allowed resources", func() {
+			It("prevents bob from interacting with the allowed resources", func() {
 				Eventually(func() string {
-					output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps")
+					output, _ := devUserBob.RunKubeCtl("-n", projectName, "get", "configmaps")
 					return output
-				}).Should(ContainSubstring(fmt.Sprintf(`User "%s" cannot list resource "configmaps"`, userName("cody"))))
+				}).Should(ContainSubstring(fmt.Sprintf(`User "%s" cannot list resource "configmaps"`, userName("bob"))))
 			})
 		})
 	})
@@ -142,14 +142,14 @@ var _ = Describe("Projects CRD", func() {
                   - kind: Group
                     name: %s`, projectName, groupName("ldap-experts"))
 
-			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})
 
 		AfterEach(func() {
-			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
+			adminUser.MustRunKubectl("delete", "-f", AsFile(projectResource))
 
 			Eventually(func() string {
-				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				output, _ := adminUser.RunKubeCtl("get", "namespace", projectName)
 				return output
 			}).Should(
 				ContainSubstring(
@@ -159,38 +159,38 @@ var _ = Describe("Projects CRD", func() {
 
 		It("permits members of the Group to interact with the allowed resources", func() {
 			Eventually(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-cody")
+				output, _ := devUserBob.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-bob")
 				return output
 			}).Should(ContainSubstring("created"))
 
 			Eventually(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps,serviceaccounts")
+				output, _ := devUserBob.RunKubeCtl("-n", projectName, "get", "configmaps,serviceaccounts")
 				return output
 			}).Should(SatisfyAll(
-				ContainSubstring("test-map-cody"),
+				ContainSubstring("test-map-bob"),
 			))
 		})
 
 		It("does not permit members of the Group to interact with arbitrary resources", func() {
 			Consistently(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "create", "quota", "test-quota-quota")
+				output, _ := devUserBob.RunKubeCtl("-n", projectName, "create", "quota", "test-quota-quota")
 				return output
 			}).Should(ContainSubstring("forbidden"))
 
 			Consistently(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "get", "quota")
+				output, _ := devUserBob.RunKubeCtl("-n", projectName, "get", "quota")
 				return output
 			}).Should(ContainSubstring("forbidden"))
 		})
 
 		It("does not permit non-members of the Group to interact with arbitrary resources", func() {
 			Consistently(func() string {
-				output, _ := alice.RunKubeCtl("-n", projectName, "get", "quota")
+				output, _ := devUserAlice.RunKubeCtl("-n", projectName, "get", "quota")
 				return output
 			}).Should(ContainSubstring("forbidden"))
 		})
 
-		When("alana revokes access to a project from the ldap-experts group", func() {
+		When("adminUser revokes access to a project from the ldap-experts group", func() {
 			BeforeEach(func() {
 				projectResource = fmt.Sprintf(`
                 apiVersion: projects.pivotal.io/v1alpha1
@@ -200,14 +200,14 @@ var _ = Describe("Projects CRD", func() {
                 spec:
                   access: []`, projectName)
 
-				alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+				adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
 			})
 
 			It("prevents members of the group from interacting with the allowed resources", func() {
 				Eventually(func() string {
-					output, _ := cody.RunKubeCtl("-n", projectName, "get", "configmaps")
+					output, _ := devUserBob.RunKubeCtl("-n", projectName, "get", "configmaps")
 					return output
-				}).Should(ContainSubstring(fmt.Sprintf(`User "%s" cannot list resource "configmaps"`, userName("cody"))))
+				}).Should(ContainSubstring(fmt.Sprintf(`User "%s" cannot list resource "configmaps"`, userName("bob"))))
 			})
 		})
 	})
@@ -221,7 +221,7 @@ var _ = Describe("Projects CRD", func() {
 
 		BeforeEach(func() {
 			saNamespace = "users" + projectName
-			alana.MustRunKubectl("create", "namespace", saNamespace)
+			adminUser.MustRunKubectl("create", "namespace", saNamespace)
 
 			saName := fmt.Sprintf("service-account-acceptance-testt%d", time.Now().UnixNano())
 			saToken := testhelpers.CreateServiceAccount(saName, saNamespace)
@@ -239,15 +239,15 @@ var _ = Describe("Projects CRD", func() {
                     name: %s
                     namespace: %s`, projectName, saName, saNamespace)
 
-			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
 		})
 
 		AfterEach(func() {
-			alana.MustRunKubectl("delete", "namespace", saNamespace)
-			alana.MustRunKubectl("delete", "project", projectName)
+			adminUser.MustRunKubectl("delete", "namespace", saNamespace)
+			adminUser.MustRunKubectl("delete", "project", projectName)
 
 			Eventually(func() string {
-				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				output, _ := adminUser.RunKubeCtl("get", "namespace", projectName)
 				return output
 			}).Should(
 				ContainSubstring(
@@ -275,25 +275,25 @@ var _ = Describe("Projects CRD", func() {
                   - kind: User
                     name: %s
                   - kind: User
-                    name: %s`, projectName, userName("cody"), userName("alice"))
+                    name: %s`, projectName, userName("bob"), userName("alice"))
 
-			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
-			alana.MustRunKubectl("delete", "-f", AsFile(projectResource))
+			adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			adminUser.MustRunKubectl("delete", "-f", AsFile(projectResource))
 		})
 
-		It("removes the corresponding namespace and leaves Cody and Alice unable to add resources", func() {
+		It("removes the corresponding namespace and leaves Bob and Alice unable to add resources", func() {
 			Eventually(func() string {
-				output, _ := alana.RunKubeCtl("get", "namespace", projectName)
+				output, _ := adminUser.RunKubeCtl("get", "namespace", projectName)
 				return output
 			}).Should(ContainSubstring(
 				fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
 			))
 
-			message, err := cody.RunKubeCtl("create", "configmap", "test-map")
+			message, err := devUserBob.RunKubeCtl("create", "configmap", "test-map")
 			Expect(err).To(HaveOccurred())
-			Expect(message).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "configmaps"`, userName("cody"))))
+			Expect(message).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "configmaps"`, userName("bob"))))
 
-			message, err = alice.RunKubeCtl("create", "configmap", "test-map")
+			message, err = devUserAlice.RunKubeCtl("create", "configmap", "test-map")
 			Expect(err).To(HaveOccurred())
 			Expect(message).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "configmaps"`, userName("alice"))))
 		})
@@ -301,16 +301,16 @@ var _ = Describe("Projects CRD", func() {
 
 	When("Alana tries to create a project over an existing namespace", func() {
 		BeforeEach(func() {
-			alana.MustRunKubectl("create", "namespace", projectName)
+			adminUser.MustRunKubectl("create", "namespace", projectName)
 
 			Eventually(func() error {
-				_, err := alana.RunKubeCtl("get", "namespace", projectName)
+				_, err := adminUser.RunKubeCtl("get", "namespace", projectName)
 				return err
 			}).Should(Succeed())
 		})
 
 		AfterEach(func() {
-			alana.MustRunKubectl("delete", "namespace", projectName)
+			adminUser.MustRunKubectl("delete", "namespace", projectName)
 		})
 
 		It("returns an error immediately", func() {
@@ -322,9 +322,9 @@ var _ = Describe("Projects CRD", func() {
                 spec:
                   access:
                   - kind: User
-                    name: %s`, projectName, userName("cody"))
+                    name: %s`, projectName, userName("bob"))
 
-			reason, err := alana.RunKubeCtl("apply", "-f", AsFile(projectResource))
+			reason, err := adminUser.RunKubeCtl("apply", "-f", AsFile(projectResource))
 			Expect(err).To(HaveOccurred())
 
 			Expect(reason).To(ContainSubstring(fmt.Sprintf("cannot create project over existing namespace '%s'", projectName)))
@@ -341,9 +341,9 @@ var _ = Describe("Projects CRD", func() {
                 spec:
                   access:
                   - kind: User
-                    name: %s`, projectName, userName("cody"))
+                    name: %s`, projectName, userName("bob"))
 
-			alana.MustRunKubectl("apply", "-f", AsFile(projectResource))
+			adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
 
 			podResource := fmt.Sprint(`
                 apiVersion: v1
@@ -358,20 +358,20 @@ var _ = Describe("Projects CRD", func() {
                     name: busybox`)
 
 			Eventually(func() string {
-				output, _ := cody.RunKubeCtl("-n", projectName, "apply", "-f", AsFile(podResource))
+				output, _ := devUserBob.RunKubeCtl("-n", projectName, "apply", "-f", AsFile(podResource))
 				return output
 			}).Should(ContainSubstring("created"))
 		})
 
 		It("prevents the deletion of the project until the object is cleaned up", func() {
-			alana.MustRunKubectl("delete", "project", projectName, "--wait=false")
+			adminUser.MustRunKubectl("delete", "project", projectName, "--wait=false")
 
 			Consistently(func() string {
-				output := alana.MustRunKubectl("get", "projects")
+				output := adminUser.MustRunKubectl("get", "projects")
 				return output
 			}).Should(ContainSubstring(projectName))
 			Consistently(func() string {
-				output := alana.MustRunKubectl("get", "namespaces")
+				output := adminUser.MustRunKubectl("get", "namespaces")
 				return output
 			}).Should(ContainSubstring(projectName))
 
@@ -385,14 +385,14 @@ var _ = Describe("Projects CRD", func() {
                   containers:
                   - image: busybox
                     name: busybox`)
-			alana.MustRunKubectl("-n", projectName, "apply", "-f", AsFile(podResource))
+			adminUser.MustRunKubectl("-n", projectName, "apply", "-f", AsFile(podResource))
 
 			Eventually(func() string {
-				output := alana.MustRunKubectl("get", "projects")
+				output := adminUser.MustRunKubectl("get", "projects")
 				return output
 			}).ShouldNot(ContainSubstring(projectName))
 			Eventually(func() string {
-				output := alana.MustRunKubectl("get", "namespaces")
+				output := adminUser.MustRunKubectl("get", "namespaces")
 				return output
 			}).ShouldNot(ContainSubstring(projectName))
 		})
@@ -409,12 +409,12 @@ var _ = Describe("Projects CRD", func() {
                   - kind: SomeUnknownKind
                     name: %s`, userName("alice"))
 
-		message, err := alana.RunKubeCtl("apply", "-f", AsFile(projectResource))
+		message, err := adminUser.RunKubeCtl("apply", "-f", AsFile(projectResource))
 		Expect(err).To(HaveOccurred(), message)
 		Expect(message).To(ContainSubstring("spec.access.kind in body should be one of [ServiceAccount User Group]"))
 	})
 
-	It("does not allow alice or cody to create projects", func() {
+	It("does not allow alice or bob to create projects", func() {
 		projectResource := fmt.Sprintf(`
                 apiVersion: projects.pivotal.io/v1alpha1
                 kind: Project
@@ -425,11 +425,11 @@ var _ = Describe("Projects CRD", func() {
                   - kind: User
                     name: %s
                   - kind: User
-                    name: %s`, "project", userName("cody"), userName("alice"))
+                    name: %s`, "project", userName("bob"), userName("alice"))
 
-		output, err := cody.RunKubeCtl("create", "-f", AsFile(projectResource))
+		output, err := devUserBob.RunKubeCtl("create", "-f", AsFile(projectResource))
 		Expect(err).To(HaveOccurred())
-		Expect(output).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "projects"`, userName("cody"))))
+		Expect(output).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "projects"`, userName("bob"))))
 	})
 })
 

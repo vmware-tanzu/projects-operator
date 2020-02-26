@@ -98,7 +98,7 @@ metadata:
 spec:
   access:
   - kind: User
-    name: cody
+    name: alice
   - kind: ServiceAccount
     name: some-robot
     namespace: some-namespace
@@ -129,7 +129,7 @@ To run the acceptance tests you must have a pks k8s cluster using OIDC pointing 
   1. `export UAA_LOCATION=<UAA_SERVER_LOCATION>`
   1. `export CLUSTER_API_LOCATION=<CLUSTER>`
   1. `export CLUSTER_NAME=<CLUSTER_NAME>`
-  1. `export CODY_PASSWORD=<PASSWORD_ABOVE>`
+  1. `export DEVELOPER_PASSWORD=<PASSWORD_ABOVE>`
   1. `export OIDC_USER_PREFIX=<OIDC_USER_PREFIX>` (optional)
   1. `export OIDC_GROUP_PREFIX=<OIDC_GROUP_PREFIX>` (optional)
 

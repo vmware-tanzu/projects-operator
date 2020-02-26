@@ -24,7 +24,7 @@ import (
 type Env struct {
 	UaaLocation        string `env:"UAA_LOCATION"`
 	ClusterAPILocation string `env:"CLUSTER_API_LOCATION"`
-	CodyPassword       string `env:"CODY_PASSWORD"`
+	DeveloperPassword  string `env:"DEVELOPER_PASSWORD"`
 	ClusterName        string `env:"CLUSTER_NAME"`
 	OIDCUserPrefix     string `env:"OIDC_USER_PREFIX"`
 	OIDCGroupPrefix    string `env:"OIDC_GROUP_PREFIX"`

@@ -67,6 +67,7 @@ userpassword: $hashedPassword
 
 dn: cn=ldap-experts,dc=example,dc=com
 cn: ldap-experts
+member: cn=bob,dc=example,dc=com
 member: cn=cody,dc=example,dc=com
 objectclass: groupOfNames
 objectclass: top

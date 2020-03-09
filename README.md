@@ -52,13 +52,7 @@ We are currently experimenting with using
 and testing workflow. In order to use this workflow, you must first download
 `skaffold` and then update the `skaffold.yaml` file as required. Specifically
 you will need to point to an image registry you have access to and to set the
-`clusterRoleRef`.
-
-NB: At time of writing we are using a forked version of skaffold that supports
-helm v3. The binary for this fork can be downloaded
-[here](https://github.com/ktarplee/skaffold/releases/download/v1.2.0-helm3/skaffold-darwin-amd64).
-Our hope is that this fork will be merged into `skaffold` soon. Here's the GH
-Issue: https://github.com/GoogleContainerTools/skaffold/issues/2142.
+`clusterRoleRef`. N.B. `skaffold` must be v1.5.0+.
 
 You also need to ensure that a `registry-secret` exists for your registry in
 the namespace you are deploying to.

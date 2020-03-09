@@ -5,7 +5,7 @@ go 1.14
 require (
 	cloud.google.com/go v0.54.0 // indirect
 	github.com/Azure/go-autorest/autorest v0.10.0 // indirect
-	github.com/caarlos0/env/v6 v6.1.0
+	github.com/caarlos0/env/v6 v6.2.1
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect

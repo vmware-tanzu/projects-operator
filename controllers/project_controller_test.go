@@ -132,6 +132,23 @@ var _ = Describe("ProjectController", func() {
 					Expect(ownerReference.Name).To(Equal(project.Name))
 					Expect(ownerReference.Kind).To(Equal("Project"))
 				})
+
+				It("copies project labels to the namespace", func() {
+					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					Expect(err).NotTo(HaveOccurred())
+
+					namespace := &corev1.Namespace{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name,
+					}, namespace)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(namespace.Labels).To(HaveLen(2))
+					Expect(namespace.Labels).To(HaveKey("some.org/some.key"))
+					Expect(namespace.Labels["some.org/some.key"]).To(Equal("some-value"))
+					Expect(namespace.Labels).To(HaveKey("other.org/other.key"))
+					Expect(namespace.Labels["other.org/other.key"]).To(Equal("other-value"))
+				})
 			})
 
 			Describe("creates a cluster role", func() {
@@ -503,7 +520,8 @@ func Project(projectName string, users ...string) *projectv1alpha1.Project {
 
 	return &projectv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: projectName,
+			Name:   projectName,
+			Labels: map[string]string{"some.org/some.key": "some-value", "other.org/other.key": "other-value"},
 		},
 		Spec: projectv1alpha1.ProjectSpec{
 			Access: subjectRefs,

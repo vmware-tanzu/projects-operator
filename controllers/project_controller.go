@@ -19,7 +19,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/pivotal/projects-operator/pkg/finalizer"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	projectv1alpha1 "github.com/pivotal/projects-operator/api/v1alpha1"
+	"github.com/pivotal/projects-operator/pkg/finalizer"
 )
 
 type RoleConfiguration struct {
@@ -105,7 +105,8 @@ func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *ProjectReconciler) createNamespace(project *projectv1alpha1.Project) error {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: project.Name,
+			Name:   project.Name,
+			Labels: project.Labels,
 		},
 	}
 

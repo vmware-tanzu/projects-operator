@@ -42,6 +42,7 @@ var _ = Describe("ProjectController", func() {
 			reconciler     controllers.ProjectReconciler
 			fakeClient     client.Client
 			project        *projectv1alpha1.Project
+			labels         map[string]string
 			user1          string
 			user2          string
 			scheme         *runtime.Scheme
@@ -57,7 +58,8 @@ var _ = Describe("ProjectController", func() {
 
 			user1 = "some-user1"
 			user2 = "some-user2"
-			project = Project("my-project", user1, user2)
+			labels = map[string]string{"some.org/some.key": "some-value", "other.org/other.key": "other-value"}
+			project = Project("my-project", labels, user1, user2)
 
 			fakeClient = fake.NewFakeClientWithScheme(scheme, project)
 
@@ -131,6 +133,19 @@ var _ = Describe("ProjectController", func() {
 					ownerReference := namespace.ObjectMeta.OwnerReferences[0]
 					Expect(ownerReference.Name).To(Equal(project.Name))
 					Expect(ownerReference.Kind).To(Equal("Project"))
+				})
+
+				It("copies project labels to the namespace", func() {
+					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					Expect(err).NotTo(HaveOccurred())
+
+					namespace := &corev1.Namespace{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name,
+					}, namespace)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(namespace.Labels).To(Equal(labels))
 				})
 			})
 
@@ -491,7 +506,7 @@ func Request(namespace, name string) ctrl.Request {
 	}
 }
 
-func Project(projectName string, users ...string) *projectv1alpha1.Project {
+func Project(projectName string, labels map[string]string, users ...string) *projectv1alpha1.Project {
 	subjectRefs := []projectv1alpha1.SubjectRef{}
 
 	for _, user := range users {
@@ -503,7 +518,8 @@ func Project(projectName string, users ...string) *projectv1alpha1.Project {
 
 	return &projectv1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: projectName,
+			Name:   projectName,
+			Labels: labels,
 		},
 		Spec: projectv1alpha1.ProjectSpec{
 			Access: subjectRefs,

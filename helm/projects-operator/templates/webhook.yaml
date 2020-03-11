@@ -103,6 +103,30 @@ webhooks:
 
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ template "projects-operator.fullname" . }}-creation-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: "{{ $tls.caCert }}"
+    service:
+      name: {{ template "projects-operator.fullname" . }}-webhook
+      path: /project-create
+      namespace: "{{ .Release.Namespace }}"
+  failurePolicy: Fail
+  name: project.projects.pivotal.io
+  rules:
+  - apiGroups:
+    - projects.pivotal.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    resources:
+    - projects
+
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
   name: {{ template "projects-operator.fullname" . }}-webhook-configuration

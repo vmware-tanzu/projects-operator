@@ -24,6 +24,7 @@ import (
 	"github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -263,6 +264,30 @@ func ValidRequestForProjectWebhookAPI(method, path, projectName string) *http.Re
 	project := v1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: projectName,
+		},
+	}
+	projectJson, err := json.Marshal(project)
+	Expect(err).NotTo(HaveOccurred())
+
+	return requestForWebhookAPI(method, path, projectJson)
+}
+
+func ValidRequestWithUsersForProjectWebhookAPI(method, path, projectName string) *http.Request {
+	project := v1alpha1.Project{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: projectName,
+		},
+		Spec: v1alpha1.ProjectSpec{
+			Access: []v1alpha1.SubjectRef{
+				{
+					Kind: v1.UserKind,
+					Name: "project-owner",
+				},
+				{
+					Kind: v1.UserKind,
+					Name: "project-user",
+				},
+			},
 		},
 	}
 	projectJson, err := json.Marshal(project)

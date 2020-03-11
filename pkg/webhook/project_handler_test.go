@@ -59,6 +59,12 @@ var _ = Describe("ProjectHandler", func() {
 		Expect(responseRecorder.Result().StatusCode).To(Equal(http.StatusOK))
 	})
 
+	It("handles POST /project-create", func() {
+		h.ServeHTTP(responseRecorder, testhelpers.ValidRequestForProjectWebhookAPI(http.MethodPost, "/project-create", "my-project"))
+
+		Expect(responseRecorder.Result().StatusCode).To(Equal(http.StatusOK))
+	})
+
 	It("fetches all namespaces", func() {
 		h.ServeHTTP(responseRecorder, testhelpers.ValidRequestForProjectWebhookAPI(http.MethodPost, "/project", "my-project"))
 
@@ -122,6 +128,36 @@ var _ = Describe("ProjectHandler", func() {
 
 			Expect(string(body)).To(ContainSubstring("error unmarshalling request body"))
 			Expect(responseRecorder.Result().StatusCode).To(Equal(http.StatusBadRequest))
+		})
+	})
+
+	When("the project does not have any access defined on the spec during project creation", func() {
+		It("adds the requesting user as a user on the project", func() {
+			h.ServeHTTP(responseRecorder, testhelpers.ValidRequestForProjectWebhookAPI(http.MethodPost, "/project-create", "my-project"))
+
+			response, err := ioutil.ReadAll(responseRecorder.Result().Body)
+			Expect(err).NotTo(HaveOccurred())
+
+			var admissionReview *admissionv1.AdmissionReview
+			Expect(json.Unmarshal(response, &admissionReview)).To(Succeed())
+
+			Expect(admissionReview.Response.Allowed).To(BeTrue())
+			Expect(admissionReview.Response.Patch).To(Equal([]byte(`[{"op":"add","path":"/spec","value":{"access":[{"kind":"User","name":"developer"}]}}]`)))
+		})
+	})
+
+	When("the project has access defined on the spec during project creation", func() {
+		It("does not modify the project creation request", func() {
+			h.ServeHTTP(responseRecorder, testhelpers.ValidRequestWithUsersForProjectWebhookAPI(http.MethodPost, "/project-create", "my-project"))
+
+			response, err := ioutil.ReadAll(responseRecorder.Result().Body)
+			Expect(err).NotTo(HaveOccurred())
+
+			var admissionReview *admissionv1.AdmissionReview
+			Expect(json.Unmarshal(response, &admissionReview)).To(Succeed())
+
+			Expect(admissionReview.Response.Allowed).To(BeTrue())
+			Expect(admissionReview.Response.Patch).NotTo(Equal([]byte(`[{"op":"add","path":"/spec","value":{"access":[{"kind":"User","name":"developer"}]}}]`)))
 		})
 	})
 })

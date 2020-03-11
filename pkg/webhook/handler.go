@@ -19,8 +19,9 @@ func NewHandler(logger logr.Logger, namespaceFetcher NamespaceFetcher, projectFe
 	projectHandler := NewProjectHandler(logger.WithName("project"), namespaceFetcher)
 	projectAccessHandler := NewProjectAccessHandler(logger.WithName("projectaccess"), projectFetcher, projectFilterer)
 
-	mux.HandleFunc("/project", projectHandler.HandleProject)
+	mux.HandleFunc("/project", projectHandler.HandleProjectValidation)
 	mux.HandleFunc("/projectaccess", projectAccessHandler.HandleProjectAccess)
+	mux.HandleFunc("/project-create", projectHandler.HandleProjectCreation)
 
 	return mux
 }

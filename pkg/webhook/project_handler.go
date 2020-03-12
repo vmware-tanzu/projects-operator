@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/go-logr/logr"
-	"github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
-	v1 "k8s.io/api/rbac/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/pivotal/projects-operator/api/v1alpha1"
 )
 
 type ProjectHandler struct {
@@ -123,18 +125,32 @@ func (h *ProjectHandler) HandleProjectCreation(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	var patchBytes []byte
-	if len(project.Spec.Access) == 0 {
-		user := arRequest.Request.UserInfo
-		project.Spec.Access = append(project.Spec.Access, v1alpha1.SubjectRef{
-			Kind: v1.UserKind,
-			Name: user.Username,
+	if len(project.Spec.Access) > 0 {
+		sendReview(w, &admissionv1.AdmissionReview{
+			Response: &admissionv1.AdmissionResponse{
+				Allowed: true,
+			},
 		})
-		patchBytes, err = createProjectPatch(project.Spec.Access)
-	} else {
-		patchBytes, err = createProjectPatch([]v1alpha1.SubjectRef{})
+		return
 	}
 
+	userInfo := arRequest.Request.UserInfo
+
+	var subjectRef v1alpha1.SubjectRef
+	if groups := regexp.MustCompile(`system:serviceaccount:([-a-z0-9]+):(.*)`).FindStringSubmatch(userInfo.Username); len(groups) == 3 {
+		subjectRef = v1alpha1.SubjectRef{
+			Kind:      rbacv1.ServiceAccountKind,
+			Namespace: groups[1],
+			Name:      groups[2],
+		}
+	} else {
+		subjectRef = v1alpha1.SubjectRef{
+			Kind: rbacv1.UserKind,
+			Name: userInfo.Username,
+		}
+	}
+
+	patchBytes, err := createProjectPatch(subjectRef)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, fmt.Sprintf(`{"error creating ProjectAccess patch": "%s"}`, err.Error()))
@@ -156,16 +172,10 @@ func (h *ProjectHandler) HandleProjectCreation(w http.ResponseWriter, r *http.Re
 	sendReview(w, arReview)
 }
 
-func createProjectPatch(access []v1alpha1.SubjectRef) ([]byte, error) {
-	if access == nil {
-		access = []v1alpha1.SubjectRef{}
-	}
-
+func createProjectPatch(user v1alpha1.SubjectRef) ([]byte, error) {
 	return json.Marshal([]PatchOperation{{
-		Op:   "add",
-		Path: "/spec",
-		Value: map[string]interface{}{
-			"access": access,
-		},
+		Op:    "add",
+		Path:  "/spec/access",
+		Value: interface{}(user),
 	}})
 }

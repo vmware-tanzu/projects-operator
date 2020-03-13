@@ -143,7 +143,7 @@ var _ = Describe("ProjectHandler", func() {
 				Expect(json.Unmarshal(response, &admissionReview)).To(Succeed())
 
 				Expect(admissionReview.Response.Allowed).To(BeTrue())
-				Expect(admissionReview.Response.Patch).To(Equal([]byte(`[{"op":"add","path":"/spec/access","value":{"kind":"User","name":"developer"}}]`)))
+				Expect(admissionReview.Response.Patch).To(Equal([]byte(`[{"op":"add","path":"/spec/access","value":[{"kind":"User","name":"developer"}]}]`)))
 			})
 		})
 
@@ -158,7 +158,7 @@ var _ = Describe("ProjectHandler", func() {
 				Expect(json.Unmarshal(response, &admissionReview)).To(Succeed())
 
 				Expect(admissionReview.Response.Allowed).To(BeTrue())
-				Expect(admissionReview.Response.Patch).To(Equal([]byte(`[{"op":"add","path":"/spec/access","value":{"kind":"ServiceAccount","name":"some-serviceaccount","namespace":"some-namespace"}}]`)))
+				Expect(admissionReview.Response.Patch).To(Equal([]byte(`[{"op":"add","path":"/spec/access","value":[{"kind":"ServiceAccount","name":"some-serviceaccount","namespace":"some-namespace"}]}]`)))
 			})
 		})
 	})

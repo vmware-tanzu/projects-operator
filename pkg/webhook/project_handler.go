@@ -153,7 +153,7 @@ func (h *ProjectHandler) HandleProjectCreation(w http.ResponseWriter, r *http.Re
 	patchBytes, err := createProjectPatch(subjectRef)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, fmt.Sprintf(`{"error creating ProjectAccess patch": "%s"}`, err.Error()))
+		fmt.Fprint(w, fmt.Sprintf(`{"error creating Project patch": "%s"}`, err.Error()))
 
 		h.logger.Error(err, "error creating Project patch")
 		return
@@ -176,6 +176,6 @@ func createProjectPatch(user v1alpha1.SubjectRef) ([]byte, error) {
 	return json.Marshal([]PatchOperation{{
 		Op:    "add",
 		Path:  "/spec/access",
-		Value: interface{}(user),
+		Value: interface{}([]v1alpha1.SubjectRef{user}),
 	}})
 }

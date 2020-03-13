@@ -25,7 +25,7 @@ import (
 type ProjectSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Access []SubjectRef `json:"access"`
+	Access []SubjectRef `json:"access,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=ServiceAccount;User;Group

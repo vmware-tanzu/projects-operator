@@ -1,9 +1,11 @@
 package acceptance_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/pivotal/projects-operator/api/v1alpha1"
 	"github.com/pivotal/projects-operator/testhelpers"
 
 	. "github.com/onsi/ginkgo"
@@ -260,6 +262,39 @@ var _ = Describe("Projects CRD", func() {
 				output, _ := sa.RunKubeCtl("-n", projectName, "create", "configmap", "test-map-sa")
 				return output
 			}).Should(ContainSubstring("created"))
+		})
+	})
+
+	When("Alana creates a project with no users", func() {
+		BeforeEach(func() {
+			projectResource := fmt.Sprintf(`
+                apiVersion: projects.pivotal.io/v1alpha1
+                kind: Project
+                metadata:
+                 name: %s
+                spec:
+                  access: []`,
+				projectName,
+			)
+
+			adminUser.MustKubeCtlApply(projectResource)
+		})
+
+		FIt("adds Alana as a user", func() {
+			Eventually(func() int {
+				output, err := adminUser.RunKubeCtl("get", "project", projectName, "-o", "json")
+				if err != nil {
+					return 0
+				}
+
+				var proj v1alpha1.Project
+				if err := json.Unmarshal([]byte(output), &proj); err != nil {
+					fmt.Println(err.Error())
+					return 0
+				}
+
+				return len(proj.Spec.Access)
+			}).Should(Equal(1))
 		})
 	})
 

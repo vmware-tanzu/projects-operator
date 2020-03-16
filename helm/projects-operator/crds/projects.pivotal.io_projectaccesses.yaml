@@ -3,6 +3,8 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.4
   creationTimestamp: null
   name: projectaccesses.projects.pivotal.io
 spec:
@@ -12,7 +14,7 @@ spec:
     listKind: ProjectAccessList
     plural: projectaccesses
     singular: projectaccess
-  scope: ""
+  scope: Cluster
   validation:
     openAPIV3Schema:
       description: ProjectAccess is the Schema for the projectaccesses API
@@ -36,9 +38,6 @@ spec:
           description: ProjectAccessStatus defines the observed state of ProjectAccess
           properties:
             projects:
-              description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                of cluster Important: Run "make" to regenerate code after modifying
-                this file'
               items:
                 type: string
               type: array

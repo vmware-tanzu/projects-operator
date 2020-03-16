@@ -21,11 +21,13 @@ import (
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
 	. "github.com/onsi/gomega/gexec"
-	"github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/pivotal/projects-operator/api/v1alpha1"
 )
 
 const (
@@ -259,7 +261,7 @@ func createKubeConfigCopy() string {
 	return copiedKubeConfigPath
 }
 
-func ValidRequestForProjectWebhookAPI(method, path, projectName string) *http.Request {
+func ValidRequestForProjectWebhookAPI(method, path, projectName string, requestWithServiceAccount bool) *http.Request {
 	project := v1alpha1.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: projectName,
@@ -268,7 +270,31 @@ func ValidRequestForProjectWebhookAPI(method, path, projectName string) *http.Re
 	projectJson, err := json.Marshal(project)
 	Expect(err).NotTo(HaveOccurred())
 
-	return requestForWebhookAPI(method, path, projectJson)
+	return requestForWebhookAPI(method, path, projectJson, requestWithServiceAccount)
+}
+
+func ValidRequestWithUsersForProjectWebhookAPI(method, path, projectName string) *http.Request {
+	project := v1alpha1.Project{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: projectName,
+		},
+		Spec: v1alpha1.ProjectSpec{
+			Access: []v1alpha1.SubjectRef{
+				{
+					Kind: rbacv1.UserKind,
+					Name: "project-owner",
+				},
+				{
+					Kind: rbacv1.UserKind,
+					Name: "project-user",
+				},
+			},
+		},
+	}
+	projectJson, err := json.Marshal(project)
+	Expect(err).NotTo(HaveOccurred())
+
+	return requestForWebhookAPI(method, path, projectJson, false)
 }
 
 func ValidRequestForProjectAccessWebhookAPI(method, path string) *http.Request {
@@ -276,23 +302,27 @@ func ValidRequestForProjectAccessWebhookAPI(method, path string) *http.Request {
 	projectAccessJson, err := json.Marshal(projectAccess)
 	Expect(err).NotTo(HaveOccurred())
 
-	return requestForWebhookAPI(method, path, projectAccessJson)
+	return requestForWebhookAPI(method, path, projectAccessJson, false)
 }
 
-func requestForWebhookAPI(method, path string, raw []byte) *http.Request {
+func requestForWebhookAPI(method, path string, raw []byte, requestWithServiceAccount bool) *http.Request {
 	u, err := url.Parse(path)
 	Expect(err).NotTo(HaveOccurred())
 
 	arRequest := admissionv1.AdmissionReview{
 		Request: &admissionv1.AdmissionRequest{
-			UserInfo: authenticationv1.UserInfo{
-				Username: "developer",
-				Groups:   []string{"group-a"},
-			},
+			UserInfo: authenticationv1.UserInfo{},
 			Object: k8sruntime.RawExtension{
 				Raw: raw,
 			},
 		},
+	}
+
+	if requestWithServiceAccount {
+		arRequest.Request.UserInfo.Username = "system:serviceaccount:some-namespace:some-serviceaccount"
+	} else {
+		arRequest.Request.UserInfo.Username = "developer"
+		arRequest.Request.UserInfo.Groups = []string{"group-a"}
 	}
 
 	body, err := json.Marshal(arRequest)

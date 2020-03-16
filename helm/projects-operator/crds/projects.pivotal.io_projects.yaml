@@ -52,8 +52,6 @@ spec:
                 - name
                 type: object
               type: array
-          required:
-          - access
           type: object
         status:
           description: ProjectStatus defines the observed state of Project

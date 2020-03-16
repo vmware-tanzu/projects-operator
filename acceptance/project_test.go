@@ -280,7 +280,7 @@ var _ = Describe("Projects CRD", func() {
 			adminUser.MustKubeCtlApply(projectResource)
 		})
 
-		FIt("adds Alana as a user", func() {
+		It("adds Alana as a user", func() {
 			Eventually(func() int {
 				output, err := adminUser.RunKubeCtl("get", "project", projectName, "-o", "json")
 				if err != nil {

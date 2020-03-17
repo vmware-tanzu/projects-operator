@@ -91,6 +91,7 @@ jobs:
       passed: [build]
     - get: build-artefacts-dev
       passed: [build]
+      trigger: true
     - get: project-operator-image
       passed: [build]
       params:

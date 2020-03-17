@@ -128,3 +128,15 @@ func GetToken(uaaLocation, user, password string) string {
 
 	return responseMap["id_token"].(string)
 }
+
+func DeleteProject(adminUser testhelpers.KubeActor, projectName string) {
+	adminUser.MustRunKubectl("delete", "project", projectName)
+
+	Eventually(func() string {
+		output, _ := adminUser.RunKubeCtl("get", "namespace", projectName)
+		return output
+	}).Should(
+		ContainSubstring(
+			fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
+		))
+}

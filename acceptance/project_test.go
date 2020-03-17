@@ -64,15 +64,7 @@ var _ = Describe("Projects CRD", func() {
 		})
 
 		AfterEach(func() {
-			adminUser.MustRunKubectl("delete", "-f", AsFile(projectResource))
-
-			Eventually(func() string {
-				output, _ := adminUser.RunKubeCtl("get", "namespace", projectName)
-				return output
-			}).Should(
-				ContainSubstring(
-					fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
-				))
+			DeleteProject(adminUser, projectName)
 		})
 
 		It("permits alice and bob to interact with the allowed resources", func() {
@@ -148,15 +140,7 @@ var _ = Describe("Projects CRD", func() {
 		})
 
 		AfterEach(func() {
-			adminUser.MustRunKubectl("delete", "-f", AsFile(projectResource))
-
-			Eventually(func() string {
-				output, _ := adminUser.RunKubeCtl("get", "namespace", projectName)
-				return output
-			}).Should(
-				ContainSubstring(
-					fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
-				))
+			DeleteProject(adminUser, projectName)
 		})
 
 		It("permits members of the Group to interact with the allowed resources", func() {
@@ -246,15 +230,7 @@ var _ = Describe("Projects CRD", func() {
 
 		AfterEach(func() {
 			adminUser.MustRunKubectl("delete", "namespace", saNamespace)
-			adminUser.MustRunKubectl("delete", "project", projectName)
-
-			Eventually(func() string {
-				output, _ := adminUser.RunKubeCtl("get", "namespace", projectName)
-				return output
-			}).Should(
-				ContainSubstring(
-					fmt.Sprintf("Error from server (NotFound): namespaces \"%s\" not found", projectName),
-				))
+			DeleteProject(adminUser, projectName)
 		})
 
 		It("permits the ServiceAccount to interact with the allowed resources", func() {
@@ -278,6 +254,10 @@ var _ = Describe("Projects CRD", func() {
 			)
 
 			adminUser.MustKubeCtlApply(projectResource)
+		})
+
+		AfterEach(func() {
+			DeleteProject(adminUser, projectName)
 		})
 
 		It("adds Alana as a user", func() {
@@ -466,6 +446,7 @@ var _ = Describe("Projects CRD", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(output).To(ContainSubstring(fmt.Sprintf(`User "%s" cannot create resource "projects"`, userName("bob"))))
 	})
+
 })
 
 func userName(user string) string {

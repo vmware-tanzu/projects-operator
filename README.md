@@ -3,15 +3,13 @@
 ## About
 
 `projects-operator` extends kubernetes with a `Project` CRD and corresponding
-controller.
-`Projects` are intended to provide isolation of kubernetes resources on a
-single kubernetes cluster.
-A `Project` is essentially a kubernetes namespace along with a corresponding
-set of RBAC rules.
+controller.  `Projects` are intended to provide isolation of kubernetes
+resources on a single kubernetes cluster.  A `Project` is essentially a
+kubernetes namespace along with a corresponding set of RBAC rules.
 
 ## Usage
 
-`projects-operator` is currently deployed using [helm (v3+)](https://helm.sh/),
+`projects-operator` is currently deployed using [helm (v3)](https://helm.sh/),
 but it is also possible to run the controller locally for development and
 testing purposes.
 
@@ -47,12 +45,14 @@ $ make install && make run
 
 ### Development and testing workflow
 
-We are currently experimenting with using
-[skaffold](https://github.com/GoogleContainerTools/skaffold) for development
-and testing workflow. In order to use this workflow, you must first download
-`skaffold` and then update the `skaffold.yaml` file as required. Specifically
-you will need to point to an image registry you have access to and to set the
-`clusterRoleRef`. N.B. `skaffold` must be v1.5.0+.
+We are  using [skaffold](https://github.com/GoogleContainerTools/skaffold) for
+development and testing workflow. In order to use this workflow, you must first
+download `skaffold` and then update the `skaffold.yaml` file as required.
+Specifically you will need to point to an image registry you have access to and
+to set the `clusterRoleRef`. The default `clusterRoleRef` is set to the name of
+the role the acceptance tests use.
+
+N.B. `skaffold` must be v1.6.0+.
 
 You also need to ensure that a `registry-secret` exists for your registry in
 the namespace you are deploying to.
@@ -108,18 +108,20 @@ helm uninstall projects-operator
 
 Note that the `Project` CRD will be left on the cluster as will any CRs for the `Project` CRD. These can be deleted manually if desired.
 
-### Webhook
+### Webhooks
 
-projects-operator makes use of two webhooks to provide further functionality, as follows:
+projects-operator makes use of three webhooks to provide further functionality, as follows:
 
 1. A ValidatingWebhook (invoked on Project CREATE) - ensures that Projects cannot be created if they have the same name as an existing namespace.
 1. A MutatingWebhook (invoked on ProjectAccess CREATE, UPDATE) - returns a modified ProjectAccess containing the list of Projects the user has access to.
+1. A MutatingWebhook (invoked on Project CREATE) - adds the user from the request as a member of the project if a project is created with no entries in access.
 
 ### Tests
 
-To run the acceptance tests you must have a pks k8s cluster using OIDC pointing to an LDAP. (You can set up openldap as a container by running `./ldap/deploy-ldap.sh`
+To run the acceptance tests you must have a pks k8s cluster using OIDC pointing to an LDAP. You can set up openldap as a container by running `./ldap/deploy-ldap.sh`.
+
 1. Run `./ldap/generate-users.sh <ldap_host> <admin_dn> <admin_password>` and take note of the generated password
-1. Setup the following env vars: 
+1. Setup the following env vars:
   1. `export UAA_LOCATION=<UAA_SERVER_LOCATION>`
   1. `export CLUSTER_API_LOCATION=<CLUSTER>`
   1. `export CLUSTER_NAME=<CLUSTER_NAME>`
@@ -141,4 +143,4 @@ The following dependencies need to be installed in order to hack on projects-ope
 * [golangci-lint](https://github.com/golangci/golangci-lint)
 * [docker](https://www.docker.com/)
 * [helm](https://helm.sh/) (v3)
-* [skaffold](https://github.com/GoogleContainerTools/skaffold)
+* [skaffold](https://github.com/GoogleContainerTools/skaffold) (v1.6.0+)

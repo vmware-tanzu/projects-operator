@@ -33,7 +33,7 @@ func (h *ProjectHandler) HandleProjectValidation(w http.ResponseWriter, r *http.
 	body, err := ensureBody(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()))
+		fmt.Fprintf(w, `{"error": "%s"}`, err.Error())
 
 		h.logger.Error(err, "error reading body")
 		return
@@ -43,7 +43,7 @@ func (h *ProjectHandler) HandleProjectValidation(w http.ResponseWriter, r *http.
 	arRequest, err := unmarshalToAdmissionReview(body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, fmt.Sprintf(`{"error unmarshalling request body": "%s"}`, err))
+		fmt.Fprintf(w, `{"error unmarshalling request body": "%s"}`, err)
 
 		h.logger.Error(err, "error unmarshaling AdmissionReview")
 		return
@@ -54,7 +54,7 @@ func (h *ProjectHandler) HandleProjectValidation(w http.ResponseWriter, r *http.
 	project := v1alpha1.Project{}
 	if err := json.Unmarshal(raw, &project); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, fmt.Sprintf(`{"error unmarshalling project": "%s"}`, err))
+		fmt.Fprintf(w, `{"error unmarshalling project": "%s"}`, err)
 
 		h.logger.Error(err, "error unmarshaling Project from AdmissionReview")
 		return

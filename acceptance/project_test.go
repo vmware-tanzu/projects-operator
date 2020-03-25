@@ -360,7 +360,7 @@ var _ = Describe("Projects CRD", func() {
 
 			adminUser.MustRunKubectl("apply", "-f", AsFile(projectResource))
 
-			podResource := fmt.Sprint(`
+			podResource := `
                 apiVersion: v1
                 kind: Pod
                 metadata:
@@ -370,7 +370,7 @@ var _ = Describe("Projects CRD", func() {
                 spec:
                   containers:
                   - image: busybox
-                    name: busybox`)
+                    name: busybox`
 
 			Eventually(func() string {
 				output, _ := devUserBob.RunKubeCtl("-n", projectName, "apply", "-f", AsFile(podResource))
@@ -390,7 +390,7 @@ var _ = Describe("Projects CRD", func() {
 				return output
 			}).Should(ContainSubstring(projectName))
 
-			podResource := fmt.Sprint(`
+			podResource := `
                 apiVersion: v1
                 kind: Pod
                 metadata:
@@ -399,7 +399,7 @@ var _ = Describe("Projects CRD", func() {
                 spec:
                   containers:
                   - image: busybox
-                    name: busybox`)
+                    name: busybox`
 			adminUser.MustRunKubectl("-n", projectName, "apply", "-f", AsFile(podResource))
 
 			Eventually(func() string {

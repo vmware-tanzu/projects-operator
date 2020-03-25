@@ -53,14 +53,14 @@ func sendReview(w http.ResponseWriter, arReview *admissionv1.AdmissionReview) {
 	response, err := json.Marshal(arReview)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, fmt.Sprintf(`{"error marshalling response": "%s"}`, err))
+		fmt.Fprintf(w, `{"error marshalling response": "%s"}`, err)
 		return
 	}
 
 	_, err = w.Write(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, fmt.Sprintf(`{"error writing response": "%s"}`, err))
+		fmt.Fprintf(w, `{"error writing response": "%s"}`, err)
 		return
 	}
 }

@@ -31,7 +31,7 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 	body, err := ensureBody(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()))
+		fmt.Fprintf(w, `{"error": "%s"}`, err.Error())
 
 		h.logger.Error(err, "error reading body")
 		return
@@ -41,7 +41,7 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 	arRequest, err := unmarshalToAdmissionReview(body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, fmt.Sprintf(`{"error unmarshalling request body": "%s"}`, err))
+		fmt.Fprintf(w, `{"error unmarshalling request body": "%s"}`, err)
 
 		h.logger.Error(err, "error unmarshaling AdmissionReview")
 		return
@@ -52,7 +52,7 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 	projectAccess := v1alpha1.ProjectAccess{}
 	if err := json.Unmarshal(raw, &projectAccess); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, fmt.Sprintf(`{"error unmarshalling ProjectList": "%s"}`, err))
+		fmt.Fprintf(w, `{"error unmarshalling ProjectList": "%s"}`, err)
 
 		h.logger.Error(err, "error unmarshaling ProjectAccess from AdmissionReview")
 		return
@@ -65,7 +65,7 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 	projects, err := h.ProjectFetcher.GetProjects()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, fmt.Sprintf(`{"error fetching projects": "%s"}`, err.Error()))
+		fmt.Fprintf(w, `{"error fetching projects": "%s"}`, err.Error())
 
 		h.logger.Error(err, "error fetching Projects")
 		return
@@ -78,7 +78,7 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 	patchBytes, err := createPatch(filteredProjects)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, fmt.Sprintf(`{"error creating ProjectAccess patch": "%s"}`, err.Error()))
+		fmt.Fprintf(w, `{"error creating ProjectAccess patch": "%s"}`, err.Error())
 
 		h.logger.Error(err, "error creating ProjectAccess patch")
 		return

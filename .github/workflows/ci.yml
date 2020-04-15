@@ -20,8 +20,8 @@ jobs:
       uses: actions/checkout@v2
     - name: Lint
       run: |
-      curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
-      make lint
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)/bin"
+        make lint
 
   unit-tests:
     name: Unit Tests

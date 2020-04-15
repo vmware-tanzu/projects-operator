@@ -36,4 +36,8 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
     - name: Unit Tests
-      run: make unit-tests
+      run: |
+        export PATH="$PATH:$(go env GOPATH)/bin"
+        go get -u github.com/onsi/ginkgo/ginkgo
+        go get -u github.com/onsi/gomega/...
+        make unit-tests

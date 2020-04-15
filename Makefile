@@ -15,6 +15,9 @@ all: generate format manager webhook
 
 test: lint unit-tests acceptance-tests
 
+test-actions:
+	act -P ubuntu-latest=nektos/act-environments-ubuntu:18.04
+
 unit-tests:
 	ginkgo ${GINKGO_ARGS} -skipPackage acceptance
 

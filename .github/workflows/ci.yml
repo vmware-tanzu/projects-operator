@@ -51,9 +51,13 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+    - name: Load deploy key
+      uses: webfactory/ssh-agent@v0.2.0
+      with:
+        ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
     - name: Get version
       id: version
-      uses: paulhatch/semantic-version@v1
+      uses: paulhatch/semantic-version@v2
       with:
         branch: "master"
         major_pattern: "(MAJOR_VERSION_BUMP)"

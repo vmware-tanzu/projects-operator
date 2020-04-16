@@ -55,6 +55,8 @@ jobs:
       uses: webfactory/ssh-agent@v0.2.0
       with:
         ssh-private-key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+    - name: Use SSH for GitHub
+      run: git remote set-url origin git@github.com:pivotal/projects-operator.git
     - name: Get version
       id: version
       uses: paulhatch/semantic-version@v2

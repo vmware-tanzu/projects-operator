@@ -27,7 +27,7 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.1.0 // indirect
 	k8s.io/api v0.17.5
 	k8s.io/apiextensions-apiserver v0.17.5 // indirect
-	k8s.io/apimachinery v0.17.5
+	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v0.17.5
 	k8s.io/utils v0.0.0-20200229041039-0a110f9eb7ab // indirect
 	sigs.k8s.io/controller-runtime v0.5.2

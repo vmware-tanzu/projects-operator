@@ -37,6 +37,8 @@ spec:
           env:
             - name: CLUSTER_ROLE_REF
               value: {{ .Values.clusterRoleRef}}
+            - name: MAX_CONCURRENT_RECONCILES
+              value: "{{ .Values.maxConcurrentReconciles }}"
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           name: manager

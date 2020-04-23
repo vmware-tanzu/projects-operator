@@ -14,7 +14,8 @@ import (
 
 var _ = Describe("Projects CRD", func() {
 	var (
-		projectName string
+		projectName      string
+		otherProjectName string
 
 		// Note that these users have a corresponding identity in LDAP
 		// see the README.md for further info
@@ -34,6 +35,7 @@ var _ = Describe("Projects CRD", func() {
 		devUserBob = testhelpers.NewKubeActor("bob", devUserBobToken)
 
 		projectName = fmt.Sprintf("my-project-%d", time.Now().UnixNano())
+		otherProjectName = fmt.Sprintf("my-other-project-%d", time.Now().UnixNano())
 	})
 
 	When("alice and bob have not been given access to a Project", func() {
@@ -378,18 +380,11 @@ var _ = Describe("Projects CRD", func() {
 			}).Should(ContainSubstring("created"))
 		})
 
-		It("prevents the deletion of the project until the object is cleaned up", func() {
+		JustBeforeEach(func() {
 			adminUser.MustRunKubectl("delete", "project", projectName, "--wait=false")
+		})
 
-			Consistently(func() string {
-				output := adminUser.MustRunKubectl("get", "projects")
-				return output
-			}).Should(ContainSubstring(projectName))
-			Consistently(func() string {
-				output := adminUser.MustRunKubectl("get", "namespaces")
-				return output
-			}).Should(ContainSubstring(projectName))
-
+		AfterEach(func() {
 			podResource := `
                 apiVersion: v1
                 kind: Pod
@@ -410,6 +405,56 @@ var _ = Describe("Projects CRD", func() {
 				output := adminUser.MustRunKubectl("get", "namespaces")
 				return output
 			}).ShouldNot(ContainSubstring(projectName))
+		})
+
+		It("prevents the deletion of the project until the object is cleaned up", func() {
+			Consistently(func() string {
+				output := adminUser.MustRunKubectl("get", "projects")
+				return output
+			}).Should(ContainSubstring(projectName))
+			Consistently(func() string {
+				output := adminUser.MustRunKubectl("get", "namespaces")
+				return output
+			}).Should(ContainSubstring(projectName))
+		})
+
+		It("still allows for creation and deletion of other projects", func() {
+			Consistently(func() string {
+				output := adminUser.MustRunKubectl("get", "projects")
+				return output
+			}).Should(ContainSubstring(projectName))
+
+			otherProjectResource := fmt.Sprintf(`
+                apiVersion: projects.pivotal.io/v1alpha1
+                kind: Project
+                metadata:
+                  name: %s
+                spec:
+                  access:
+                  - kind: User
+                    name: %s`, otherProjectName, userName("bob"))
+
+			adminUser.MustRunKubectl("apply", "-f", AsFile(otherProjectResource))
+
+			Eventually(func() string {
+				output := adminUser.MustRunKubectl("get", "projects")
+				return output
+			}).Should(ContainSubstring(otherProjectName))
+			Eventually(func() string {
+				output := adminUser.MustRunKubectl("get", "namespaces")
+				return output
+			}).Should(ContainSubstring(otherProjectName))
+
+			adminUser.MustRunKubectl("delete", "project", otherProjectName)
+
+			Eventually(func() string {
+				output := adminUser.MustRunKubectl("get", "projects")
+				return output
+			}).ShouldNot(ContainSubstring(otherProjectName))
+			Eventually(func() string {
+				output := adminUser.MustRunKubectl("get", "namespaces")
+				return output
+			}).ShouldNot(ContainSubstring(otherProjectName))
 		})
 	})
 

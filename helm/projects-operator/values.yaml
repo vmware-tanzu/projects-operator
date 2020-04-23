@@ -24,6 +24,8 @@ affinity: {}
 
 clusterRoleRef: "projects-operator-clusterrole-ref-rolebinding"
 
+maxConcurrentReconciles: 4
+
 kubeRbacProxy:
   image: gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0
 

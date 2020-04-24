@@ -2,7 +2,7 @@
 
 When contributing to this repository, please first discuss the change you wish to make via [GitHub issue](https://github.com/pivotal/projects-operator/issues) before making a pull request.
 
-### Dependencies
+## Dependencies
 
 The following dependencies need to be installed in order to hack on projects-operator:
 
@@ -16,46 +16,72 @@ The following dependencies need to be installed in order to hack on projects-ope
 * [helm](https://helm.sh/) (v3)
 * [skaffold](https://github.com/GoogleContainerTools/skaffold) (v1.6.0+)
 
-### Development and testing workflow
+## Testing your contribution
 
-We are  using [skaffold](https://github.com/GoogleContainerTools/skaffold) for
-development and testing workflow. In order to use this workflow, you must first
-download `skaffold` and then update the `skaffold.yaml` file as required.
-Specifically you will need to point to an image registry you have access to and
-to set the `clusterRoleRef`. The default `clusterRoleRef` is set to the name of
-the role the acceptance tests use.
+### Unit tests
 
-#### Running tests with a kubernetes cluster
-
-1. Target a cluster using OIDC pointing to an LDAP.
-    1. You can set up openldap as a container by running `./ldap/deploy-ldap.sh`
-    1. Run `./ldap/generate-uesrs.sh <ldap_host> <admin_dn> <admin_password>` and take note of the generated password.
-1. Ensure that a `registry-secret` exists for your registry in the namespace you are deploying to.
-    1. `kubectl create secret docker-registry registry-secret --docker-server=<your-registry-server> --docker-username=<your-name> --docker-password=<your-password> --docker-email=<your-email>`
-
-In one terminal window:
-
+Unit tests can be run with:
 ```
-$ export CLUSTER_ROLE_REF="my-clusterrole"
-$ make install
+$ make unit-tests
+```
+
+### Acceptance tests
+
+Acceptance tests are run against an installation of projects-operator on a cluster using OIDC backed by LDAP, there are a number
+of ways to install projects-operator however the recommended way for development is to use Skaffold.
+
+#### Configuring the LDAP server
+
+You can set up openldap as a container by running:
+```
+$ ./ldap/deploy-ldap.sh
+```
+Test users can then be created by running:
+```
+$ ./ldap/generate-users.sh <ldap_host> <admin_dn> <admin_password>
+```
+Take note of the generated password.
+
+This LDAP server must then be set up as the OIDC backing for the Kubernetes cluster to be used for acceptance, see
+[OpenID Connect Tokens](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens).
+
+#### Installing projects-operator via skaffold
+
+In order to use this workflow, you must first download [skaffold](https://github.com/GoogleContainerTools/skaffold)
+and then update the `skaffold.yaml` file as required. Specifically you will need to point to an image registry you
+have access to and to set the `clusterRoleRef`. The default `clusterRoleRef` is set to the name ofthe role the
+acceptance tests use. N.B. `skaffold` must be v1.6.0+.
+
+You also need to ensure that a `docker-registry` secret named `registry-secret` exists for your registry in the
+namespace you are deploying to, this can be done by running:
+```
+$ kubectl create secret docker-registry registry-secret --docker-server=<your-registry-server> --docker-username=<your-username> --docker-password=<your-password> --docker-email=<your-email>
+```
+
+Once configured, in a new terminal window you can then run:
+```
 $ make dev
 ```
+This will monitor for changes on the codebase and then build, tag and push a new image to the configured registry.
+It will then also do a helm update. Once the helm update has completed you are free to run your tests.
 
-This will first apply the necessary RBAC rules to the cluster and do initial setup,
-then monitor for changes on the codebase and then build, tag and push a new
-image to the configured registry. It will then also do a helm update. Once the
-helm update has completed you are free to run your tests.
+#### Running the tests
 
-In a separate window:
+Setup the following env vars:
+```
+export UAA_LOCATION=<UAA_SERVER_LOCATION>
+export CLUSTER_API_LOCATION=<CLUSTER>
+export CLUSTER_NAME=<CLUSTER_NAME>
+export DEVELOPER_PASSWORD=<DEVELOPER_PASSWORD>
+export OIDC_USER_PREFIX=<OIDC_USER_PREFIX> (optional)
+export OIDC_GROUP_PREFIX=<OIDC_GROUP_PREFIX> (optional)
+```
+Note: `DEVELOPER_PASSWORD` is password of the LDAP users generated in [Configuring LDAP server](#configuring-ldap-server).
 
-1. Set up the following environment variables:
-    `export UAA_LOCATION=<UAA_SERVER_LOCATION>`
-    `export CLUSTER_API_LOCATION=<CLUSTER>`
-    `export CLUSTER_NAME=<CLUSTER_NAME>`
-    `export DEVELOPER_PASSWORD=<PASSWORD_ABOVE>`
-    `export OIDC_USER_PREFIX=<OIDC_USER_PREFIX>` (optional)
-    `export OIDC_GROUP_PREFIX=<OIDC_GROUP_PREFIX>` (optional)
-1. Run `make test`
+Then run:
+```
+$ make acceptance-tests
+```
 
 #### Running locally
 
@@ -77,7 +103,7 @@ rules:
   - "*"
 ```
 
-To run the controller locally using go:
+To run the controller locally using Go:
 
 ```
 $ export CLUSTER_ROLE_REF="my-clusterrole"

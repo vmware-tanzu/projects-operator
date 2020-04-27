@@ -9,11 +9,9 @@ kubernetes namespace along with a corresponding set of RBAC rules.
 
 ## Usage
 
-`projects-operator` is currently deployed using [helm (v3)](https://helm.sh/),
-but it is also possible to run the controller locally for development and
-testing purposes.
+`projects-operator` is currently deployed using [helm (v3)](https://helm.sh/).
 
-NB: In both cases you must first create a `ClusterRole` that contains the RBAC
+You must first create a `ClusterRole` that contains the RBAC
 rules you wish to apply to each of the `Project`s. For example:
 
 ```
@@ -29,38 +27,6 @@ rules:
   verbs:
   - "*"
 ```
-
-Also note that some functionality (namely webhook functionality, such as
-listing projects) does not work when running locally. To test webhook-related
-features you will need to deploy the webhook to a kubernetes cluster.
-
-### Running locally
-
-To run the controller locally using go:
-
-```
-$ export CLUSTER_ROLE_REF="my-clusterrole"
-$ make install && make run
-```
-
-### Development and testing workflow
-
-We are  using [skaffold](https://github.com/GoogleContainerTools/skaffold) for
-development and testing workflow. In order to use this workflow, you must first
-download `skaffold` and then update the `skaffold.yaml` file as required.
-Specifically you will need to point to an image registry you have access to and
-to set the `clusterRoleRef`. The default `clusterRoleRef` is set to the name of
-the role the acceptance tests use.
-
-N.B. `skaffold` must be v1.6.0+.
-
-You also need to ensure that a `registry-secret` exists for your registry in
-the namespace you are deploying to.
-
-Once configured, you can then run `make dev` in a new terminal window. This
-will monitor for changes on the codebase and then build, tag and push a new
-image to the configured registry. It will then also do a helm update. Once the
-helm update has completed you are free to run your tests.
 
 ### Deploying via helm
 
@@ -115,32 +81,3 @@ projects-operator makes use of three webhooks to provide further functionality, 
 1. A ValidatingWebhook (invoked on Project CREATE) - ensures that Projects cannot be created if they have the same name as an existing namespace.
 1. A MutatingWebhook (invoked on ProjectAccess CREATE, UPDATE) - returns a modified ProjectAccess containing the list of Projects the user has access to.
 1. A MutatingWebhook (invoked on Project CREATE) - adds the user from the request as a member of the project if a project is created with no entries in access.
-
-### Tests
-
-To run the acceptance tests you must have a pks k8s cluster using OIDC pointing to an LDAP. You can set up openldap as a container by running `./ldap/deploy-ldap.sh`.
-
-1. Run `./ldap/generate-users.sh <ldap_host> <admin_dn> <admin_password>` and take note of the generated password
-1. Setup the following env vars:
-  1. `export UAA_LOCATION=<UAA_SERVER_LOCATION>`
-  1. `export CLUSTER_API_LOCATION=<CLUSTER>`
-  1. `export CLUSTER_NAME=<CLUSTER_NAME>`
-  1. `export DEVELOPER_PASSWORD=<PASSWORD_ABOVE>`
-  1. `export OIDC_USER_PREFIX=<OIDC_USER_PREFIX>` (optional)
-  1. `export OIDC_GROUP_PREFIX=<OIDC_GROUP_PREFIX>` (optional)
-
-Then simply run `make test`.
-
-### Dependencies
-
-The following dependencies need to be installed in order to hack on projects-operator:
-
-* [Go](https://golang.org/doc/install)
-  * [ginkgo](https://github.com/onsi/ginkgo)
-  * [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) (v6)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-* [kubebuilder 2.0](https://github.com/kubernetes-sigs/kubebuilder)
-* [golangci-lint](https://github.com/golangci/golangci-lint)
-* [docker](https://www.docker.com/)
-* [helm](https://helm.sh/) (v3)
-* [skaffold](https://github.com/GoogleContainerTools/skaffold) (v1.6.0+)

@@ -18,6 +18,7 @@ deploy:
       setValues:
         clusterRoleRef: acceptance-test-clusterrole
         imagePullPolicy: Always
+        maxConcurrentReconciles: 4
       imageStrategy:
         fqn: {}
     flags:

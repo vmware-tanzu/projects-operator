@@ -18,6 +18,7 @@ import (
 	"errors"
 	"flag"
 	"os"
+	"strconv"
 
 	v1 "k8s.io/api/rbac/v1"
 
@@ -77,6 +78,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	var maxConcurrentReconciles int
+	maxConcurrentReconcilesString, maxConcurrentReconcilesExists := os.LookupEnv("MAX_CONCURRENT_RECONCILES")
+	if !maxConcurrentReconcilesExists {
+		err = errors.New("MAX_CONCURRENT_RECONCILES env must be set")
+		setupLog.Error(err, "unable to create controller", "controller", "Project")
+		os.Exit(1)
+	} else {
+		maxConcurrentReconciles, err = strconv.Atoi(maxConcurrentReconcilesString)
+		if err != nil {
+			err = errors.New("MAX_CONCURRENT_RECONCILES env must be set to an integer")
+			setupLog.Error(err, "unable to create controller", "controller", "Project")
+			os.Exit(1)
+		}
+	}
+
 	if err = (&controllers.ProjectReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Project"),
@@ -86,7 +102,7 @@ func main() {
 			Kind:     "ClusterRole",
 			Name:     clusterRole,
 		},
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, maxConcurrentReconciles); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Project")
 		os.Exit(1)
 	}

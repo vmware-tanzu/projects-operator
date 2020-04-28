@@ -8,8 +8,6 @@ require (
 	github.com/caarlos0/env/v6 v6.2.1
 	github.com/go-logr/logr v0.1.0
 	github.com/go-logr/zapr v0.1.1 // indirect
-	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.4.0 // indirect
 	github.com/gophercloud/gophercloud v0.8.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
@@ -25,11 +23,9 @@ require (
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073 // indirect
 	golang.org/x/tools v0.0.0-20200422205258-72e4a01eba43 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.1.0 // indirect
-	k8s.io/api v0.17.5
-	k8s.io/apiextensions-apiserver v0.17.5 // indirect
-	k8s.io/apimachinery v0.17.5
-	k8s.io/client-go v0.17.5
-	k8s.io/utils v0.0.0-20200229041039-0a110f9eb7ab // indirect
-	sigs.k8s.io/controller-runtime v0.5.2
-	sigs.k8s.io/yaml v1.2.0 // indirect
+	k8s.io/api v0.18.2
+	k8s.io/apimachinery v0.18.2
+	k8s.io/client-go v0.18.2
+	k8s.io/kube-openapi v0.0.0-20200316234421-82d701f24f9d // indirect
+	sigs.k8s.io/controller-runtime v0.6.0
 )

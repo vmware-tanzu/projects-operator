@@ -431,10 +431,18 @@ var _ = Describe("ProjectController", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
-					first := project.Spec.Access[0]
-					project.Spec.Access = []projectv1alpha1.SubjectRef{first}
+					// need to retrieve the reconciled project so that it has the correct ResourceVersion
+					reconciledProject := &projectv1alpha1.Project{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Namespace: project.Namespace,
+						Name:      project.Name,
+					}, reconciledProject)
+					Expect(err).NotTo(HaveOccurred())
 
-					err = fakeClient.Update(context.TODO(), project)
+					first := reconciledProject.Spec.Access[0]
+					reconciledProject.Spec.Access = []projectv1alpha1.SubjectRef{first}
+
+					err = fakeClient.Update(context.TODO(), reconciledProject)
 					Expect(err).NotTo(HaveOccurred())
 
 					_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
@@ -472,9 +480,17 @@ var _ = Describe("ProjectController", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
-					project.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+					// need to retrieve the reconciled project so that it has the correct ResourceVersion
+					reconciledProject := &projectv1alpha1.Project{}
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Namespace: project.Namespace,
+						Name:      project.Name,
+					}, reconciledProject)
+					Expect(err).NotTo(HaveOccurred())
 
-					err = fakeClient.Update(context.TODO(), project)
+					reconciledProject.DeletionTimestamp = &metav1.Time{Time: time.Now()}
+
+					err = fakeClient.Update(context.TODO(), reconciledProject)
 					Expect(err).NotTo(HaveOccurred())
 
 					_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))

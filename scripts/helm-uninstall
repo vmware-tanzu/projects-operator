@@ -2,10 +2,12 @@
 
 set -euo pipefail
 
+NAMESPACE=${NAMESPACE:-projects-operator}
+
 main () {
-  helm uninstall projects-operator
+  helm uninstall projects-operator --namespace "$NAMESPACE"
   kubectl get crds | awk '{print $1}' | grep projects.pivotal.io | grep project | xargs kubectl delete crd
-  kubectl delete namespace projects-operator
+  kubectl delete namespace "$NAMESPACE"
 }
 
 main

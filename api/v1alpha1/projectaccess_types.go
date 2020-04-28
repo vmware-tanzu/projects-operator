@@ -24,6 +24,7 @@ type ProjectAccessSpec struct {
 
 // ProjectAccessStatus defines the observed state of ProjectAccess
 type ProjectAccessStatus struct {
+	// +optional
 	Projects []string `json:"projects,omitempty"`
 }
 

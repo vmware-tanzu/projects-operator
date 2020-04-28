@@ -35,8 +35,6 @@ spec:
           description: ProjectSpec defines the desired state of Project
           properties:
             access:
-              description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                Important: Run "make" to regenerate code after modifying this file'
               items:
                 properties:
                   kind:

@@ -108,7 +108,7 @@ func (r *ProjectReconciler) createNamespace(project *projectv1alpha1.Project) er
 		},
 	}
 
-	if err := controllerutil.SetControllerReference(project, namespace, r.Scheme); err != nil {
+	if err := controllerutil.SetOwnerReference(project, namespace, r.Scheme); err != nil {
 		return err
 	}
 
@@ -148,7 +148,7 @@ func (r *ProjectReconciler) createClusterRole(project *projectv1alpha1.Project) 
 			Name: clusterRoleName(project),
 		},
 	}
-	if err := controllerutil.SetControllerReference(project, clusterRole, r.Scheme); err != nil {
+	if err := controllerutil.SetOwnerReference(project, clusterRole, r.Scheme); err != nil {
 		return err
 	}
 
@@ -190,7 +190,7 @@ func (r *ProjectReconciler) createClusterRoleBinding(project *projectv1alpha1.Pr
 			Name: project.Name + "-clusterrolebinding",
 		},
 	}
-	if err := controllerutil.SetControllerReference(project, clusterRoleBinding, r.Scheme); err != nil {
+	if err := controllerutil.SetOwnerReference(project, clusterRoleBinding, r.Scheme); err != nil {
 		return err
 	}
 
@@ -219,7 +219,7 @@ func (r *ProjectReconciler) createRoleBinding(project *projectv1alpha1.Project) 
 			Namespace: project.Name,
 		},
 	}
-	if err := controllerutil.SetControllerReference(project, roleBinding, r.Scheme); err != nil {
+	if err := controllerutil.SetOwnerReference(project, roleBinding, r.Scheme); err != nil {
 		return err
 	}
 

@@ -34,6 +34,8 @@ import (
 	"github.com/pivotal/projects-operator/pkg/finalizer"
 )
 
+const projectFinalizer = "project.finalizer.projects.pivotal.io"
+
 type RoleConfiguration struct {
 	APIGroups []string
 	Resources []string
@@ -128,7 +130,7 @@ func (r *ProjectReconciler) deleteNamespace(project *projectv1alpha1.Project) er
 		if err := r.Client.Get(context.Background(), types.NamespacedName{Name: project.Name}, namespace); err != nil {
 			if errors.IsNotFound(err) {
 				status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
-					finalizer.RemoveFinalizer(project, "wait-for-namespace-to-be-deleted")
+					finalizer.RemoveFinalizer(project, projectFinalizer)
 					return nil
 				})
 				if err != nil {
@@ -261,7 +263,7 @@ func subjects(project *projectv1alpha1.Project) []rbacv1.Subject {
 
 func (r *ProjectReconciler) addFinalizer(project *projectv1alpha1.Project) error {
 	status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
-		finalizer.AddFinalizer(project, "wait-for-namespace-to-be-deleted")
+		finalizer.AddFinalizer(project, projectFinalizer)
 		return nil
 	})
 	if err != nil {

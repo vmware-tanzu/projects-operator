@@ -101,7 +101,7 @@ var _ = Describe("ProjectController", func() {
 						Name: project.Name,
 					}, updatedProject)
 					Expect(err).NotTo(HaveOccurred())
-					Expect(updatedProject.Finalizers).To(ConsistOf("wait-for-namespace-to-be-deleted"))
+					Expect(updatedProject.Finalizers).To(ConsistOf("project.finalizer.projects.pivotal.io"))
 				})
 			})
 

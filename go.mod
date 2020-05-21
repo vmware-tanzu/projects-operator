@@ -23,9 +23,9 @@ require (
 	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073 // indirect
 	golang.org/x/tools v0.0.0-20200422205258-72e4a01eba43 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.1.0 // indirect
-	k8s.io/api v0.18.2
-	k8s.io/apimachinery v0.18.2
+	k8s.io/api v0.18.3
+	k8s.io/apimachinery v0.18.3
 	k8s.io/client-go v0.18.2
-	k8s.io/kube-openapi v0.0.0-20200316234421-82d701f24f9d // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
+	sigs.k8s.io/structured-merge-diff/v2 v2.0.1 // indirect
 )

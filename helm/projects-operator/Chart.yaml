@@ -1,4 +1,4 @@
-apiVersion: v1alpha1
+apiVersion: v2
 name: projects-operator
 description: A Helm chart to install the Projects Operator
 

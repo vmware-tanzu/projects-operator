@@ -11,7 +11,7 @@ import (
 	admissionv1 "k8s.io/api/admission/v1"
 )
 
-// +kubebuilder:rbac:groups=projects.pivotal.io,resources=projectaccesses,verbs=get;create;delete
+// +kubebuilder:rbac:groups=projects.vmware.com,resources=projectaccesses,verbs=get;create;delete
 
 func NewHandler(logger logr.Logger, namespaceFetcher NamespaceFetcher, projectFetcher ProjectFetcher, projectFilterer ProjectFilterer) http.Handler {
 	mux := http.NewServeMux()

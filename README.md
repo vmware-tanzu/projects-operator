@@ -51,7 +51,7 @@ $ helm install projects-operator -helm/projects-operator \
 Apply projects yaml with a project name and a list of users/groups/serviceaccounts who have access, for example:
 
 ```yaml
-apiVersion: projects.pivotal.io/v1alpha1
+apiVersion: projects.vmware.com/v1alpha1
 kind: Project
 metadata:
   name: project-sample

@@ -223,7 +223,7 @@ func (ka KubeActor) RunPmCLI(pathToCLI string, args ...string) (string, error) {
 
 func (ka KubeActor) CreateProject(projectName string) {
 	ka.MustKubeCtlApply(fmt.Sprintf(`
-apiVersion: projects.pivotal.io/v1alpha1
+apiVersion: projects.vmware.com/v1alpha1
 kind: Project
 metadata:
   name: %s

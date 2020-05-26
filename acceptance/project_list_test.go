@@ -32,7 +32,7 @@ var _ = Describe("ProjectAccess CRD", func() {
 		projectAccessName = fmt.Sprintf("my-projectaccess-%d", time.Now().UnixNano())
 
 		projectResource = fmt.Sprintf(`
-                apiVersion: projects.pivotal.io/v1alpha1
+                apiVersion: projects.vmware.com/v1alpha1
                 kind: Project
                 metadata:
                  name: %s
@@ -52,7 +52,7 @@ var _ = Describe("ProjectAccess CRD", func() {
 
 	It("can be created", func() {
 		projectAccessResource := fmt.Sprintf(`
-                apiVersion: projects.pivotal.io/v1alpha1
+                apiVersion: projects.vmware.com/v1alpha1
                 kind: ProjectAccess
                 metadata:
                   name: %s`, projectAccessName)
@@ -63,7 +63,7 @@ var _ = Describe("ProjectAccess CRD", func() {
 
 	It("eventually has its status updated to include a list of projects alice has access to", func() {
 		projectAccessResource := fmt.Sprintf(`
-                apiVersion: projects.pivotal.io/v1alpha1
+                apiVersion: projects.vmware.com/v1alpha1
                 kind: ProjectAccess
                 metadata:
                   name: %s`, projectAccessName)

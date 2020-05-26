@@ -1,4 +1,4 @@
-domain: pivotal.io
+domain: vmware.com
 repo: projects-operator
 resources:
 - group: projects

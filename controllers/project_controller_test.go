@@ -100,7 +100,7 @@ var _ = Describe("ProjectController", func() {
 						Name: project.Name,
 					}, updatedProject)
 					Expect(err).NotTo(HaveOccurred())
-					Expect(updatedProject.Finalizers).To(ConsistOf("project.finalizer.projects.pivotal.io"))
+					Expect(updatedProject.Finalizers).To(ConsistOf("project.finalizer.projects.vmware.com"))
 				})
 			})
 
@@ -189,7 +189,7 @@ var _ = Describe("ProjectController", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(clusterRole.Rules).To(HaveLen(1))
-					Expect(clusterRole.Rules[0].APIGroups[0]).To(Equal("projects.pivotal.io"))
+					Expect(clusterRole.Rules[0].APIGroups[0]).To(Equal("projects.vmware.com"))
 					Expect(clusterRole.Rules[0].Resources[0]).To(Equal("projects"))
 					Expect(clusterRole.Rules[0].ResourceNames[0]).To(Equal(project.Name))
 					Expect(clusterRole.Rules[0].Verbs).To(Equal([]string{"get", "update", "delete", "patch", "watch"}))

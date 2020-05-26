@@ -1,4 +1,4 @@
-apiVersion: projects.pivotal.io/v1alpha1
+apiVersion: projects.vmware.com/v1alpha1
 kind: Project
 metadata:
   name: cody-project

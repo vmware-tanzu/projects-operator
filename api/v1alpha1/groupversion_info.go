@@ -14,7 +14,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Package v1alpha1 contains API Schema definitions for the projects v1alpha1 API group
 // +kubebuilder:object:generate=true
-// +groupName=projects.pivotal.io
+// +groupName=projects.vmware.com
 package v1alpha1
 
 import (
@@ -24,7 +24,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "projects.pivotal.io", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "projects.vmware.com", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

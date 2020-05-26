@@ -89,10 +89,10 @@ webhooks:
       path: /projectaccess
       namespace: "{{ .Release.Namespace }}"
   failurePolicy: Fail
-  name: projectaccess.projects.pivotal.io
+  name: projectaccess.projects.vmware.com
   rules:
   - apiGroups:
-    - projects.pivotal.io
+    - projects.vmware.com
     apiVersions:
     - v1alpha1
     operations:
@@ -114,10 +114,10 @@ webhooks:
       path: /project-create
       namespace: "{{ .Release.Namespace }}"
   failurePolicy: Fail
-  name: project.projects.pivotal.io
+  name: project.projects.vmware.com
   rules:
   - apiGroups:
-    - projects.pivotal.io
+    - projects.vmware.com
     apiVersions:
     - v1alpha1
     operations:
@@ -138,10 +138,10 @@ webhooks:
       path: /project
       namespace: "{{ .Release.Namespace }}"
   failurePolicy: Fail
-  name: project.projects.pivotal.io
+  name: project.projects.vmware.com
   rules:
   - apiGroups:
-    - projects.pivotal.io
+    - projects.vmware.com
     apiVersions:
     - v1alpha1
     operations:

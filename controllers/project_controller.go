@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-const projectFinalizer = "project.finalizer.projects.pivotal.io"
+const projectFinalizer = "project.finalizer.projects.vmware.com"
 
 type RoleConfiguration struct {
 	APIGroups []string
@@ -49,8 +49,8 @@ type ProjectReconciler struct {
 	ClusterRoleRef rbacv1.RoleRef
 }
 
-// +kubebuilder:rbac:groups=projects.pivotal.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=projects.pivotal.io,resources=projects/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=projects.vmware.com,resources=projects,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=projects.vmware.com,resources=projects/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=watch;list;create;get;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;roles,verbs=watch;list;create;get;update;patch
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;rolebindings,verbs=watch;list;create;get;update;patch
@@ -157,7 +157,7 @@ func (r *ProjectReconciler) createClusterRole(project *projects.Project) error {
 		clusterRole.Rules = []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{
-					"projects.pivotal.io",
+					"projects.vmware.com",
 				},
 				Resources: []string{
 					"projects",

@@ -18,7 +18,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - projects.pivotal.io
+  - projects.vmware.com
   resources:
   - projects
   verbs:
@@ -30,7 +30,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - projects.pivotal.io
+  - projects.vmware.com
   resources:
   - projects/status
   verbs:

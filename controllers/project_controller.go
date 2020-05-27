@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
+	"github.com/pivotal/projects-operator/pkg/finalizer"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -29,9 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	projectv1alpha1 "github.com/pivotal/projects-operator/api/v1alpha1"
-	"github.com/pivotal/projects-operator/pkg/finalizer"
 )
 
 const projectFinalizer = "project.finalizer.projects.pivotal.io"
@@ -60,7 +59,7 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
 	_ = r.Log.WithValues("project", req.NamespacedName)
 
-	project := &projectv1alpha1.Project{}
+	project := &projects.Project{}
 
 	if err := r.Client.Get(context.Background(), req.NamespacedName, project); err != nil {
 		if errors.IsNotFound(err) {
@@ -97,12 +96,12 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, maxConcurrentReconciles int) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&projectv1alpha1.Project{}).
+		For(&projects.Project{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: maxConcurrentReconciles}).
 		Complete(r)
 }
 
-func (r *ProjectReconciler) createNamespace(project *projectv1alpha1.Project) error {
+func (r *ProjectReconciler) createNamespace(project *projects.Project) error {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   project.Name,
@@ -123,7 +122,7 @@ func (r *ProjectReconciler) createNamespace(project *projectv1alpha1.Project) er
 	return nil
 }
 
-func (r *ProjectReconciler) deleteNamespace(project *projectv1alpha1.Project) error {
+func (r *ProjectReconciler) deleteNamespace(project *projects.Project) error {
 	_ = r.Client.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: project.Name}})
 	for {
 		namespace := &corev1.Namespace{}
@@ -144,7 +143,7 @@ func (r *ProjectReconciler) deleteNamespace(project *projectv1alpha1.Project) er
 	}
 }
 
-func (r *ProjectReconciler) createClusterRole(project *projectv1alpha1.Project) error {
+func (r *ProjectReconciler) createClusterRole(project *projects.Project) error {
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleName(project),
@@ -186,7 +185,7 @@ func (r *ProjectReconciler) createClusterRole(project *projectv1alpha1.Project) 
 	return nil
 }
 
-func (r *ProjectReconciler) createClusterRoleBinding(project *projectv1alpha1.Project) error {
+func (r *ProjectReconciler) createClusterRoleBinding(project *projects.Project) error {
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: project.Name + "-clusterrolebinding",
@@ -214,7 +213,7 @@ func (r *ProjectReconciler) createClusterRoleBinding(project *projectv1alpha1.Pr
 	return nil
 }
 
-func (r *ProjectReconciler) createRoleBinding(project *projectv1alpha1.Project) error {
+func (r *ProjectReconciler) createRoleBinding(project *projects.Project) error {
 	roleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      project.Name + "-rolebinding",
@@ -239,11 +238,11 @@ func (r *ProjectReconciler) createRoleBinding(project *projectv1alpha1.Project) 
 	return nil
 }
 
-func clusterRoleName(project *projectv1alpha1.Project) string {
+func clusterRoleName(project *projects.Project) string {
 	return project.Name + "-clusterrole"
 }
 
-func subjects(project *projectv1alpha1.Project) []rbacv1.Subject {
+func subjects(project *projects.Project) []rbacv1.Subject {
 	var subjects []rbacv1.Subject
 	for _, userRef := range project.Spec.Access {
 
@@ -261,7 +260,7 @@ func subjects(project *projectv1alpha1.Project) []rbacv1.Subject {
 	return subjects
 }
 
-func (r *ProjectReconciler) addFinalizer(project *projectv1alpha1.Project) error {
+func (r *ProjectReconciler) addFinalizer(project *projects.Project) error {
 	status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
 		finalizer.AddFinalizer(project, projectFinalizer)
 		return nil

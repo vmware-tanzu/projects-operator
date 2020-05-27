@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"github.com/pivotal/projects-operator/api/v1alpha1"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
 )
 
@@ -49,7 +49,7 @@ func (h *ProjectAccessHandler) HandleProjectAccess(w http.ResponseWriter, r *htt
 
 	// 3. Unmarshal the admissionreview.object.raw into a v1alpha1.ProjectAccess
 	raw := arRequest.Request.Object.Raw
-	projectAccess := v1alpha1.ProjectAccess{}
+	projectAccess := projects.ProjectAccess{}
 	if err := json.Unmarshal(raw, &projectAccess); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, `{"error unmarshalling ProjectList": "%s"}`, err)

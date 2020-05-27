@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/pivotal/projects-operator/api/v1alpha1"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	"github.com/pivotal/projects-operator/pkg/webhook"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -26,7 +25,7 @@ var (
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
-	_ = v1alpha1.AddToScheme(scheme)
+	_ = projects.AddToScheme(scheme)
 }
 
 func main() {

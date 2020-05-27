@@ -20,6 +20,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,19 +30,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	projectv1alpha1 "github.com/pivotal/projects-operator/api/v1alpha1"
-	"github.com/pivotal/projects-operator/controllers"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/pivotal/projects-operator/controllers"
 )
 
 var _ = Describe("ProjectController", func() {
 	Describe("Reconcile", func() {
 		var (
-			reconciler     controllers.ProjectReconciler
+			reconciler     ProjectReconciler
 			fakeClient     client.Client
-			project        *projectv1alpha1.Project
+			project        *projects.Project
 			labels         map[string]string
 			user1          string
 			user2          string
@@ -52,7 +51,7 @@ var _ = Describe("ProjectController", func() {
 		BeforeEach(func() {
 			scheme = runtime.NewScheme()
 
-			projectv1alpha1.AddToScheme(scheme)
+			projects.AddToScheme(scheme)
 			corev1.AddToScheme(scheme)
 			rbacv1.AddToScheme(scheme)
 
@@ -69,7 +68,7 @@ var _ = Describe("ProjectController", func() {
 				Name:     "some-cluster-role",
 			}
 
-			reconciler = controllers.ProjectReconciler{
+			reconciler = ProjectReconciler{
 				Log:            ctrl.Log.WithName("controllers").WithName("Project"),
 				Client:         fakeClient,
 				Scheme:         scheme,
@@ -96,7 +95,7 @@ var _ = Describe("ProjectController", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
-					updatedProject := &projectv1alpha1.Project{}
+					updatedProject := &projects.Project{}
 					err = fakeClient.Get(context.TODO(), client.ObjectKey{
 						Name: project.Name,
 					}, updatedProject)
@@ -202,12 +201,12 @@ var _ = Describe("ProjectController", func() {
 					var serviceAccountName = "service-account"
 
 					BeforeEach(func() {
-						project = &projectv1alpha1.Project{
+						project = &projects.Project{
 							ObjectMeta: metav1.ObjectMeta{
 								Name: "my-project",
 							},
-							Spec: projectv1alpha1.ProjectSpec{
-								Access: []projectv1alpha1.SubjectRef{
+							Spec: projects.ProjectSpec{
+								Access: []projects.SubjectRef{
 									{
 										Kind:      "ServiceAccount",
 										Name:      serviceAccountName,
@@ -328,12 +327,12 @@ var _ = Describe("ProjectController", func() {
 					BeforeEach(func() {
 						groupName = "my-group"
 
-						project = &projectv1alpha1.Project{
+						project = &projects.Project{
 							ObjectMeta: metav1.ObjectMeta{
 								Name: "my-project",
 							},
-							Spec: projectv1alpha1.ProjectSpec{
-								Access: []projectv1alpha1.SubjectRef{
+							Spec: projects.ProjectSpec{
+								Access: []projects.SubjectRef{
 									{
 										Kind:      "Group",
 										Name:      groupName,
@@ -432,7 +431,7 @@ var _ = Describe("ProjectController", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					// need to retrieve the reconciled project so that it has the correct ResourceVersion
-					reconciledProject := &projectv1alpha1.Project{}
+					reconciledProject := &projects.Project{}
 					err = fakeClient.Get(context.TODO(), client.ObjectKey{
 						Namespace: project.Namespace,
 						Name:      project.Name,
@@ -440,7 +439,7 @@ var _ = Describe("ProjectController", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					first := reconciledProject.Spec.Access[0]
-					reconciledProject.Spec.Access = []projectv1alpha1.SubjectRef{first}
+					reconciledProject.Spec.Access = []projects.SubjectRef{first}
 
 					err = fakeClient.Update(context.TODO(), reconciledProject)
 					Expect(err).NotTo(HaveOccurred())
@@ -481,7 +480,7 @@ var _ = Describe("ProjectController", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					// need to retrieve the reconciled project so that it has the correct ResourceVersion
-					reconciledProject := &projectv1alpha1.Project{}
+					reconciledProject := &projects.Project{}
 					err = fakeClient.Get(context.TODO(), client.ObjectKey{
 						Namespace: project.Namespace,
 						Name:      project.Name,
@@ -502,7 +501,7 @@ var _ = Describe("ProjectController", func() {
 					}, namespace)
 					Expect(errors.IsNotFound(err)).To(BeTrue())
 
-					updatedProject := &projectv1alpha1.Project{}
+					updatedProject := &projects.Project{}
 					err = fakeClient.Get(context.TODO(), client.ObjectKey{
 						Name: project.Name,
 					}, updatedProject)
@@ -522,22 +521,22 @@ func Request(namespace, name string) ctrl.Request {
 	}
 }
 
-func Project(projectName string, labels map[string]string, users ...string) *projectv1alpha1.Project {
-	subjectRefs := []projectv1alpha1.SubjectRef{}
+func Project(projectName string, labels map[string]string, users ...string) *projects.Project {
+	subjectRefs := []projects.SubjectRef{}
 
 	for _, user := range users {
-		subjectRefs = append(subjectRefs, projectv1alpha1.SubjectRef{
+		subjectRefs = append(subjectRefs, projects.SubjectRef{
 			Kind: "User",
 			Name: user,
 		})
 	}
 
-	return &projectv1alpha1.Project{
+	return &projects.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   projectName,
 			Labels: labels,
 		},
-		Spec: projectv1alpha1.ProjectSpec{
+		Spec: projects.ProjectSpec{
 			Access: subjectRefs,
 		},
 	}

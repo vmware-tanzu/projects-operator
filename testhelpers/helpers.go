@@ -17,17 +17,17 @@ import (
 	"path/filepath"
 	"runtime"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gbytes"
-	. "github.com/onsi/gomega/gexec"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
 	authenticationv1 "k8s.io/api/authentication/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/pivotal/projects-operator/api/v1alpha1"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gbytes"
+	. "github.com/onsi/gomega/gexec"
 )
 
 const (
@@ -262,7 +262,7 @@ func createKubeConfigCopy() string {
 }
 
 func ValidRequestForProjectWebhookAPI(method, path, projectName string, requestWithServiceAccount bool) *http.Request {
-	project := v1alpha1.Project{
+	project := projects.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: projectName,
 		},
@@ -274,12 +274,12 @@ func ValidRequestForProjectWebhookAPI(method, path, projectName string, requestW
 }
 
 func ValidRequestWithUsersForProjectWebhookAPI(method, path, projectName string) *http.Request {
-	project := v1alpha1.Project{
+	project := projects.Project{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: projectName,
 		},
-		Spec: v1alpha1.ProjectSpec{
-			Access: []v1alpha1.SubjectRef{
+		Spec: projects.ProjectSpec{
+			Access: []projects.SubjectRef{
 				{
 					Kind: rbacv1.UserKind,
 					Name: "project-owner",
@@ -298,7 +298,7 @@ func ValidRequestWithUsersForProjectWebhookAPI(method, path, projectName string)
 }
 
 func ValidRequestForProjectAccessWebhookAPI(method, path string) *http.Request {
-	projectAccess := v1alpha1.ProjectAccess{}
+	projectAccess := projects.ProjectAccess{}
 	projectAccessJson, err := json.Marshal(projectAccess)
 	Expect(err).NotTo(HaveOccurred())
 

@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/go-logr/logr/testing"
-	"github.com/pivotal/projects-operator/api/v1alpha1"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	"github.com/pivotal/projects-operator/testhelpers"
 	admissionv1 "k8s.io/api/admission/v1"
 	authenticationv1 "k8s.io/api/authentication/v1"
@@ -34,40 +34,40 @@ var _ = Describe("ProjectAccessHandler", func() {
 		responseRecorder = httptest.NewRecorder()
 
 		fakeProjectFetcher = new(webhookfakes.FakeProjectFetcher)
-		fakeProjectFetcher.GetProjectsReturns([]v1alpha1.Project{
-			v1alpha1.Project{
+		fakeProjectFetcher.GetProjectsReturns([]projects.Project{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "my-project-a",
 				},
-				Spec: v1alpha1.ProjectSpec{
-					Access: []v1alpha1.SubjectRef{
-						v1alpha1.SubjectRef{
+				Spec: projects.ProjectSpec{
+					Access: []projects.SubjectRef{
+						{
 							Name: "group-a",
 							Kind: "Group",
 						},
 					},
 				},
 			},
-			v1alpha1.Project{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "my-project-b",
 				},
-				Spec: v1alpha1.ProjectSpec{
-					Access: []v1alpha1.SubjectRef{
-						v1alpha1.SubjectRef{
+				Spec: projects.ProjectSpec{
+					Access: []projects.SubjectRef{
+						{
 							Name: "group-b",
 							Kind: "Group",
 						},
 					},
 				},
 			},
-			v1alpha1.Project{
+			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "my-project-c",
 				},
-				Spec: v1alpha1.ProjectSpec{
-					Access: []v1alpha1.SubjectRef{
-						v1alpha1.SubjectRef{
+				Spec: projects.ProjectSpec{
+					Access: []projects.SubjectRef{
+						{
 							Name: "developer",
 							Kind: "User",
 						},
@@ -126,7 +126,7 @@ var _ = Describe("ProjectAccessHandler", func() {
 
 	When("the ProjectFetcher returns an error", func() {
 		BeforeEach(func() {
-			fakeProjectFetcher.GetProjectsReturns([]v1alpha1.Project{}, errors.New("error-fetching-projects"))
+			fakeProjectFetcher.GetProjectsReturns([]projects.Project{}, errors.New("error-fetching-projects"))
 		})
 
 		It("returns an internal server error", func() {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pivotal/projects-operator/api/v1alpha1"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	"github.com/pivotal/projects-operator/testhelpers"
 
 	. "github.com/onsi/ginkgo"
@@ -269,7 +269,7 @@ var _ = Describe("Projects CRD", func() {
 					return 0
 				}
 
-				var proj v1alpha1.Project
+				var proj projects.Project
 				if err := json.Unmarshal([]byte(output), &proj); err != nil {
 					fmt.Println(err.Error())
 					return 0

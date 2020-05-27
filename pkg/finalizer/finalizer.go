@@ -14,9 +14,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package finalizer
 
-import v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-func AddFinalizer(obj v1.Object, finalizer string) {
+func AddFinalizer(obj metav1.Object, finalizer string) {
 	finalizers := obj.GetFinalizers()
 	for _, f := range finalizers {
 		if f == finalizer {
@@ -27,7 +27,7 @@ func AddFinalizer(obj v1.Object, finalizer string) {
 	obj.SetFinalizers(append(finalizers, finalizer))
 }
 
-func RemoveFinalizer(obj v1.Object, finalizer string) {
+func RemoveFinalizer(obj metav1.Object, finalizer string) {
 	finalizers := obj.GetFinalizers()
 
 	newFinalizers := []string{}

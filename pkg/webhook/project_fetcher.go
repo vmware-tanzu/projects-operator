@@ -3,14 +3,14 @@ package webhook
 import (
 	"context"
 
-	"github.com/pivotal/projects-operator/api/v1alpha1"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 //go:generate counterfeiter . ProjectFetcher
 
 type ProjectFetcher interface {
-	GetProjects() ([]v1alpha1.Project, error)
+	GetProjects() ([]projects.Project, error)
 }
 
 type projectFetcher struct {
@@ -23,8 +23,8 @@ func NewProjectFetcher(client client.Client) *projectFetcher {
 	}
 }
 
-func (f *projectFetcher) GetProjects() ([]v1alpha1.Project, error) {
-	projectList := &v1alpha1.ProjectList{}
+func (f *projectFetcher) GetProjects() ([]projects.Project, error) {
+	projectList := &projects.ProjectList{}
 	err := f.client.List(context.TODO(), projectList)
 
 	return projectList.Items, err

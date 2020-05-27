@@ -3,15 +3,15 @@ package webhook
 import (
 	"fmt"
 
-	"github.com/pivotal/projects-operator/api/v1alpha1"
-	v1 "k8s.io/api/authentication/v1"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
 //go:generate counterfeiter . ProjectFilterer
 
 type ProjectFilterer interface {
-	FilterProjects([]v1alpha1.Project, v1.UserInfo) []string
+	FilterProjects([]projects.Project, authenticationv1.UserInfo) []string
 }
 
 type projectFilterer struct{}
@@ -21,7 +21,7 @@ func NewProjectFilterer() projectFilterer {
 }
 
 //TODO: return []v1alpha1.Project instead of []string ?
-func (f projectFilterer) FilterProjects(projects []v1alpha1.Project, user v1.UserInfo) []string {
+func (f projectFilterer) FilterProjects(projects []projects.Project, user authenticationv1.UserInfo) []string {
 	groupProjectMap := make(map[string][]string)
 	usernameProjectMap := make(map[string][]string)
 	serviceAccountProjectMap := make(map[string][]string)

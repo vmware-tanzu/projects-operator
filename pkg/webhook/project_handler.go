@@ -7,11 +7,10 @@ import (
 	"regexp"
 
 	"github.com/go-logr/logr"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	admissionv1 "k8s.io/api/admission/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/pivotal/projects-operator/api/v1alpha1"
 )
 
 type ProjectHandler struct {
@@ -51,7 +50,7 @@ func (h *ProjectHandler) HandleProjectValidation(w http.ResponseWriter, r *http.
 
 	// 3. Unmarshal the admissionreview.object.raw into a v1alpha1.Project
 	raw := arRequest.Request.Object.Raw
-	project := v1alpha1.Project{}
+	project := projects.Project{}
 	if err := json.Unmarshal(raw, &project); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, `{"error unmarshalling project": "%s"}`, err)
@@ -116,7 +115,7 @@ func (h *ProjectHandler) HandleProjectCreation(w http.ResponseWriter, r *http.Re
 	}
 
 	raw := arRequest.Request.Object.Raw
-	project := v1alpha1.Project{}
+	project := projects.Project{}
 	if err := json.Unmarshal(raw, &project); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, `{"error unmarshalling Project": "%s"}`, err)
@@ -136,15 +135,15 @@ func (h *ProjectHandler) HandleProjectCreation(w http.ResponseWriter, r *http.Re
 
 	userInfo := arRequest.Request.UserInfo
 
-	var subjectRef v1alpha1.SubjectRef
+	var subjectRef projects.SubjectRef
 	if groups := regexp.MustCompile(`system:serviceaccount:([-a-z0-9]+):(.*)`).FindStringSubmatch(userInfo.Username); len(groups) == 3 {
-		subjectRef = v1alpha1.SubjectRef{
+		subjectRef = projects.SubjectRef{
 			Kind:      rbacv1.ServiceAccountKind,
 			Namespace: groups[1],
 			Name:      groups[2],
 		}
 	} else {
-		subjectRef = v1alpha1.SubjectRef{
+		subjectRef = projects.SubjectRef{
 			Kind: rbacv1.UserKind,
 			Name: userInfo.Username,
 		}
@@ -172,10 +171,10 @@ func (h *ProjectHandler) HandleProjectCreation(w http.ResponseWriter, r *http.Re
 	sendReview(w, arReview)
 }
 
-func createProjectPatch(user v1alpha1.SubjectRef) ([]byte, error) {
+func createProjectPatch(user projects.SubjectRef) ([]byte, error) {
 	return json.Marshal([]PatchOperation{{
 		Op:    "add",
 		Path:  "/spec/access",
-		Value: interface{}([]v1alpha1.SubjectRef{user}),
+		Value: interface{}([]projects.SubjectRef{user}),
 	}})
 }

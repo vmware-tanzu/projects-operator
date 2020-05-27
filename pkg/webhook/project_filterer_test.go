@@ -1,31 +1,31 @@
 package webhook_test
 
 import (
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
+	authenticationv1 "k8s.io/api/authentication/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal/projects-operator/api/v1alpha1"
-	v1 "k8s.io/api/authentication/v1"
-
 	. "github.com/pivotal/projects-operator/pkg/webhook"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("ProjectFilterer", func() {
 	var (
-		filterer ProjectFilterer
-		projects []v1alpha1.Project
-		user     v1.UserInfo
+		filterer         ProjectFilterer
+		projectsToFilter []projects.Project
+		user             authenticationv1.UserInfo
 
 		filteredProjects []string
 	)
 
 	BeforeEach(func() {
-		project1 := v1alpha1.Project{
+		project1 := projects.Project{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "project-1",
 			},
-			Spec: v1alpha1.ProjectSpec{
-				Access: []v1alpha1.SubjectRef{
+			Spec: projects.ProjectSpec{
+				Access: []projects.SubjectRef{
 					{
 						Kind: "User",
 						Name: "developer-1",
@@ -43,12 +43,12 @@ var _ = Describe("ProjectFilterer", func() {
 			},
 		}
 
-		project2 := v1alpha1.Project{
+		project2 := projects.Project{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "project-2",
 			},
-			Spec: v1alpha1.ProjectSpec{
-				Access: []v1alpha1.SubjectRef{
+			Spec: projects.ProjectSpec{
+				Access: []projects.SubjectRef{
 					{
 						Kind: "User",
 						Name: "developer-2",
@@ -66,17 +66,17 @@ var _ = Describe("ProjectFilterer", func() {
 			},
 		}
 
-		projects = []v1alpha1.Project{project1, project2}
+		projectsToFilter = []projects.Project{project1, project2}
 		filterer = NewProjectFilterer()
 	})
 
 	JustBeforeEach(func() {
-		filteredProjects = filterer.FilterProjects(projects, user)
+		filteredProjects = filterer.FilterProjects(projectsToFilter, user)
 	})
 
 	When("the user matches no projects", func() {
 		BeforeEach(func() {
-			user = v1.UserInfo{Username: "other-developer", Groups: []string{"other-group"}}
+			user = authenticationv1.UserInfo{Username: "other-developer", Groups: []string{"other-group"}}
 		})
 
 		It("returns no projects", func() {
@@ -86,7 +86,7 @@ var _ = Describe("ProjectFilterer", func() {
 
 	When("the user matches a project by username matching user access", func() {
 		BeforeEach(func() {
-			user = v1.UserInfo{Username: "developer-1", Groups: []string{"other-group"}}
+			user = authenticationv1.UserInfo{Username: "developer-1", Groups: []string{"other-group"}}
 		})
 
 		It("returns the project that grants access to the user", func() {
@@ -96,7 +96,7 @@ var _ = Describe("ProjectFilterer", func() {
 
 	When("the user matches a project by group", func() {
 		BeforeEach(func() {
-			user = v1.UserInfo{Username: "other-developer", Groups: []string{"group-2"}}
+			user = authenticationv1.UserInfo{Username: "other-developer", Groups: []string{"group-2"}}
 		})
 
 		It("returns the project that grants access to the group", func() {
@@ -106,7 +106,7 @@ var _ = Describe("ProjectFilterer", func() {
 
 	When("the user matches a project by username matching service-account access", func() {
 		BeforeEach(func() {
-			user = v1.UserInfo{
+			user = authenticationv1.UserInfo{
 				Username: "system:serviceaccount:namespace-1:service-account-1",
 			}
 		})
@@ -118,7 +118,7 @@ var _ = Describe("ProjectFilterer", func() {
 
 	When("the user matches multiple projects", func() {
 		BeforeEach(func() {
-			user = v1.UserInfo{Username: "developer-1", Groups: []string{"group-2"}}
+			user = authenticationv1.UserInfo{Username: "developer-1", Groups: []string{"group-2"}}
 		})
 
 		It("returns all the matched projects", func() {
@@ -128,7 +128,7 @@ var _ = Describe("ProjectFilterer", func() {
 
 	When("the user matches a project by both group and username", func() {
 		BeforeEach(func() {
-			user = v1.UserInfo{Username: "developer-2", Groups: []string{"group-2"}}
+			user = authenticationv1.UserInfo{Username: "developer-2", Groups: []string{"group-2"}}
 		})
 
 		It("returns the project once only", func() {
@@ -138,7 +138,7 @@ var _ = Describe("ProjectFilterer", func() {
 
 	When("the username matches a permission granted to a group", func() {
 		BeforeEach(func() {
-			user = v1.UserInfo{Username: "group-1"}
+			user = authenticationv1.UserInfo{Username: "group-1"}
 		})
 
 		It("returns no projects", func() {
@@ -148,7 +148,7 @@ var _ = Describe("ProjectFilterer", func() {
 
 	When("the non-serviceaccount qualified username matches a permission granted to a service account", func() {
 		BeforeEach(func() {
-			user = v1.UserInfo{
+			user = authenticationv1.UserInfo{
 				Username: "service-account-1",
 			}
 		})

@@ -20,12 +20,9 @@ import (
 	"os"
 	"strconv"
 
-	v1 "k8s.io/api/rbac/v1"
-
-	projectv1alpha1 "github.com/pivotal/projects-operator/api/v1alpha1"
-
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	"github.com/pivotal/projects-operator/controllers"
-
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -46,7 +43,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
-	_ = projectv1alpha1.AddToScheme(scheme)
+	_ = projects.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -97,7 +94,7 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Project"),
 		Scheme: scheme,
-		ClusterRoleRef: v1.RoleRef{
+		ClusterRoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
 			Name:     clusterRole,

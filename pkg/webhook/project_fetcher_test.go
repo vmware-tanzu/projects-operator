@@ -1,14 +1,14 @@
 package webhook_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/pivotal/projects-operator/api/v1alpha1"
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	. "github.com/pivotal/projects-operator/pkg/webhook"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("ProjectFetcher", func() {
@@ -18,19 +18,19 @@ var _ = Describe("ProjectFetcher", func() {
 	)
 
 	BeforeEach(func() {
-		projectA := &v1alpha1.Project{
+		projectA := &projects.Project{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "project-a",
 			},
 		}
 
-		projectB := &v1alpha1.Project{
+		projectB := &projects.Project{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "project-b",
 			},
 		}
 
-		scheme, err := v1alpha1.SchemeBuilder.Build()
+		scheme, err := projects.SchemeBuilder.Build()
 		Expect(err).NotTo(HaveOccurred())
 		fakeClient = fake.NewFakeClientWithScheme(scheme, projectA, projectB)
 		fetcher = NewProjectFetcher(fakeClient)

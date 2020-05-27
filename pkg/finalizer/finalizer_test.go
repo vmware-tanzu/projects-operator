@@ -15,20 +15,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package finalizer_test
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	. "github.com/onsi/ginkgo/extensions/table"
-
+	. "github.com/onsi/gomega"
 	. "github.com/pivotal/projects-operator/pkg/finalizer"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("Finalizer", func() {
 	DescribeTable("AddFinalizer",
 		func(existingFinalizers []string, newFinalizer string, expectedFinalizers []string) {
-			obj := &v1.ObjectMeta{}
+			obj := &metav1.ObjectMeta{}
 			obj.SetFinalizers(existingFinalizers)
 
 			AddFinalizer(obj, newFinalizer)
@@ -42,7 +40,7 @@ var _ = Describe("Finalizer", func() {
 
 	DescribeTable("RemoveFinalizer",
 		func(existingFinalizers []string, deleteFinalizer string, expectedFinalizers []string) {
-			obj := &v1.ObjectMeta{}
+			obj := &metav1.ObjectMeta{}
 			obj.SetFinalizers(existingFinalizers)
 
 			RemoveFinalizer(obj, deleteFinalizer)

@@ -4,20 +4,20 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.4
+    controller-gen.kubebuilder.io/version: v0.2.9
   creationTimestamp: null
-  name: projectaccesses.projects.vmware.com
+  name: projects.projects.vmware.com
 spec:
   group: projects.vmware.com
   names:
-    kind: ProjectAccess
-    listKind: ProjectAccessList
-    plural: projectaccesses
-    singular: projectaccess
+    kind: Project
+    listKind: ProjectList
+    plural: projects
+    singular: project
   scope: Cluster
   validation:
     openAPIV3Schema:
-      description: ProjectAccess is the Schema for the projectaccesses API
+      description: Project is the Schema for the projects API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -32,15 +32,29 @@ spec:
         metadata:
           type: object
         spec:
-          description: ProjectAccessSpec defines the desired state of ProjectAccess
+          description: ProjectSpec defines the desired state of Project
+          properties:
+            access:
+              items:
+                properties:
+                  kind:
+                    enum:
+                    - ServiceAccount
+                    - User
+                    - Group
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - kind
+                - name
+                type: object
+              type: array
           type: object
         status:
-          description: ProjectAccessStatus defines the observed state of ProjectAccess
-          properties:
-            projects:
-              items:
-                type: string
-              type: array
+          description: ProjectStatus defines the observed state of Project
           type: object
       type: object
   version: v1alpha1

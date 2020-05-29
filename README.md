@@ -14,7 +14,7 @@ kubernetes namespace along with a corresponding set of RBAC rules.
 You must first create a `ClusterRole` that contains the RBAC
 rules you wish to apply to each of the `Project`s. For example:
 
-```
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -30,7 +30,7 @@ rules:
 
 ### Deploying via helm
 
-```
+```bash
 # 1. Build the controller manager image
 
 $ docker build -t my-registry/projects-operator:my-tag .
@@ -50,7 +50,7 @@ $ helm install projects-operator -helm/projects-operator \
 
 Apply projects yaml with a project name and a list of users/groups/serviceaccounts who have access, for example:
 
-```
+```yaml
 apiVersion: projects.pivotal.io/v1alpha1
 kind: Project
 metadata:
@@ -68,7 +68,7 @@ spec:
 
 ### Uninstalling via helm
 
-```
+```bash
 helm uninstall projects-operator
 ```
 

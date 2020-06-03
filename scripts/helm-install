@@ -10,33 +10,38 @@ CLUSTER_ROLE_REF=${CLUSTER_ROLE_REF:-projects-operator-clusterrole-ref-rolebindi
 
 REGISTRY_SECRET_NAME=${REGISTRY_SECRET_NAME:-registry-secret}
 REGISTRY_URL=${REGISTRY_URL:-https://gcr.io}
+REGISTRY_HOST=${REGISTRY_URL#"https://"}
+IMAGE_PATH=${IMAGE_REPO%"/projects-operator"}
+REGISTRY_NAMESPACE=${IMAGE_PATH#"${REGISTRY_HOST}/"}
 REGISTRY_USERNAME=${REGISTRY_USERNAME:-_json_key}
 REGISTRY_PASSWORD="${REGISTRY_PASSWORD:-$(lpass show "Shared-Independent Services Marketplace/service-account-keys/gcr-service-account-key" --notes)}"
 REGISTRY_EMAIL=${REGISTRY_EMAIL:-admin@example.com}
 
-prepare_cluster_for_helm_install () {
-  if ! kubectl get namespace "$NAMESPACE" > /dev/null 2>&1; then
+prepare_cluster_for_helm_install() {
+  if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
     kubectl create namespace "$NAMESPACE"
   fi
 
-  if ! kubectl -n "$NAMESPACE" get secret "$REGISTRY_SECRET_NAME" > /dev/null 2>&1; then
+  if ! kubectl -n "$NAMESPACE" get secret "$REGISTRY_SECRET_NAME" >/dev/null 2>&1; then
     kubectl -n "$NAMESPACE" create secret docker-registry "$REGISTRY_SECRET_NAME" \
-	  --docker-server="$REGISTRY_URL" \
-	  --docker-username="$REGISTRY_USERNAME" \
-	  --docker-password="$REGISTRY_PASSWORD" \
-	  --docker-email="$REGISTRY_EMAIL"
+      --docker-server="$REGISTRY_URL" \
+      --docker-username="$REGISTRY_USERNAME" \
+      --docker-password="$REGISTRY_PASSWORD" \
+      --docker-email="$REGISTRY_EMAIL"
   fi
 }
 
-main () {
+main() {
   prepare_cluster_for_helm_install
 
   helm upgrade --install projects-operator $CHART_PATH \
     --atomic \
     --recreate-pods \
     --namespace "$NAMESPACE" \
-    --set image="$IMAGE_REPO:$IMAGE_TAG" \
-    --set imagePullSecrets[0].name="$REGISTRY_SECRET_NAME" \
+    --set imageRegistry="$REGISTRY_HOST" \
+    --set imageNamespace="$REGISTRY_NAMESPACE" \
+    --set images.projectsOperator.tag="$IMAGE_TAG" \
+    --set imagePullSecrets[0]="$REGISTRY_SECRET_NAME" \
     --set imagePullPolicy="Always" \
     --set clusterRoleRef="$CLUSTER_ROLE_REF"
 }

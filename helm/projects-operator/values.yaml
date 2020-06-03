@@ -1,9 +1,21 @@
-replicaCount: 1
+global: {}
 
-image: gcr.io/cf-ism-0/projects-operator:latest
+originalImageRegistry: gcr.io
+originalImageNamespace: cf-ism-0
 imagePullPolicy: IfNotPresent
 imagePullSecrets:
-- name: registry-secret
+- registry-secret
+
+images:
+  projectsOperator:
+    name: projects-operator
+    tag: latest
+  kubeRbacProxy:
+    originalNamespace: kubebuilder
+    name: kube-rbac-proxy
+    tag: v0.4.1
+
+replicaCount: 1
 
 nameOverride: ""
 fullnameOverride: ""
@@ -25,9 +37,6 @@ affinity: {}
 clusterRoleRef: "projects-operator-clusterrole-ref-rolebinding"
 
 maxConcurrentReconciles: 4
-
-kubeRbacProxy:
-  image: gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0
 
 webhook:
   serviceAccount: default

@@ -16,15 +16,14 @@ spec:
         app.kubernetes.io/name: {{ include "projects-operator.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      imagePullSecrets:
-{{ toYaml .Values.imagePullSecrets | indent 8 }}
+      {{- include "projects-operator.imagePullSecrets" . | indent 6 }}
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
             - --v=10
-          image: "{{ .Values.kubeRbacProxy.image }}"
+          {{- include "projects-operator.registryImage" (dict "image" .Values.images.kubeRbacProxy "values" .Values "name" "kubeRbacProxy") | nindent 10 }}
           name: kube-rbac-proxy
           ports:
             - containerPort: 8443
@@ -39,8 +38,7 @@ spec:
               value: {{ .Values.clusterRoleRef}}
             - name: MAX_CONCURRENT_RECONCILES
               value: "{{ .Values.maxConcurrentReconciles }}"
-          image: "{{ .Values.image }}"
-          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- include "projects-operator.registryImage" (dict "image" .Values.images.projectsOperator "values" .Values "name" "projectsOperator") | nindent 10 }}
           name: manager
           resources:
 {{ toYaml .Values.resources | indent 12 }}

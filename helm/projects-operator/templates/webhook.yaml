@@ -41,12 +41,10 @@ spec:
         releaseRevision: "{{ .Release.Revision }}"
     spec:
       serviceAccountName: "{{ .Values.webhook.serviceAccount }}"
-      imagePullSecrets:
-{{ toYaml .Values.imagePullSecrets | indent 8 }}
+      {{- include "projects-operator.imagePullSecrets" . | indent 6 }}
       containers:
         - name: webhook
-          image: "{{ .Values.image }}"
-          imagePullPolicy: Always
+          {{- include "projects-operator.registryImage" (dict "image" .Values.images.projectsOperator "values" .Values "name" "projectsOperator") | nindent 10 }}
           command:
             - /webhook
           env:

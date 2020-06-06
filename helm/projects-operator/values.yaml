@@ -1,6 +1,8 @@
 replicaCount: 1
 
-image: gcr.io/cf-ism-0/projects-operator:latest
+managerImage: gcr.io/cf-ism-0/projects-operator-manager:latest
+webhookImage: gcr.io/cf-ism-0/projects-operator-webhook:latest
+
 imagePullPolicy: IfNotPresent
 imagePullSecrets:
 - name: registry-secret

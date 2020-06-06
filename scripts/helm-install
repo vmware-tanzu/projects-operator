@@ -2,9 +2,12 @@
 
 set -euo pipefail
 
+export GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-"$HOME/gke_service_account_key.json"}
+
 NAMESPACE=${NAMESPACE:-projects-operator}
 CHART_PATH=${CHART_PATH:-helm/projects-operator/}
-IMAGE_REPO=${IMAGE_REPO:-gcr.io/cf-ism-0/projects-operator}
+MANAGER_IMAGE_REPO=${MANAGER_IMAGE_REPO:-gcr.io/cf-ism-0/projects-operator-manager}
+WEBHOOK_IMAGE_REPO=${WEBHOOK_IMAGE_REPO:-gcr.io/cf-ism-0/projects-operator-webhook}
 IMAGE_TAG=${IMAGE_TAG:-latest}
 CLUSTER_ROLE_REF=${CLUSTER_ROLE_REF:-projects-operator-clusterrole-ref-rolebinding}
 
@@ -35,7 +38,8 @@ main () {
     --atomic \
     --recreate-pods \
     --namespace "$NAMESPACE" \
-    --set image="$IMAGE_REPO:$IMAGE_TAG" \
+    --set managerImage="$MANAGER_IMAGE_REPO:$IMAGE_TAG" \
+    --set webhookImage="$WEBHOOK_IMAGE_REPO:$IMAGE_TAG" \
     --set imagePullSecrets[0].name="$REGISTRY_SECRET_NAME" \
     --set imagePullPolicy="Always" \
     --set clusterRoleRef="$CLUSTER_ROLE_REF"

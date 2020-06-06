@@ -45,7 +45,7 @@ spec:
 {{ toYaml .Values.imagePullSecrets | indent 8 }}
       containers:
         - name: webhook
-          image: "{{ .Values.image }}"
+          image: "{{ .Values.webhookImage }}"
           imagePullPolicy: Always
           command:
             - /webhook

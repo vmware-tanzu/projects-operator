@@ -8,12 +8,14 @@ image_resource:
 inputs:
 - name: projects-operator
 - name: build-artefacts-dev
-- name: project-operator-image
 
 params:
   KUBECONFIG_FILE_CONTENTS:
   CHART_PATH:
+  GKE_SERVICE_ACCOUNT_KEY:
   REGISTRY_PASSWORD:
+  MANAGER_IMAGE_REPO:
+  WEBHOOK_IMAGE_REPO:
 
 run:
   path: projects-operator/ci/shim

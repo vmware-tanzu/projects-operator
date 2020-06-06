@@ -39,7 +39,7 @@ spec:
               value: {{ .Values.clusterRoleRef}}
             - name: MAX_CONCURRENT_RECONCILES
               value: "{{ .Values.maxConcurrentReconciles }}"
-          image: "{{ .Values.image }}"
+          image: "{{ .Values.managerImage }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           name: manager
           resources:

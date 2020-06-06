@@ -1,0 +1,308 @@
+groups:
+  - name: main
+    jobs:
+      - absolute-unit
+      - kpack-images
+      - build
+      - acceptance
+      - promote-final
+  - name: bump
+    jobs:
+      - bump-major
+      - bump-minor
+      - bump-patch
+
+jobs:
+  - name: absolute-unit
+    plan:
+      - get: projects-operator
+        trigger: true
+      - in_parallel:
+          - task: lint
+            file: projects-operator/ci/tasks/lint.yml
+          - task: unit
+            file: projects-operator/ci/tasks/unit.yml
+
+  - name: kpack-images
+    plan:
+      - get: projects-operator
+        trigger: true
+        passed: [absolute-unit]
+      - in_parallel:
+          - put: manager-kpack-image
+            params:
+              commitish: projects-operator/.git/ref
+          - put: webhook-kpack-image
+            params:
+              commitish: projects-operator/.git/ref
+
+  - name: build
+    plan:
+      - in_parallel:
+          - get: projects-operator
+            passed: [kpack-images]
+            trigger: true
+          - get: version
+            params:
+              pre: build
+          - get: manager-image
+            params:
+              format: oci
+          - get: webhook-image
+            params:
+              format: oci
+      - task: deplab
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: dev.registry.pivotal.io/navcon/deplab-task
+              tag: latest
+              username: {{pivnet_username}}
+              password: {{pivnet_password}}
+          inputs:
+            - name: projects-operator
+            - name: manager-image
+            - name: webhook-image
+            - name: version
+          outputs:
+            - name: tagged-image
+          run:
+            path: /bin/bash
+            args:
+              - -ec
+              - |
+                set -eu pipefail
+
+                projects_operator_version=$(cat version/version)
+
+                deplab --image-tar manager-image/image.tar \
+                --git projects-operator \
+                --dpkg-file "tagged-image/projects-operator-manager-dpkg-${projects_operator_version}.txt"
+
+                deplab --image-tar webhook-image/image.tar \
+                --git projects-operator \
+                --dpkg-file "tagged-image/projects-operator-webhook-dpkg-${projects_operator_version}.txt"
+      - task: package-helm-chart
+        file: projects-operator/ci/tasks/assemble-build-artefact.yml
+      - in_parallel:
+          - put: version
+            params:
+              file: version/version
+          - put: manager-image
+            params:
+              image: manager-image/image.tar
+              additional_tags: version/version
+          - put: webhook-image
+            params:
+              image: webhook-image/image.tar
+              additional_tags: version/version
+          - put: manager-dpkg-list
+            params:
+              file: tagged-image/projects-operator-manager-dpkg-*.txt
+          - put: webhook-dpkg-list
+            params:
+              file: tagged-image/projects-operator-webhook-dpkg-*.txt
+          - put: build-artefacts-dev
+            params:
+              file: archive/projects-operator-*.tgz
+
+  - name: acceptance
+    serial: true
+    plan:
+      - in_parallel:
+          - get: projects-operator
+            passed: [build]
+            trigger: true
+          - get: version
+            passed: [build]
+          - get: manager-image
+            passed: [build]
+            params:
+              format: oci
+          - get: webhook-image
+            passed: [build]
+            params:
+              format: oci
+          - get: build-artefacts-dev
+            passed: [build]
+      - task: helm-install
+        file: projects-operator/ci/tasks/helm-install.yml
+        params:
+          KUBECONFIG_FILE_CONTENTS: {{kubeconfig_projects_operator_ci}}
+          CHART_PATH: ../build-artefacts-dev/*.tgz
+          GKE_SERVICE_ACCOUNT_KEY: {{gke_service_account_key}}
+          REGISTRY_PASSWORD: {{gke_service_account_key}}
+          MANAGER_IMAGE_REPO: {{manager_image_repository}}
+          WEBHOOK_IMAGE_REPO: {{webhook_image_repository}}
+
+  - name: promote-final
+    plan:
+      - in_parallel:
+          - get: version
+            passed: [acceptance]
+            params:
+              bump: final
+          - get: projects-operator
+            passed: [acceptance]
+          - get: build-artefacts-dev
+            passed: [acceptance]
+          - get: manager-image
+            passed: [build]
+            params:
+              format: oci
+          - get: webhook-image
+            passed: [build]
+            params:
+              format: oci
+      - in_parallel:
+          - put: build-artefacts-final
+            params:
+              file: build-artefacts-dev/projects-operator-*.tgz
+          - put: projects-operator
+            params:
+              repository: projects-operator
+              only_tag: true
+              tag: version/version
+              tag_prefix: v
+          - put: version
+            params:
+              bump: patch
+          - put: manager-image-stable
+            params:
+              image: manager-image/image.tar
+          - put: webhook-image-stable
+            params:
+              image: manager-image/image.tar
+
+  - name: bump-major
+    plan:
+      - put: version
+        params: {bump: major}
+
+  - name: bump-minor
+    plan:
+      - put: version
+        params: {bump: minor}
+
+  - name: bump-patch
+    plan:
+      - put: version
+        params: {bump: patch}
+
+resources:
+  - name: projects-operator
+    type: git
+    icon: git
+    source:
+      private_key: {{git_deploy_key}}
+      uri: git@github.com:pivotal/projects-operator
+      branch: master
+
+  - name: manager-kpack-image
+    type: kpack-image
+    icon: ferry
+    source:
+      image: "manager-image"
+      namespace: "projects-operator-team"
+      gke:
+        json_key: {{shipyard_service_account_key}}
+        kubeconfig: {{kubeconfig_shipyard}}
+
+  - name: webhook-kpack-image
+    type: kpack-image
+    icon: ferry
+    source:
+      image: "webhook-image"
+      namespace: "projects-operator-team"
+      gke:
+        json_key: {{shipyard_service_account_key}}
+        kubeconfig: {{kubeconfig_shipyard}}
+
+  - name: manager-image
+    type: registry-image
+    icon: docker
+    source:
+      repository: {{manager_image_repository}}
+      username: _json_key
+      password: {{gcr_service_account_key}}
+
+  - name: manager-image-stable
+    type: registry-image
+    icon: docker
+    source:
+      repository: {{manager_image_repository}}
+      username: _json_key
+      password: {{gcr_service_account_key}}
+      tag: stable
+
+  - name: webhook-image
+    type: registry-image
+    icon: docker
+    source:
+      repository: {{webhook_image_repository}}
+      username: _json_key
+      password: {{gcr_service_account_key}}
+
+  - name: webhook-image-stable
+    type: registry-image
+    icon: docker
+    source:
+      repository: {{webhook_image_repository}}
+      username: _json_key
+      password: {{gcr_service_account_key}}
+      tag: stable
+
+  - name: build-artefacts-dev
+    type: google-cloud-storage
+    icon: harddisk
+    source:
+      bucket: projects-operator-dev
+      json_key: {{gcs_service_account_key}}
+      regexp: projects-operator-(.*).tgz
+
+  - name: build-artefacts-final
+    type: google-cloud-storage
+    icon: harddisk
+    source:
+      bucket: projects-operator-final
+      json_key: {{gcs_service_account_key}}
+      regexp: projects-operator-(.*).tgz
+
+  - name: manager-dpkg-list
+    type: google-cloud-storage
+    icon: format-list-bulleted
+    source:
+      bucket: projects-operator-osl
+      json_key: {{gcs_service_account_key}}
+      regexp: manager-dpkg-(.*).txt
+
+  - name: webhook-dpkg-list
+    type: google-cloud-storage
+    icon: format-list-bulleted
+    source:
+      bucket: projects-operator-osl
+      json_key: {{gcs_service_account_key}}
+      regexp: webhook-dpkg-(.*).txt
+
+  - name: version
+    type: semver
+    icon: one-up
+    source:
+      driver: gcs
+      bucket: projects-operator-version
+      json_key: {{gcs_service_account_key}}
+      key: projects-operator
+      initial_version: 0.0.1
+
+resource_types:
+  - name: google-cloud-storage
+    type: docker-image
+    source:
+      repository: frodenas/gcs-resource
+
+  - name: kpack-image
+    type: registry-image
+    source:
+      repository: gcr.io/cf-build-service-public/concourse-kpack-resource

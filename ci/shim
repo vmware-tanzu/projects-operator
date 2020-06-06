@@ -8,4 +8,8 @@ if [ -n "$KUBECONFIG_FILE_CONTENTS" ]; then
     echo "$KUBECONFIG_FILE_CONTENTS" > "$HOME/.kube/config"
 fi
 
+if [ -n "$GKE_SERVICE_ACCOUNT_KEY" ]; then
+    echo "$GKE_SERVICE_ACCOUNT_KEY" > "$HOME/gke_service_account_key.json"
+fi
+
 "$@"

@@ -1,7 +1,7 @@
 global: {}
 
-originalImageRegistry: gcr.io
-originalImageNamespace: cf-ism-0
+originalImageRegistry: dev.registry.pivotal.io
+originalImageNamespace: developer-console
 imagePullPolicy: IfNotPresent
 imagePullSecrets:
 - registry-secret
@@ -11,7 +11,6 @@ images:
     name: projects-operator
     tag: latest
   kubeRbacProxy:
-    originalNamespace: kubebuilder
     name: kube-rbac-proxy
     tag: v0.4.1
 

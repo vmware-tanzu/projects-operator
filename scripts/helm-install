@@ -19,13 +19,12 @@ prepare_cluster_for_helm_install() {
     kubectl create namespace "$NAMESPACE"
   fi
 
-  if ! kubectl -n "$NAMESPACE" get secret "$REGISTRY_SECRET_NAME" >/dev/null 2>&1; then
-    kubectl -n "$NAMESPACE" create secret docker-registry "$REGISTRY_SECRET_NAME" \
-      --docker-server="$REGISTRY_URL" \
-      --docker-username="$REGISTRY_USERNAME" \
-      --docker-password="$REGISTRY_PASSWORD" \
-      --docker-email="$REGISTRY_EMAIL"
-  fi
+  kubectl -n "$NAMESPACE" delete secret "$REGISTRY_SECRET_NAME" >/dev/null 2>&1
+  kubectl -n "$NAMESPACE" create secret docker-registry "$REGISTRY_SECRET_NAME" \
+    --docker-server="$REGISTRY_URL" \
+    --docker-username="$REGISTRY_USERNAME" \
+    --docker-password="$REGISTRY_PASSWORD" \
+    --docker-email="$REGISTRY_EMAIL"
 }
 
 main() {

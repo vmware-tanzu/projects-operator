@@ -93,7 +93,7 @@ helm-install:
 	./scripts/helm-install
 
 helm-local-install:
-	CLUSTER_ROLE_REF=acceptance-test-clusterrole ./scripts/helm-install
+	CLUSTER_ROLE_REF=acceptance-test-clusterrole ./scripts/helm-install --local
 
 helm-uninstall:
 	./scripts/helm-uninstall

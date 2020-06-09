@@ -101,7 +101,11 @@ jobs:
     params:
       KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
       CHART_PATH: ../build-artefacts-dev/*.tgz
-      REGISTRY_PASSWORD: {{GCR_SERVICE_ACCOUNT_KEY}}
+      REGISTRY_URL: ((REGISTRY_URL))
+      REGISTRY_NAMESPACE: ((REGISTRY_NAMESPACE))
+      REGISTRY_USERNAME: ((REGISTRY_USERNAME))
+      REGISTRY_PASSWORD: ((REGISTRY_PASSWORD))
+      REGISTRY_EMAIL: ((REGISTRY_EMAIL))
       CLUSTER_ROLE_REF: acceptance-test-clusterrole
   - task: acceptance
     file: projects-operator/ci/tasks/acceptance.yml
@@ -172,17 +176,17 @@ resources:
   type: registry-image
   icon: docker
   source:
-    repository: gcr.io/cf-ism-0/projects-operator
-    username: _json_key
-    password: {{GCR_SERVICE_ACCOUNT_KEY}}
+    repository: dev.registry.pivotal.io/developer-console/projects-operator
+    username: {{REGISTRY_USERNAME}}
+    password: {{REGISTRY_PASSWORD}}
 
 - name: project-operator-image-stable
   type: registry-image
   icon: docker
   source:
-    repository: gcr.io/cf-ism-0/projects-operator
-    username: _json_key
-    password: {{GCR_SERVICE_ACCOUNT_KEY}}
+    repository: dev.registry.pivotal.io/developer-console/projects-operator
+    username: {{REGISTRY_USERNAME}}
+    password: {{REGISTRY_PASSWORD}}
     tag: stable
 
 - name: build-artefacts-dev

@@ -13,7 +13,11 @@ inputs:
 params:
   KUBECONFIG_FILE_CONTENTS:
   CHART_PATH:
+  REGISTRY_URL:
+  REGISTRY_NAMESPACE:
+  REGISTRY_USERNAME:
   REGISTRY_PASSWORD:
+  REGISTRY_EMAIL:
 
 run:
   path: projects-operator/ci/shim

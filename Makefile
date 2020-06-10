@@ -1,7 +1,7 @@
 # Image URL to use all building/pushing image targets
 IMG ?= gcr.io/cf-ism-0/projects-operator:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true"
+CRD_OPTIONS ?= "crd:crdVersions=v1"
 GINKGO_ARGS = -r -p -randomizeSuites -randomizeAllSpecs
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)

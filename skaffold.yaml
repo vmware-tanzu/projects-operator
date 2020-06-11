@@ -4,10 +4,10 @@ metadata:
   name: projects-operator
 build:
   artifacts:
-  - image: harbor.anaheim.cf-app.com/dev/projects-operator
+  - image: projects-operator
   tagPolicy:
     envTemplate:
-      template: '{{.IMAGE_TAG}}'
+      template: '{{.IMAGE_REPO}}:{{.IMAGE_TAG}}'
 deploy:
   helm:
     flags:

@@ -85,7 +85,7 @@ dev:
 		--docker-server="$$REGISTRY_URL" \
 		--docker-username="$$REGISTRY_USERNAME" \
 		--docker-password="$$REGISTRY_PASSWORD" \
-		--docker-email="$$REGISTRY_EMAIL"
+		--docker-email="$$REGISTRY_EMAIL" || true
 	IMAGE_TAG=$(shell hostname) skaffold dev --force=false
 
 #################### HELM ####################

@@ -80,6 +80,12 @@ format:
 	golangci-lint run --fix --timeout 2m30s --verbose
 
 dev:
+	kubectl create secret docker-registry "$$REGISTRY_SECRET_NAME" \
+		--namespace "$$NAMESPACE" \
+		--docker-server="$$REGISTRY_URL" \
+		--docker-username="$$REGISTRY_USERNAME" \
+		--docker-password="$$REGISTRY_PASSWORD" \
+		--docker-email="$$REGISTRY_EMAIL"
 	IMAGE_TAG=$(shell hostname) skaffold dev --force=false
 
 #################### HELM ####################

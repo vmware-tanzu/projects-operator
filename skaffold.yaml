@@ -1,27 +1,30 @@
-apiVersion: skaffold/v2beta1
+apiVersion: skaffold/v2beta4
 kind: Config
+metadata:
+  name: projects-operator
 build:
   artifacts:
   - image: harbor.anaheim.cf-app.com/dev/projects-operator
-    docker:
-      dockerfile: Dockerfile
   tagPolicy:
     envTemplate:
-      template: '{{.IMAGE_NAME}}:{{.IMAGE_TAG}}'
+      template: '{{.IMAGE_TAG}}'
 deploy:
   helm:
+    flags:
+      upgrade: [--install]
     releases:
     - name: projects-operator
-      chartPath: helm/projects-operator/
-      values:
-        image: harbor.anaheim.cf-app.com/dev/projects-operator
+      namespace: projects-operator
+      chartPath: helm/projects-operator
+      valuesFiles:
+      - helm/projects-operator/values.yaml
+      recreatePods: true
       setValues:
-        clusterRoleRef: acceptance-test-clusterrole
+        originalImageRegistry: harbor.anaheim.cf-app.com
+        originalImageNamespace: dev
         imagePullPolicy: Always
+        clusterRoleRef: acceptance-test-clusterrole
         maxConcurrentReconciles: 4
-      imageStrategy:
-        fqn: {}
-    flags:
-      upgrade:
-      - --install
-      - --recreate-pods
+        "images.kubeRbacProxy.originalNamespace": dev
+      setValueTemplates:
+        "images.projectsOperator.tag": '{{.IMAGE_TAG}}'

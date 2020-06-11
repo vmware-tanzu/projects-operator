@@ -104,6 +104,53 @@ var _ = Describe("ProjectController", func() {
 				})
 			})
 
+			Describe("getting the project", func() {
+				var (
+					result ctrl.Result
+					err    error
+				)
+
+				BeforeEach(func() {
+					result, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+				})
+
+				It("doesn't error", func() {
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				It("doesn't requeue", func() {
+					Expect(result.Requeue).To(BeFalse())
+				})
+
+				It("gets the correct project", func() {
+					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name: project.Name,
+					}, project)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(project.Name).To(Equal("my-project"))
+				})
+
+				When("the project doesn't yet exist", func() {
+					BeforeEach(func() {
+						project = &projects.Project{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "new-project",
+							},
+						}
+						result, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+					})
+
+					It("doesn't error", func() {
+						Expect(err).NotTo(HaveOccurred())
+					})
+
+					It("does requeue", func() {
+						Expect(result.Requeue).To(BeTrue())
+					})
+				})
+			})
+
 			Describe("creates a namespace", func() {
 				It("with given project name", func() {
 					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))

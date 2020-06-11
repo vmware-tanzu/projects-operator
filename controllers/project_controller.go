@@ -57,14 +57,17 @@ type ProjectReconciler struct {
 
 func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
-	_ = r.Log.WithValues("project", req.NamespacedName)
+	logger := r.Log.WithValues("project", req.NamespacedName)
 
 	project := &projects.Project{}
 
 	if err := r.Client.Get(context.Background(), req.NamespacedName, project); err != nil {
 		if errors.IsNotFound(err) {
-			return ctrl.Result{}, nil
+			logger.Info("Project resource not found")
+			return ctrl.Result{Requeue: true}, client.IgnoreNotFound(err)
 		}
+
+		logger.Error(err, "unable to fetch Project")
 		return ctrl.Result{}, err
 	}
 

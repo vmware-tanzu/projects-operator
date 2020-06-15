@@ -80,6 +80,7 @@ format:
 	golangci-lint run --fix --timeout 2m30s --verbose
 
 dev:
+	kubectl create namespace "$$NAMESPACE" || true
 	kubectl create secret docker-registry "$$REGISTRY_SECRET_NAME" \
 		--namespace "$$NAMESPACE" \
 		--docker-server="$$REGISTRY_URL" \

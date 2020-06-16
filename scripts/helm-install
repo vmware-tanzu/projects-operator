@@ -35,7 +35,7 @@ main() {
     tag="dev-$(hostname)"
   fi
 
-  helm upgrade --install projects-operator "$CHART_PATH" \
+  helm upgrade --install projects-operator $CHART_PATH \
     --recreate-pods \
     --namespace "$NAMESPACE" \
     --atomic \

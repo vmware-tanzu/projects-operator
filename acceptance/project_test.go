@@ -471,7 +471,7 @@ var _ = Describe("Projects CRD", func() {
 
 		message, err := adminUser.RunKubeCtl("apply", "-f", AsFile(projectResource))
 		Expect(err).To(HaveOccurred(), message)
-		Expect(message).To(ContainSubstring("spec.access.kind in body should be one of [ServiceAccount User Group]"))
+		Expect(message).To(ContainSubstring("spec.access.kind: Unsupported value: \"SomeUnknownKind\": supported values: \"ServiceAccount\", \"User\", \"Group\""))
 	})
 
 	It("does not allow alice or bob to create projects", func() {

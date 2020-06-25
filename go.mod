@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go v0.54.0 // indirect
 	github.com/Azure/go-autorest/autorest v0.10.0 // indirect
 	github.com/caarlos0/env/v6 v6.3.0
-	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/logr v0.2.0
 	github.com/googleapis/gnostic v0.4.0 // indirect
 	github.com/gophercloud/gophercloud v0.8.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
@@ -24,6 +24,6 @@ require (
 	k8s.io/api v0.18.4
 	k8s.io/apimachinery v0.18.4
 	k8s.io/client-go v0.18.4
-	k8s.io/klog/v2 v2.0.0
+	k8s.io/klog/v2 v2.2.0
 	sigs.k8s.io/controller-runtime v0.6.0
 )

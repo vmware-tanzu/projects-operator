@@ -7,11 +7,11 @@ build:
   - image: projects-operator
   tagPolicy:
     envTemplate:
-      template: '{{.IMAGE_REPO}}:{{.IMAGE_TAG}}'
+      template: '{{.REGISTRY_HOST}}/{{.REGISTRY_PROJECT}}/projects-operator:{{.DEV_IMAGE_TAG}}'
 deploy:
   helm:
     flags:
-      upgrade: [--install]
+      upgrade: [--install, --atomic]
     releases:
     - name: projects-operator
       namespace: projects-operator
@@ -20,11 +20,11 @@ deploy:
       - helm/projects-operator/values.yaml
       recreatePods: true
       setValues:
-        originalImageRegistry: harbor.anaheim.cf-app.com
-        originalImageNamespace: dev
-        imagePullPolicy: Always
-        clusterRoleRef: acceptance-test-clusterrole
+        imagePullPolicy: "Always"
+        clusterRoleRef: "acceptance-test-clusterrole"
         maxConcurrentReconciles: 4
-        "images.kubeRbacProxy.originalNamespace": dev
       setValueTemplates:
-        "images.projectsOperator.tag": '{{.IMAGE_TAG}}'
+        originalImageRegistry: '{{.REGISTRY_HOST}}'
+        originalImageNamespace: '{{.REGISTRY_PROJECT}}'
+        "images.kubeRbacProxy.originalNamespace": '{{.REGISTRY_PROJECT}}'
+        "images.projectsOperator.tag": '{{.DEV_IMAGE_TAG}}'

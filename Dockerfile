@@ -21,7 +21,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o webhook cmd/webhook/main.go
 
 # Changed base image to cftiny for OSL compliance
-FROM cloudfoundry/run:tiny
+FROM gcr.io/paketo-buildpacks/run:tiny-cnb
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY --from=builder /workspace/webhook .
+
+# Set the UID and GID to be the values for the "nonroot" tiny user
+# This will allow the image to run on platforms that deny root access
+USER 65532:65532

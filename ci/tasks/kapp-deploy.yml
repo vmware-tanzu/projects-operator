@@ -1,0 +1,23 @@
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: ismteam/ci
+    tag: latest
+
+inputs:
+- name: projects-operator
+- name: version
+- name: project-operator-image
+
+params:
+  KUBECONFIG_FILE_CONTENTS:
+  INSTANCE:
+  REGISTRY_URL:
+  REGISTRY_PROJECT:
+  REGISTRY_USERNAME:
+  REGISTRY_PASSWORD:
+  CLUSTER_ROLE_REF:
+
+run:
+  path: projects-operator/ci/scripts/kapp-deploy.sh

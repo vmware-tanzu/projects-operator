@@ -63,7 +63,7 @@ jobs:
             --git projects-operator \
             --output-tar tagged-image/image.tar \
             --dpkg-file "tagged-image/projects-operator-dpkg-${projects_operator_version}.txt"
-  - task: package-helm-chart
+  - task: assemble
     file: projects-operator/ci/tasks/assemble-build-artefact.yml
   - in_parallel:
     - put: version
@@ -96,16 +96,15 @@ jobs:
       passed: [build]
       params:
         format: oci
-  - task: helm-install
-    file: projects-operator/ci/tasks/helm-install.yml
+  - task: kapp-deploy
+    file: projects-operator/ci/tasks/kapp-deploy.yml
     params:
       KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
-      CHART_PATH: ../build-artefacts-dev/*.tgz
+      INSTANCE: acceptance-test
       REGISTRY_URL: ((REGISTRY_URL))
       REGISTRY_PROJECT: ((REGISTRY_PROJECT))
       REGISTRY_USERNAME: ((REGISTRY_USERNAME))
       REGISTRY_PASSWORD: ((REGISTRY_PASSWORD))
-      REGISTRY_EMAIL: ((REGISTRY_EMAIL))
       CLUSTER_ROLE_REF: acceptance-test-clusterrole
   - task: acceptance
     file: projects-operator/ci/tasks/acceptance.yml

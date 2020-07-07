@@ -1,0 +1,53 @@
+#@ load("@ytt:data", "data")
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: #@ data.values.instance + '-' + data.values.name + "-manager-rolebinding"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: #@ data.values.instance + '-' + data.values.name + "-manager-role"
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: #@ data.values.namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: #@ data.values.instance + '-' + data.values.name + "-clusterrole-ref-rolebinding"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: #@ data.values.clusterRoleRef
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: #@ data.values.namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: #@ data.values.instance + '-' + data.values.name + "-projectaccess-authenticated-cluster-rolebinding"
+subjects:
+- kind: Group
+  name: system:authenticated
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: #@ data.values.instance + '-' + data.values.name + "-projectaccess-cluster-role"
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: #@ data.values.instance + '-' + data.values.name + "-leader-election-rolebinding"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: #@ data.values.instance + '-' + data.values.name + "-leader-election-role"
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: #@ data.values.namespace

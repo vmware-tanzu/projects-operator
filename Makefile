@@ -41,23 +41,23 @@ generate-deepcopy: controller-gen
 
 generate-crd: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
-		output:crd:artifacts:config=helm/projects-operator/crds \
+		output:crd:artifacts:config=deployments/k8s/manifests \
 		paths=./...
 
 generate-rbac: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
 		rbac:roleName=projects-manager-role \
 		output:rbac:stdout \
-		paths=./controllers/... > helm/projects-operator/templates/manager-role.yaml
+		paths=./controllers/... > deployments/k8s/manifests/manager-role.yaml
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
 		rbac:roleName=projectaccesses-manager-role \
 		output:rbac:stdout \
-		paths=./pkg/... > helm/projects-operator/templates/projectaccess-role.yaml
+		paths=./pkg/... > deployments/k8s/manifests/projectaccess-role.yaml
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
 		rbac:roleName=projects-leader-election-role \
 		output:rbac:stdout \
-		paths=./cmd/manager/... > helm/projects-operator/templates/leader-election-role.yaml
-	./scripts/helmify-yaml
+		paths=./cmd/manager/... > deployments/k8s/manifests/leader-election-role.yaml
+	./scripts/yttify-yaml
 
 controller-gen:
 ifeq (, $(shell which controller-gen))
@@ -97,3 +97,11 @@ helm-local-install:
 
 helm-uninstall:
 	./scripts/helm-uninstall
+
+#################### k14s ####################
+
+kapp-deploy:
+	./scripts/kapp-deploy
+
+kapp-delete:
+	kapp delete -a projects-operator -y

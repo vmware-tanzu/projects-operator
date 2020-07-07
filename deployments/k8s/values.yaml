@@ -1,0 +1,35 @@
+#@data/values
+---
+name: "projects-operator"
+instance:
+namespace: "default"
+version: "latest"
+
+registry:
+  url:
+  username:
+  password:
+  secretName: "registry-secret"
+
+clusterRoleRef:
+
+maxConcurrentReconciles: "4"
+
+resources:
+  limits:
+    cpu: "100m"
+    memory: "30Mi"
+  requests:
+    cpu: "100m"
+    memory: "20Mi"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+tls:
+  cert:
+  key:
+caCert:

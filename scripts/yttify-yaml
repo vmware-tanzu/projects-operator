@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+sed -i'.temp' \
+    -e '1s/^/#@ load("@ytt:data", "data")/' \
+    -e 's/projects-manager-role/#@ data.values.instance + "-" + data.values.name + "-manager-role"/g' \
+    deployments/k8s/manifests/manager-role.yaml
+
+sed -i'.temp' \
+    -e '1s/^/#@ load("@ytt:data", "data")/' \
+    -e 's/projectaccesses-manager-role/#@ data.values.instance + "-" + data.values.name + "-projectaccess-cluster-role"/g' \
+    deployments/k8s/manifests/projectaccess-role.yaml
+
+sed -i'.temp' \
+    -e '1s/^/#@ load("@ytt:data", "data")/' \
+    -e 's/projects-leader-election-role/#@ data.values.instance + "-" + data.values.name + "-leader-election-role"/g' \
+    deployments/k8s/manifests/leader-election-role.yaml
+
+rm deployments/k8s/manifests/*.temp

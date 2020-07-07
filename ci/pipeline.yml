@@ -63,15 +63,10 @@ jobs:
             --git projects-operator \
             --output-tar tagged-image/image.tar \
             --dpkg-file "tagged-image/projects-operator-dpkg-${projects_operator_version}.txt"
-  - task: package-helm-chart
-    file: projects-operator/ci/tasks/assemble-build-artefact.yml
   - in_parallel:
     - put: version
       params:
         file: version/version
-    - put: build-artefacts-dev
-      params:
-        file: archive/projects-operator-*.tgz
     - put: project-operator-image
       params:
         image: tagged-image/image.tar
@@ -89,23 +84,21 @@ jobs:
       trigger: true
     - get: version
       passed: [build]
-    - get: build-artefacts-dev
-      passed: [build]
-      trigger: true
     - get: project-operator-image
       passed: [build]
       params:
-        format: oci
-  - task: helm-install
-    file: projects-operator/ci/tasks/helm-install.yml
+        skip_download: true
+  - task: kapp-deploy
+    file: projects-operator/ci/tasks/kapp-deploy.yml
     params:
       KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
-      CHART_PATH: ../build-artefacts-dev/*.tgz
+      INSTANCE: acceptance-test
       REGISTRY_URL: ((REGISTRY_URL))
       REGISTRY_PROJECT: ((REGISTRY_PROJECT))
       REGISTRY_USERNAME: ((REGISTRY_USERNAME))
       REGISTRY_PASSWORD: ((REGISTRY_PASSWORD))
-      REGISTRY_EMAIL: ((REGISTRY_EMAIL))
+      PROJECTS_OPERATOR_IMAGE: dev.registry.pivotal.io/developer-console/projects-operator
+      KUBE_RBAC_PROXY_IMAGE: dev.registry.pivotal.io/developer-console/kube-rbac-proxy:v0.4.1
       CLUSTER_ROLE_REF: acceptance-test-clusterrole
   - task: acceptance
     file: projects-operator/ci/tasks/acceptance.yml
@@ -170,7 +163,7 @@ resources:
   source:
     private_key: {{PROJECTS_OPERATOR_DEPLOY_KEY}}
     uri: git@github.com:pivotal/projects-operator
-    branch: master
+    branch: use-k14s
 
 - name: project-operator-image
   type: registry-image

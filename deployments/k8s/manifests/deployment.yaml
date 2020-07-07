@@ -1,0 +1,52 @@
+#@ load("@ytt:data", "data")
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: #@ data.values.name
+    app.kubernetes.io/instance: #@ data.values.instance
+    app.kubernetes.io/version: #@ data.values.version
+  name: #@ data.values.instance + '-' + data.values.name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: #@ data.values.name
+      app.kubernetes.io/instance: #@ data.values.instance
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: #@ data.values.name
+        app.kubernetes.io/instance: #@ data.values.instance
+    spec:
+      imagePullSecrets:
+      - name: #@ data.values.registry.secretName
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        image: #@ data.values.kubeRbacProxyImage
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --metrics-addr=127.0.0.1:8080
+        - --enable-leader-election
+        command:
+        - /manager
+        env:
+        - name: CLUSTER_ROLE_REF
+          value: #@ data.values.clusterRoleRef
+        - name: MAX_CONCURRENT_RECONCILES
+          value: #@ data.values.maxConcurrentReconciles
+        image: #@ data.values.projectsOperatorImage
+        name: manager
+        resources: #@ data.values.resources
+      nodeSelector: #@ data.values.nodeSelector
+      affinity: #@ data.values.affinity
+      tolerations: #@ data.values.tolerations
+      terminationGracePeriodSeconds: 10

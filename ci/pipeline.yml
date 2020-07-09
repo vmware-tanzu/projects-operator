@@ -87,7 +87,7 @@ jobs:
     - get: project-operator-image
       passed: [build]
       params:
-        skip_download: true
+        format: oci
   - task: kapp-deploy
     file: projects-operator/ci/tasks/kapp-deploy.yml
     params:

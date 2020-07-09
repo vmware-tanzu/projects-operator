@@ -49,7 +49,7 @@ spec:
       - name: #@ data.values.registry.secretName
       containers:
       - name: webhook
-        image: #@ data.values.projectsOperatorImage
+        image: #@ "dev.registry.pivotal.io/developer-console/projects-operator:" + data.values.version
         command:
         - /webhook
         env:

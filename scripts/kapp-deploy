@@ -15,9 +15,6 @@ REGISTRY_USERNAME="${REGISTRY_USERNAME:?"please set the username of your registr
 REGISTRY_PASSWORD="${REGISTRY_PASSWORD:?"please set the password of your registry"}"
 REGISTRY_SECRET_NAME="${REGISTRY_SECRET_NAME:-registry-secret}"
 
-PROJECTS_OPERATOR_IMAGE="${PROJECTS_OPERATOR_IMAGE:?"please set the projects operator image"}"
-KUBE_RBAC_PROXY_IMAGE="${KUBE_RBAC_PROXY_IMAGE:?"please set the kube rbac proxy image"}"
-
 CLUSTER_ROLE_REF="${CLUSTER_ROLE_REF:?"please set the cluster role ref"}"
 
 $DIR/generate-certs $NAME $INSTANCE $NAMESPACE
@@ -38,10 +35,9 @@ ytt -f $DIR/../deployments/k8s \
   -v registry.username=$REGISTRY_USERNAME \
   -v registry.password=$REGISTRY_PASSWORD \
   -v registry.secretName=$REGISTRY_SECRET_NAME \
-  -v projectsOperatorImage=$PROJECTS_OPERATOR_IMAGE \
-  -v kubeRbacProxyImage=$KUBE_RBAC_PROXY_IMAGE \
   -v clusterRoleRef=$CLUSTER_ROLE_REF \
   --data-value-file tls.cert=/tmp/webhook-server-tls.crt \
   --data-value-file tls.key=/tmp/webhook-server-tls.key \
   --data-value-file caCert=/tmp/ca.pem  | \
+kbld -f - | \
 kapp deploy -y -a projects-operator -n $NAMESPACE -f -

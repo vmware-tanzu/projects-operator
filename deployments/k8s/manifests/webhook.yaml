@@ -32,6 +32,9 @@ metadata:
   labels:
     app: #@ data.values.instance + '-' + data.values.name + "-webhook"
     release: #@ data.values.instance
+  annotations:
+    kapp.k14s.io/disable-original: "" #! Always rotate the webhook for new TLS certs
+    kapp.k14s.io/update-strategy: "always-replace" #! Always rotate the webhook for new TLS certs
 spec:
   replicas: 1
   selector:

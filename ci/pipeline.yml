@@ -63,10 +63,15 @@ jobs:
             --git projects-operator \
             --output-tar tagged-image/image.tar \
             --dpkg-file "tagged-image/projects-operator-dpkg-${projects_operator_version}.txt"
+  - task: assemble
+    file: projects-operator/ci/tasks/assemble-build-artefact.yml
   - in_parallel:
     - put: version
       params:
         file: version/version
+    - put: build-artefacts-dev
+      params:
+        file: archive/projects-operator-*.tgz
     - put: project-operator-image
       params:
         image: tagged-image/image.tar
@@ -84,6 +89,9 @@ jobs:
       trigger: true
     - get: version
       passed: [build]
+    - get: build-artefacts-dev
+      passed: [build]
+      trigger: true
     - get: project-operator-image
       passed: [build]
       params:

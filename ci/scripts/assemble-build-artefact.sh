@@ -2,8 +2,7 @@
 
 VERSION=$(cat version/version)
 
-sed -i s/version:.*/version:\ ${VERSION}/ projects-operator/helm/projects-operator/Chart.yaml
-sed -i s/appVersion:.*/appVersion:\ ${VERSION}/ projects-operator/helm/projects-operator/Chart.yaml
-sed -i "s/tag: latest/tag: ${VERSION}/" projects-operator/helm/projects-operator/values.yaml
+sed -i "s/version:.*/version:\ ${VERSION}/" projects-operator/deployments/k8s/values.yaml
 
-helm package projects-operator/helm/projects-operator/ -d archive/
+tar -czf projects-operator-${VERSION}.tgz -C projects-operator/deployments -s /k8s/projects-operator/ k8s/
+mv projects-operator-${VERSION}.tgz archive/projects-operator-${VERSION}.tgz

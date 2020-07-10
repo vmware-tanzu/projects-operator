@@ -33,7 +33,7 @@ tolerations: []
 
 affinity: {}
 
-clusterRoleRef:
+clusterRoleRef: "projects-operator-clusterrole-ref-rolebinding"
 
 maxConcurrentReconciles: 4
 

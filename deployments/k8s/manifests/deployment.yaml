@@ -28,7 +28,7 @@ spec:
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
         - --v=10
-        image: dev.registry.pivotal.io/developer-console/kube-rbac-proxy:v0.4.1
+        image: #@ data.values.registry.url + "/kube-rbac-proxy:v0.4.1"
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
@@ -43,7 +43,7 @@ spec:
           value: #@ data.values.clusterRoleRef
         - name: MAX_CONCURRENT_RECONCILES
           value: #@ data.values.maxConcurrentReconciles
-        image: #@ "dev.registry.pivotal.io/developer-console/projects-operator:" + data.values.version
+        image: #@ data.values.registry.url + "/projects-operator:" + data.values.version
         name: manager
         resources: #@ data.values.resources
       nodeSelector: #@ data.values.nodeSelector

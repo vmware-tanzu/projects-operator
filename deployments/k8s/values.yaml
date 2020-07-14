@@ -6,7 +6,7 @@ namespace: "default"
 version: "latest"
 
 registry:
-  url:
+  url: "dev.registry.pivotal.io/developer-console"
   username:
   password:
   secretName: "registry-secret"

@@ -12,7 +12,7 @@ DOCKER_AUTH=$(echo -n "$REGISTRY_USERNAME:$REGISTRY_PASSWORD" | base64 - | tr -d
 cat <<EOT > $HOME/.docker/config.json
 {
   "auths": {
-    "${REGISTRY_URL}": {
+    "${REGISTRY_HOSTNAME}/${REGISTRY_PROJECT}": {
         "auth": "${DOCKER_AUTH}"
     }
   }

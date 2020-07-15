@@ -9,7 +9,8 @@ INSTANCE="${INSTANCE:?"please set the instance name of this deployment"}"
 NAMESPACE="${NAMESPACE:-"projects-operator"}"
 VERSION="${VERSION:-"latest"}"
 
-REGISTRY_URL="${REGISTRY_URL:?"please set the url of your registry"}"
+REGISTRY_HOSTNAME="${REGISTRY_HOSTNAME:?"please set the hostname of your registry"}"
+REGISTRY_PROJECT="${REGISTRY_PROJECT:?"please set the project of your registry"}"
 REGISTRY_USERNAME="${REGISTRY_USERNAME:?"please set the username of your registry"}"
 REGISTRY_PASSWORD="${REGISTRY_PASSWORD:?"please set the password of your registry"}"
 REGISTRY_SECRET_NAME="${REGISTRY_SECRET_NAME:-registry-secret}"
@@ -30,7 +31,8 @@ ytt -f $DIR/../deployments/k8s \
   -v instance=$INSTANCE \
   -v namespace=$NAMESPACE \
   -v version=$VERSION \
-  -v registry.url=$REGISTRY_URL \
+  -v registry.hostname=$REGISTRY_HOSTNAME \
+  -v registry.project=$REGISTRY_PROJECT \
   -v registry.username=$REGISTRY_USERNAME \
   -v registry.password=$REGISTRY_PASSWORD \
   -v registry.secretName=$REGISTRY_SECRET_NAME \

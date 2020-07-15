@@ -30,11 +30,13 @@ rules:
 
 ### Install
 
-You will need to build and push the projects-operator image to a registry.
+Then you will need to build and push the projects-operator image to a registry.
 
 ```bash
-$ docker build -t my-registry/projects-operator .
-$ docker push my-registry/projects-operator
+$ docker build -t <REGISTRY_HOSTNAME>/<REGISTRY_PROJECT>/projects-operator .
+$ docker push <REGISTRY_HOSTNAME>/<REGISTRY_PROJECT>/projects-operator
+
+# For example, docker build -t gcr.io/team-a/projects-operator .
 ```
 
 Then finally you can run the [/scripts/kapp-deploy](/scripts/kapp-deploy) script
@@ -43,8 +45,9 @@ to deploy projects-operator.
 ```bash
 
 export INSTANCE=<UNIQUE STRING TO IDENTIFY THIS DEPLOYMENT>
-export REGISTRY_URL=<REGISTRY_URL>
-export REGISTRY_USERNAME=<REGISTRY_USERNAME>
+export REGISTRY_HOSTNAME=<REGISTRY_HOSTNAME> # e.g. "gcr.io", "my.private.harbor.com", etc.
+export REGISTRY_PROJECT=<REGISTRY_PROJECT>   # e.g. "team-a", "dev", etc.
+export REGISTRY_USERNAME=<REGISTRY_PASSWORD>
 export REGISTRY_PASSWORD=<REGISTRY_PASSWORD>
 export CLUSTER_ROLE_REF=my-clusterrole-with-rbac-for-each-project
 

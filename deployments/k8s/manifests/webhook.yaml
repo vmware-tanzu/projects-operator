@@ -52,7 +52,7 @@ spec:
       - name: #@ data.values.registry.secretName
       containers:
       - name: webhook
-        image: #@ data.values.registry.url + "/projects-operator:" + data.values.version
+        image: #@ data.values.registry.hostname + '/' + data.values.registry.project + "/projects-operator:" + data.values.version
         command:
         - /webhook
         env:

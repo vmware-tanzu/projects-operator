@@ -7,18 +7,18 @@ controller.  `Projects` are intended to provide isolation of kubernetes
 resources on a single kubernetes cluster.  A `Project` is essentially a
 kubernetes namespace along with a corresponding set of RBAC rules.
 
-## Usage
+## Installation and Usage
 
-`projects-operator` is currently deployed using [helm (v3)](https://helm.sh/).
+`projects-operator` is currently deployed using [k14s](https://k14s.io).
 
 You must first create a `ClusterRole` that contains the RBAC
-rules you wish to apply to each of the `Project`s. For example:
+rules you wish to be applied to each created `Project`. For example:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: my-clusterrole
+  name: my-clusterrole-with-rbac-for-each-project
 rules:
 - apiGroups:
   - example.k8s.io
@@ -28,22 +28,27 @@ rules:
   - "*"
 ```
 
-### Deploying via helm
+### Install
+
+You will need to build and push the projects-operator image to a registry.
 
 ```bash
-# 1. Build the controller manager image
+$ docker build -t my-registry/projects-operator .
+$ docker push my-registry/projects-operator
+```
 
-$ docker build -t my-registry/projects-operator:my-tag .
+Then finally you can run the [/scripts/kapp-deploy](/scripts/kapp-deploy) script
+to deploy projects-operator.
 
-# 2. Push the controller manager image
+```bash
 
-$ docker push my-registry/projects-operator:my-tag
+export INSTANCE=<UNIQUE STRING TO IDENTIFY THIS DEPLOYMENT>
+export REGISTRY_URL=<REGISTRY_URL>
+export REGISTRY_USERNAME=<REGISTRY_USERNAME>
+export REGISTRY_PASSWORD=<REGISTRY_PASSWORD>
+export CLUSTER_ROLE_REF=my-clusterrole-with-rbac-for-each-project
 
-# 3. Helm deploy, setting the clusterRoleRef and the image
-
-$ helm install projects-operator -helm/projects-operator \
-  --set clusterRoleRef=my-clusterrole  \
-  --set image=my-registry/projects-operator:my-tag
+$ ./scripts/kapp-deploy
 ```
 
 ### Creating a Project
@@ -66,13 +71,11 @@ spec:
     name: ldap-experts
 ```
 
-### Uninstalling via helm
+### Uninstall
 
 ```bash
-helm uninstall projects-operator
+kapp -n <NAMESPACE> delete -a projects-operator
 ```
-
-Note that the `Project` CRD will be left on the cluster as will any CRs for the `Project` CRD. These can be deleted manually if desired.
 
 ### Webhooks
 

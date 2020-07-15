@@ -7,20 +7,17 @@ image_resource:
 
 inputs:
 - name: projects-operator
-- name: build-artefacts-dev
+- name: version
 - name: project-operator-image
 
 params:
   KUBECONFIG_FILE_CONTENTS:
-  CHART_PATH:
-  REGISTRY_URL:
+  INSTANCE:
+  REGISTRY_HOSTNAME:
   REGISTRY_PROJECT:
   REGISTRY_USERNAME:
   REGISTRY_PASSWORD:
-  REGISTRY_EMAIL:
+  CLUSTER_ROLE_REF:
 
 run:
-  path: projects-operator/ci/shim
-  args:
-  - make
-  - helm-install
+  path: projects-operator/ci/scripts/kapp-deploy.sh

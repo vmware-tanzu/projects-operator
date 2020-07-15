@@ -29,7 +29,8 @@ run: generate format
 	go run ./cmd/manager/main.go
 
 install: generate
-	kubectl apply -f helm/projects-operator/crds
+	kubectl apply -f deployments/k8s/manifests/projects.vmware.com_projects.yaml
+	kubectl apply -f deployments/k8s/manifests/projects.vmware.com_projectaccesses.yaml
 
 generate: generate-deepcopy generate-rbac generate-crd
 	go generate ./...
@@ -41,23 +42,23 @@ generate-deepcopy: controller-gen
 
 generate-crd: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
-		output:crd:artifacts:config=helm/projects-operator/crds \
+		output:crd:artifacts:config=deployments/k8s/manifests \
 		paths=./...
 
 generate-rbac: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
 		rbac:roleName=projects-manager-role \
 		output:rbac:stdout \
-		paths=./controllers/... > helm/projects-operator/templates/manager-role.yaml
+		paths=./controllers/... > deployments/k8s/manifests/manager-role.yaml
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
 		rbac:roleName=projectaccesses-manager-role \
 		output:rbac:stdout \
-		paths=./pkg/... > helm/projects-operator/templates/projectaccess-role.yaml
+		paths=./pkg/... > deployments/k8s/manifests/projectaccess-role.yaml
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) \
 		rbac:roleName=projects-leader-election-role \
 		output:rbac:stdout \
-		paths=./cmd/manager/... > helm/projects-operator/templates/leader-election-role.yaml
-	./scripts/helmify-yaml
+		paths=./cmd/manager/... > deployments/k8s/manifests/leader-election-role.yaml
+	./scripts/yttify-yaml
 
 controller-gen:
 ifeq (, $(shell which controller-gen))
@@ -68,6 +69,7 @@ CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
 #### Custom tasks ####
+
 clean-crs:
 	kubectl delete projects --all
 
@@ -77,23 +79,10 @@ lint:
 format:
 	golangci-lint run --fix --timeout 2m30s --verbose
 
-dev:
-	kubectl create namespace "$$NAMESPACE" || true
-	kubectl create secret docker-registry "$$REGISTRY_SECRET_NAME" \
-		--namespace "$$NAMESPACE" \
-		--docker-server="$$REGISTRY_URL" \
-		--docker-username="$$REGISTRY_USERNAME" \
-		--docker-password="$$REGISTRY_PASSWORD" \
-		--docker-email="$$REGISTRY_EMAIL" || true
-	IMAGE_TAG=$(shell hostname) skaffold dev --force=false
+#################### k14s ####################
 
-#################### HELM ####################
+kapp-deploy:
+	./scripts/kapp-deploy
 
-helm-install:
-	./scripts/helm-install
-
-helm-local-install:
-	CLUSTER_ROLE_REF=acceptance-test-clusterrole ./scripts/helm-install --local
-
-helm-uninstall:
-	./scripts/helm-uninstall
+kapp-delete:
+	kapp delete -a projects-operator -y

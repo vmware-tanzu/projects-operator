@@ -8,13 +8,12 @@ The following dependencies need to be installed in order to hack on projects-ope
 
 * [Go](https://golang.org/doc/install)
   * [ginkgo](https://github.com/onsi/ginkgo)
-  * [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) (v6)
+  * [counterfeiter](https://github.com/maxbrunsfeld/counterfeiter) (v6+)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-* [kubebuilder 2.0](https://github.com/kubernetes-sigs/kubebuilder)
+* [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder) (v2+)
 * [golangci-lint](https://github.com/golangci/golangci-lint) (v1.24.0+)
 * [docker](https://www.docker.com/)
-* [helm](https://helm.sh/) (v3)
-* [skaffold](https://github.com/GoogleContainerTools/skaffold) (v1.6.0+)
+* [k14s](https://k14s.io)
 
 ## Testing your contribution
 
@@ -27,8 +26,12 @@ $ make unit-tests
 
 ### Acceptance tests
 
-Acceptance tests are run against an installation of projects-operator on a cluster using OIDC backed by LDAP, there are a number
-of ways to install projects-operator however the recommended way for development is to use Skaffold.
+Acceptance tests are run against an installation of projects-operator on a
+cluster using OIDC backed by LDAP.  For notes on installing projects-operator,
+please refer to the [/README.md](/READMD.md).
+
+NB: You will need to ensure you have deployed projects-operator with a version
+of the projects-operator image that contains your changes.
 
 #### Configuring the LDAP server
 
@@ -44,26 +47,6 @@ Take note of the generated password.
 
 This LDAP server must then be set up as the OIDC backing for the Kubernetes cluster to be used for acceptance, see
 [OpenID Connect Tokens](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens).
-
-#### Installing projects-operator via skaffold
-
-In order to use this workflow, you must first download [skaffold](https://github.com/GoogleContainerTools/skaffold)
-and then update the `skaffold.yaml` file as required. Specifically you will need to point to an image registry you
-have access to and to set the `clusterRoleRef`. The default `clusterRoleRef` is set to the name ofthe role the
-acceptance tests use. N.B. `skaffold` must be v1.6.0+.
-
-You also need to ensure that a `docker-registry` secret named `registry-secret` exists for your registry in the
-namespace you are deploying to, this can be done by running:
-```
-$ kubectl create secret docker-registry registry-secret --docker-server=<your-registry-server> --docker-username=<your-username> --docker-password=<your-password> --docker-email=<your-email>
-```
-
-Once configured, in a new terminal window you can then run:
-```
-$ make dev
-```
-This will monitor for changes on the codebase and then build, tag and push a new image to the configured registry.
-It will then also do a helm update. Once the helm update has completed you are free to run your tests.
 
 #### Running the tests
 

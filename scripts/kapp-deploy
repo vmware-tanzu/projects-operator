@@ -1,0 +1,44 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+set -euo pipefail
+
+NAME="${NAME:-"projects-operator"}"
+INSTANCE="${INSTANCE:?"please set the instance name of this deployment"}"
+NAMESPACE="${NAMESPACE:-"projects-operator"}"
+VERSION="${VERSION:-"latest"}"
+
+REGISTRY_HOSTNAME="${REGISTRY_HOSTNAME:?"please set the hostname of your registry"}"
+REGISTRY_PROJECT="${REGISTRY_PROJECT:?"please set the project of your registry"}"
+REGISTRY_USERNAME="${REGISTRY_USERNAME:?"please set the username of your registry"}"
+REGISTRY_PASSWORD="${REGISTRY_PASSWORD:?"please set the password of your registry"}"
+REGISTRY_SECRET_NAME="${REGISTRY_SECRET_NAME:-registry-secret}"
+
+CLUSTER_ROLE_REF="${CLUSTER_ROLE_REF:?"please set the cluster role ref"}"
+
+$DIR/generate-certs $NAME $INSTANCE $NAMESPACE
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: $NAMESPACE
+EOF
+
+ytt -f $DIR/../deployments/k8s \
+  -v name=$NAME \
+  -v instance=$INSTANCE \
+  -v namespace=$NAMESPACE \
+  -v version=$VERSION \
+  -v registry.hostname=$REGISTRY_HOSTNAME \
+  -v registry.project=$REGISTRY_PROJECT \
+  -v registry.username=$REGISTRY_USERNAME \
+  -v registry.password=$REGISTRY_PASSWORD \
+  -v registry.secretName=$REGISTRY_SECRET_NAME \
+  -v clusterRoleRef=$CLUSTER_ROLE_REF \
+  --data-value-file tls.cert=/tmp/webhook-server-tls.crt \
+  --data-value-file tls.key=/tmp/webhook-server-tls.key \
+  --data-value-file caCert=/tmp/ca.pem  | \
+kbld -f - | \
+kapp deploy -y -a projects-operator -n $NAMESPACE -f -

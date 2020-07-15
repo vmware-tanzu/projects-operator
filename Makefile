@@ -29,7 +29,8 @@ run: generate format
 	go run ./cmd/manager/main.go
 
 install: generate
-	kubectl apply -f helm/projects-operator/crds
+	kubectl apply -f deployments/k8s/manifests/projects.vmware.com_projects.yaml
+	kubectl apply -f deployments/k8s/manifests/projects.vmware.com_projectaccesses.yaml
 
 generate: generate-deepcopy generate-rbac generate-crd
 	go generate ./...
@@ -68,6 +69,7 @@ CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
 #### Custom tasks ####
+
 clean-crs:
 	kubectl delete projects --all
 
@@ -76,27 +78,6 @@ lint:
 
 format:
 	golangci-lint run --fix --timeout 2m30s --verbose
-
-dev:
-	kubectl create namespace "$$NAMESPACE" || true
-	kubectl create secret docker-registry "$$REGISTRY_SECRET_NAME" \
-		--namespace "$$NAMESPACE" \
-		--docker-server="$$REGISTRY_URL" \
-		--docker-username="$$REGISTRY_USERNAME" \
-		--docker-password="$$REGISTRY_PASSWORD" \
-		--docker-email="$$REGISTRY_EMAIL" || true
-	IMAGE_TAG=$(shell hostname) skaffold dev --force=false
-
-#################### HELM ####################
-
-helm-install:
-	./scripts/helm-install
-
-helm-local-install:
-	CLUSTER_ROLE_REF=acceptance-test-clusterrole ./scripts/helm-install --local
-
-helm-uninstall:
-	./scripts/helm-uninstall
 
 #################### k14s ####################
 

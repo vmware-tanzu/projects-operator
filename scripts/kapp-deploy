@@ -34,7 +34,7 @@ ytt -f $DIR/../deployments/k8s \
   -v registry.hostname=$REGISTRY_HOSTNAME \
   -v registry.project=$REGISTRY_PROJECT \
   -v registry.username=$REGISTRY_USERNAME \
-  -v registry.password=$REGISTRY_PASSWORD \
+  -v registry.password="$REGISTRY_PASSWORD" \
   -v registry.secretName=$REGISTRY_SECRET_NAME \
   -v clusterRoleRef=$CLUSTER_ROLE_REF \
   --data-value-file tls.cert=/tmp/webhook-server-tls.crt \

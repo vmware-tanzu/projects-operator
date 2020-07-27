@@ -17,6 +17,7 @@ REGISTRY_SECRET_NAME="${REGISTRY_SECRET_NAME:-registry-secret}"
 
 CLUSTER_ROLE_REF="${CLUSTER_ROLE_REF:?"please set the cluster role ref"}"
 
+export CI
 $DIR/generate-certs $NAME $INSTANCE $NAMESPACE
 
 cat <<EOF | kubectl apply -f -

@@ -26,7 +26,21 @@ metadata:
   name: $NAMESPACE
 EOF
 
-ytt -f $DIR/../deployments/k8s \
+LOCAL_YTT_FLAGS=""
+LOCAL_KBLD_FLAGS=""
+if [[ $# -eq 1 && "$1" =~ "--local" ]]; then
+  # use kbld to relocate the kube-rbac-proxy image to custom registry
+  kbld -f build/rbac-proxy-relocation.yaml |
+  kbld relocate \
+    --repository "$REGISTRY_HOSTNAME/$REGISTRY_PROJECT/kube-rbac-proxy" \
+    --lock-output build/rbac-proxy-relocation.lock.copied -f -
+  LOCAL_KBLD_FLAGS="-f ${DIR}/../build/rbac-proxy-relocation.lock.copied"
+
+  # use kbld to build, tag and push the cf-service-bridge image to the custom registry.
+  LOCAL_YTT_FLAGS="-f ${DIR}/../build/kbld.yaml"
+fi
+
+ytt -f $DIR/../deployments/k8s $LOCAL_YTT_FLAGS \
   -v name=$NAME \
   -v instance=$INSTANCE \
   -v namespace=$NAMESPACE \
@@ -40,5 +54,5 @@ ytt -f $DIR/../deployments/k8s \
   --data-value-file tls.cert=/tmp/webhook-server-tls.crt \
   --data-value-file tls.key=/tmp/webhook-server-tls.key \
   --data-value-file caCert=/tmp/ca.pem  | \
-kbld -f - | \
+kbld $LOCAL_KBLD_FLAGS -f - | \
 kapp deploy -y -a projects-operator -n $NAMESPACE -f -

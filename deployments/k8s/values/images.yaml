@@ -1,0 +1,5 @@
+#@data/values
+---
+images:
+  projectsOperator: dev.registry.pivotal.io/developer-console/projects-operator@sha256:3ce47c158ece4a1d63d449e6152bfb848db7ae207c94ae2ef89748a46e1688c3
+  kubeRbacProxy: dev.registry.pivotal.io/developer-console/kube-rbac-proxy:v0.4.1

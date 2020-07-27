@@ -84,5 +84,8 @@ format:
 kapp-deploy:
 	./scripts/kapp-deploy
 
+kapp-local-deploy:
+	./scripts/kapp-deploy --local
+
 kapp-delete:
-	kapp delete -a projects-operator -y
+	./scripts/kapp-delete

@@ -17,4 +17,4 @@ set -euo pipefail
 openssl req -nodes -new -x509 -days 365 -keyout /tmp/ca.key -out /tmp/ca.pem -subj "/CN=Admission Controller Webhook Project Operator CA"
 openssl genrsa -out /tmp/webhook-server-tls.key 2048
 openssl req -new -key /tmp/webhook-server-tls.key -subj "/CN=$instance-$name-webhook.$namespace.svc" \
-    | openssl x509 -req -CA /tmp/ca.pem -CAkey /tmp/ca.key -CAcreateserial -out /tmp/webhook-server-tls.crt
+    | openssl x509 -req -days 365 -CA /tmp/ca.pem -CAkey /tmp/ca.key -CAcreateserial -out /tmp/webhook-server-tls.crt

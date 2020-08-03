@@ -21,10 +21,10 @@ import (
 )
 
 type Env struct {
-	UaaLocation        string `env:"UAA_LOCATION"`
-	DeveloperPassword  string `env:"DEVELOPER_PASSWORD"`
-	OIDCUserPrefix     string `env:"OIDC_USER_PREFIX"`
-	OIDCGroupPrefix    string `env:"OIDC_GROUP_PREFIX"`
+	UaaLocation       string `env:"UAA_LOCATION"`
+	DeveloperPassword string `env:"DEVELOPER_PASSWORD"`
+	OIDCUserPrefix    string `env:"OIDC_USER_PREFIX"`
+	OIDCGroupPrefix   string `env:"OIDC_GROUP_PREFIX"`
 }
 
 const (

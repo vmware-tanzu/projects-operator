@@ -10,8 +10,6 @@ inputs:
 - name: projects-operator
 
 params:
-  CLUSTER_API_LOCATION:
-  CLUSTER_NAME:
   DEVELOPER_PASSWORD:
   KUBECONFIG_FILE_CONTENTS:
   UAA_LOCATION:

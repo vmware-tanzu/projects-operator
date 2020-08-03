@@ -53,8 +53,6 @@ This LDAP server must then be set up as the OIDC backing for the Kubernetes clus
 Setup the following env vars:
 ```
 export UAA_LOCATION=<UAA_SERVER_LOCATION>
-export CLUSTER_API_LOCATION=<CLUSTER>
-export CLUSTER_NAME=<CLUSTER_NAME>
 export DEVELOPER_PASSWORD=<DEVELOPER_PASSWORD>
 export OIDC_USER_PREFIX=<OIDC_USER_PREFIX> (optional)
 export OIDC_GROUP_PREFIX=<OIDC_GROUP_PREFIX> (optional)

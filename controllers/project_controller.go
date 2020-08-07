@@ -1,3 +1,6 @@
+// Copyright 2020-Present VMware, Inc.
+// SPDX-License-Identifier: BSD-2-Clause
+
 /*
 Unauthorized use, copying or distribution of any source code in this
 repository via any medium is strictly prohibited without the author's

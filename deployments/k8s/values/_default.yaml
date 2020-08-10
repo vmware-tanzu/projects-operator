@@ -12,6 +12,10 @@ registry:
   password:
   secretName: "registry-secret"
 
+images:
+  projectsOperator:
+  kubeRbacProxy:
+
 clusterRoleRef:
 
 maxConcurrentReconciles: "4"

@@ -96,6 +96,8 @@ jobs:
       passed: [build]
       params:
         format: oci
+  - task: bump-image-ref
+    file: projects-operator/ci/tasks/bump-image-ref.yml
   - task: kapp-deploy
     file: projects-operator/ci/tasks/kapp-deploy.yml
     params:
@@ -112,6 +114,9 @@ jobs:
       KUBECONFIG_FILE_CONTENTS: {{KUBECONFIG_FILE_CONTENTS}}
       UAA_LOCATION: {{UAA_LOCATION}}
       DEVELOPER_PASSWORD: {{DEVELOPER_PASSWORD}}
+  - put: projects-operator-bump
+    params:
+      repository: projects-operator
 
 - name: promote-final
   plan:
@@ -162,6 +167,16 @@ jobs:
 
 resources:
 - name: projects-operator
+  type: git
+  icon: git
+  source:
+    private_key: {{PROJECTS_OPERATOR_DEPLOY_KEY}}
+    uri: git@github.com:pivotal/projects-operator
+    branch: master
+    ignore_paths:
+    - deployments/k8s/values/images.yaml
+
+- name: projects-operator-bump
   type: git
   icon: git
   source:

@@ -1,0 +1,29 @@
+platform: linux
+
+image_resource:
+  type: registry-image
+  source:
+    repository: ismteam/ci
+    tag: latest
+
+inputs:
+- name: projects-operator
+- name: projects-operator-image
+
+outputs:
+- name: projects-operator
+
+run:
+  path: /bin/bash
+  args:
+  - -euc
+  - |
+    DIGEST=$(cat projects-operator-image/digest)
+
+    pushd projects-operator
+      sed -i "s/projects-operator@.*/projects-operator@${DIGEST}/" deployments/k8s/values/images.yaml
+      git config user.email "pvtl-marketplace-demand+ci@vmware.com"
+      git config user.name "projects-operator-ci"
+      git add .
+      git commit -m "Bump projects-operator image digest"
+    popd

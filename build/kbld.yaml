@@ -1,0 +1,13 @@
+#@ load("@ytt:data", "data")
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Sources
+sources:
+- imageRepo: dev.registry.pivotal.io/developer-console/projects-operator
+  path: .
+---
+apiVersion: kbld.k14s.io/v1alpha1
+kind: ImageDestinations
+destinations:
+- imageRepo: dev.registry.pivotal.io/developer-console/projects-operator
+  newImage: #@ data.values.registry.hostname + '/' + data.values.registry.project + '/dev-projects-operator'

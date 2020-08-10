@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+NAMESPACE="${NAMESPACE:-"projects-operator"}"
+
+kapp delete -y -a projects-operator -n "$NAMESPACE"

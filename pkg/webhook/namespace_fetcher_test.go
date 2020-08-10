@@ -1,4 +1,4 @@
-// Copyright 2020-Present VMware, Inc.
+// Copyright 2019-2020 VMware, Inc.
 // SPDX-License-Identifier: BSD-2-Clause
 
 package webhook_test

@@ -7,6 +7,10 @@ controller.  `Projects` are intended to provide isolation of kubernetes
 resources on a single kubernetes cluster.  A `Project` is essentially a
 kubernetes namespace along with a corresponding set of RBAC rules.
 
+## Contributing
+
+To begin contributing, please read the [contributing](CONTRIBUTING.md) doc.
+
 ## Installation and Usage
 
 `projects-operator` is currently deployed using [k14s](https://k14s.io).

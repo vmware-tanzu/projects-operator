@@ -22,8 +22,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	projects "github.com/pivotal/projects-operator/api/v1alpha1"
-	"github.com/pivotal/projects-operator/pkg/finalizer"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -34,6 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	projects "github.com/pivotal/projects-operator/api/v1alpha1"
+	"github.com/pivotal/projects-operator/pkg/finalizer"
 )
 
 const projectFinalizer = "project.finalizer.projects.vmware.com"

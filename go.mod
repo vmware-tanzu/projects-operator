@@ -4,13 +4,13 @@ go 1.18
 
 require (
 	github.com/caarlos0/env/v6 v6.3.0
-	github.com/go-logr/logr v0.1.0
+	github.com/go-logr/logr v1.2.0
 	github.com/onsi/ginkgo v1.14.0
 	github.com/onsi/gomega v1.10.1
 	k8s.io/api v0.18.5
 	k8s.io/apimachinery v0.18.5
 	k8s.io/client-go v0.18.5
-	k8s.io/klog/v2 v2.0.0
+	k8s.io/klog/v2 v2.80.1
 	sigs.k8s.io/controller-runtime v0.6.0
 )
 

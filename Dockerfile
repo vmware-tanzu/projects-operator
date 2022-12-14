@@ -1,5 +1,6 @@
 # Build the manager binary
-FROM golang:1.18.0 as builder
+ARG GOLANG_IMG=golang:1.18.0
+FROM ${GOLANG_IMG} as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -21,7 +22,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o webhook cmd/webhook/main.go
 
 # Changed base image to cftiny for OSL compliance
-FROM gcr.io/paketo-buildpacks/run:tiny-cnb
+FROM gcr.io/paketo-buildpacks/run-bionic-tiny:latest
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY --from=builder /workspace/webhook .

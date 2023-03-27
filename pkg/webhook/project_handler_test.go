@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/go-logr/logr/testing"
+	"github.com/go-logr/logr"
 	"github.com/pivotal/projects-operator/testhelpers"
 	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -52,7 +52,7 @@ var _ = Describe("ProjectHandler", func() {
 		fakeProjectFilterer = new(webhookfakes.FakeProjectFilterer)
 		fakeProjectFilterer.FilterProjectsReturns([]string{"my-project-a", "my-project-c"})
 
-		logger := new(testing.NullLogger)
+		logger := logr.Discard()
 		h = NewHandler(logger, fakeNamespaceFetcher, nil, nil)
 	})
 

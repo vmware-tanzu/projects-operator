@@ -134,7 +134,7 @@ func pathToProjectsOperator() string {
 	return filepath.Join(basepath, "..")
 }
 
-//TODO: little refactor here
+// TODO: little refactor here
 func CreateServiceAccount(serviceAccountName, namespace string) string {
 	context := NewKubeDefaultActor()
 

@@ -59,13 +59,12 @@ type ProjectReconciler struct {
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles;roles,verbs=watch;list;create;get;update;patch
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;rolebindings,verbs=watch;list;create;get;update;patch
 
-func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
+func (r *ProjectReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("project", req.NamespacedName)
 
 	project := &projects.Project{}
 
-	if err := r.Client.Get(context.Background(), req.NamespacedName, project); err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, project); err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("Project resource not found")
 			return ctrl.Result{Requeue: true}, client.IgnoreNotFound(err)
@@ -76,27 +75,27 @@ func (r *ProjectReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if !project.ObjectMeta.DeletionTimestamp.IsZero() {
-		err := r.deleteNamespace(project)
+		err := r.deleteNamespace(ctx, project)
 		return ctrl.Result{}, err
 	}
 
-	if err := r.createNamespace(project); err != nil {
+	if err := r.createNamespace(ctx, project); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.createClusterRole(project); err != nil {
+	if err := r.createClusterRole(ctx, project); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.createClusterRoleBinding(project); err != nil {
+	if err := r.createClusterRoleBinding(ctx, project); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.createRoleBinding(project); err != nil {
+	if err := r.createRoleBinding(ctx, project); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	err := r.addFinalizer(project)
+	err := r.addFinalizer(ctx, project)
 
 	return ctrl.Result{}, err
 }
@@ -108,7 +107,7 @@ func (r *ProjectReconciler) SetupWithManager(mgr ctrl.Manager, maxConcurrentReco
 		Complete(r)
 }
 
-func (r *ProjectReconciler) createNamespace(project *projects.Project) error {
+func (r *ProjectReconciler) createNamespace(ctx context.Context, project *projects.Project) error {
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   project.Name,
@@ -120,7 +119,7 @@ func (r *ProjectReconciler) createNamespace(project *projects.Project) error {
 		return err
 	}
 
-	status, err := controllerutil.CreateOrUpdate(context.Background(), r, namespace, func() error { return nil })
+	status, err := controllerutil.CreateOrUpdate(ctx, r.Client, namespace, func() error { return nil })
 	if err != nil {
 		return err
 	}
@@ -129,13 +128,13 @@ func (r *ProjectReconciler) createNamespace(project *projects.Project) error {
 	return nil
 }
 
-func (r *ProjectReconciler) deleteNamespace(project *projects.Project) error {
-	_ = r.Client.Delete(context.Background(), &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: project.Name}})
+func (r *ProjectReconciler) deleteNamespace(ctx context.Context, project *projects.Project) error {
+	_ = r.Client.Delete(ctx, &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: project.Name}})
 	for {
 		namespace := &corev1.Namespace{}
-		if err := r.Client.Get(context.Background(), types.NamespacedName{Name: project.Name}, namespace); err != nil {
+		if err := r.Client.Get(ctx, types.NamespacedName{Name: project.Name}, namespace); err != nil {
 			if errors.IsNotFound(err) {
-				status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
+				status, err := controllerutil.CreateOrUpdate(ctx, r.Client, project, func() error {
 					finalizer.RemoveFinalizer(project, projectFinalizer)
 					return nil
 				})
@@ -150,7 +149,7 @@ func (r *ProjectReconciler) deleteNamespace(project *projects.Project) error {
 	}
 }
 
-func (r *ProjectReconciler) createClusterRole(project *projects.Project) error {
+func (r *ProjectReconciler) createClusterRole(ctx context.Context, project *projects.Project) error {
 	clusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterRoleName(project),
@@ -160,7 +159,7 @@ func (r *ProjectReconciler) createClusterRole(project *projects.Project) error {
 		return err
 	}
 
-	status, err := controllerutil.CreateOrUpdate(context.Background(), r, clusterRole, func() error {
+	status, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRole, func() error {
 		clusterRole.Rules = []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{
@@ -192,7 +191,7 @@ func (r *ProjectReconciler) createClusterRole(project *projects.Project) error {
 	return nil
 }
 
-func (r *ProjectReconciler) createClusterRoleBinding(project *projects.Project) error {
+func (r *ProjectReconciler) createClusterRoleBinding(ctx context.Context, project *projects.Project) error {
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: project.Name + "-clusterrolebinding",
@@ -202,7 +201,7 @@ func (r *ProjectReconciler) createClusterRoleBinding(project *projects.Project) 
 		return err
 	}
 
-	status, err := controllerutil.CreateOrUpdate(context.Background(), r, clusterRoleBinding, func() error {
+	status, err := controllerutil.CreateOrUpdate(ctx, r.Client, clusterRoleBinding, func() error {
 		clusterRoleBinding.Subjects = subjects(project)
 		clusterRoleBinding.RoleRef = rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
@@ -220,7 +219,7 @@ func (r *ProjectReconciler) createClusterRoleBinding(project *projects.Project) 
 	return nil
 }
 
-func (r *ProjectReconciler) createRoleBinding(project *projects.Project) error {
+func (r *ProjectReconciler) createRoleBinding(ctx context.Context, project *projects.Project) error {
 	roleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      project.Name + "-rolebinding",
@@ -231,7 +230,7 @@ func (r *ProjectReconciler) createRoleBinding(project *projects.Project) error {
 		return err
 	}
 
-	status, err := controllerutil.CreateOrUpdate(context.Background(), r, roleBinding, func() error {
+	status, err := controllerutil.CreateOrUpdate(ctx, r.Client, roleBinding, func() error {
 		roleBinding.Subjects = subjects(project)
 		roleBinding.RoleRef = r.ClusterRoleRef
 		return nil
@@ -267,8 +266,8 @@ func subjects(project *projects.Project) []rbacv1.Subject {
 	return subjects
 }
 
-func (r *ProjectReconciler) addFinalizer(project *projects.Project) error {
-	status, err := controllerutil.CreateOrUpdate(context.Background(), r, project, func() error {
+func (r *ProjectReconciler) addFinalizer(ctx context.Context, project *projects.Project) error {
+	status, err := controllerutil.CreateOrUpdate(ctx, r.Client, project, func() error {
 		finalizer.AddFinalizer(project, projectFinalizer)
 		return nil
 	})

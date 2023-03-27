@@ -1,6 +1,6 @@
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:crdVersions=v1"
-GINKGO_ARGS = -r -p -randomizeSuites -randomizeAllSpecs
+GINKGO_ARGS = -r -p --randomize-suites --randomize-all
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -14,7 +14,7 @@ all: generate format manager webhook
 test: lint unit-tests acceptance-tests
 
 unit-tests:
-	ginkgo ${GINKGO_ARGS} -skipPackage acceptance
+	ginkgo ${GINKGO_ARGS} --skip-package acceptance
 
 acceptance-tests:
 	ginkgo -r acceptance

@@ -11,7 +11,7 @@ import (
 	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	"github.com/pivotal/projects-operator/testhelpers"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

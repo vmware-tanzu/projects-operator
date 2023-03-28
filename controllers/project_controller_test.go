@@ -21,11 +21,10 @@ import (
 	"context"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/pivotal/projects-operator/controllers"
 )
@@ -49,6 +48,7 @@ var _ = Describe("ProjectController", func() {
 			user2          string
 			scheme         *runtime.Scheme
 			clusterRoleRef rbacv1.RoleRef
+			ctx            context.Context
 		)
 
 		BeforeEach(func() {
@@ -77,17 +77,18 @@ var _ = Describe("ProjectController", func() {
 				Scheme:         scheme,
 				ClusterRoleRef: clusterRoleRef,
 			}
+			ctx = context.Background()
 		})
 
 		Describe("deletion", func() {
 			It("deletes a project without errors", func() {
-				_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+				_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 				Expect(err).NotTo(HaveOccurred())
 
-				err = fakeClient.Delete(context.TODO(), project)
+				err = fakeClient.Delete(ctx, project)
 				Expect(err).NotTo(HaveOccurred())
 
-				_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+				_, err = reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
@@ -95,11 +96,11 @@ var _ = Describe("ProjectController", func() {
 		Describe("creation", func() {
 			Describe("updates the project", func() {
 				It("adds a finalizer for waiting for namespace deletion", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					updatedProject := &projects.Project{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name,
 					}, updatedProject)
 					Expect(err).NotTo(HaveOccurred())
@@ -114,7 +115,7 @@ var _ = Describe("ProjectController", func() {
 				)
 
 				BeforeEach(func() {
-					result, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+					result, err = reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 				})
 
 				It("doesn't error", func() {
@@ -126,7 +127,7 @@ var _ = Describe("ProjectController", func() {
 				})
 
 				It("gets the correct project", func() {
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name,
 					}, project)
 					Expect(err).NotTo(HaveOccurred())
@@ -141,7 +142,7 @@ var _ = Describe("ProjectController", func() {
 								Name: "new-project",
 							},
 						}
-						result, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+						result, err = reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					})
 
 					It("doesn't error", func() {
@@ -156,11 +157,11 @@ var _ = Describe("ProjectController", func() {
 
 			Describe("creates a namespace", func() {
 				It("with given project name", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					namespace := &corev1.Namespace{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name,
 					}, namespace)
 					Expect(err).NotTo(HaveOccurred())
@@ -169,11 +170,11 @@ var _ = Describe("ProjectController", func() {
 				})
 
 				It("owned by the project", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					namespace := &corev1.Namespace{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name,
 					}, namespace)
 					Expect(err).NotTo(HaveOccurred())
@@ -185,11 +186,11 @@ var _ = Describe("ProjectController", func() {
 				})
 
 				It("copies project labels to the namespace", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					namespace := &corev1.Namespace{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name,
 					}, namespace)
 					Expect(err).NotTo(HaveOccurred())
@@ -200,11 +201,11 @@ var _ = Describe("ProjectController", func() {
 
 			Describe("creates a cluster role", func() {
 				It("with given project name", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					clusterRole := &rbacv1.ClusterRole{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name + "-clusterrole",
 					}, clusterRole)
 					Expect(err).NotTo(HaveOccurred())
@@ -213,11 +214,11 @@ var _ = Describe("ProjectController", func() {
 				})
 
 				It("owned by the project", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					clusterRole := &rbacv1.ClusterRole{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name + "-clusterrole",
 					}, clusterRole)
 					Expect(err).NotTo(HaveOccurred())
@@ -229,11 +230,11 @@ var _ = Describe("ProjectController", func() {
 				})
 
 				It("has rules to access the project", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					clusterRole := &rbacv1.ClusterRole{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name + "-clusterrole",
 					}, clusterRole)
 					Expect(err).NotTo(HaveOccurred())
@@ -251,31 +252,24 @@ var _ = Describe("ProjectController", func() {
 					var serviceAccountName = "service-account"
 
 					BeforeEach(func() {
-						project = &projects.Project{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "my-project",
-							},
-							Spec: projects.ProjectSpec{
-								Access: []projects.SubjectRef{
-									{
-										Kind:      "ServiceAccount",
-										Name:      serviceAccountName,
-										Namespace: "some-namespace",
-									},
-								},
+						project.Spec.Access = []projects.SubjectRef{
+							{
+								Kind:      "ServiceAccount",
+								Name:      serviceAccountName,
+								Namespace: "some-namespace",
 							},
 						}
 
-						err := fakeClient.Update(context.TODO(), project)
+						err := fakeClient.Update(ctx, project)
 						Expect(err).NotTo(HaveOccurred())
 					})
 
 					It("allows the user specified in the project access to the namespace", func() {
-						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
 						role := &rbacv1.RoleBinding{}
-						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						err = fakeClient.Get(ctx, client.ObjectKey{
 							Name:      project.Name + "-rolebinding",
 							Namespace: project.Name,
 						}, role)
@@ -294,11 +288,11 @@ var _ = Describe("ProjectController", func() {
 					})
 
 					It("allows the user specified in the project access to the project", func() {
-						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
 						clusterRole := &rbacv1.ClusterRoleBinding{}
-						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						err = fakeClient.Get(ctx, client.ObjectKey{
 							Name: project.Name + "-clusterrolebinding",
 						}, clusterRole)
 						Expect(err).NotTo(HaveOccurred())
@@ -320,11 +314,11 @@ var _ = Describe("ProjectController", func() {
 
 				When("the subject is a User", func() {
 					It("allows the user specified in the project access to the namespace", func() {
-						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
 						role := &rbacv1.RoleBinding{}
-						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						err = fakeClient.Get(ctx, client.ObjectKey{
 							Name:      project.Name + "-rolebinding",
 							Namespace: project.Name,
 						}, role)
@@ -347,11 +341,11 @@ var _ = Describe("ProjectController", func() {
 					})
 
 					It("allows the user specified in the project access to the project", func() {
-						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
 						clusterRole := &rbacv1.ClusterRoleBinding{}
-						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						err = fakeClient.Get(ctx, client.ObjectKey{
 							Name: project.Name + "-clusterrolebinding",
 						}, clusterRole)
 						Expect(err).NotTo(HaveOccurred())
@@ -377,31 +371,24 @@ var _ = Describe("ProjectController", func() {
 					BeforeEach(func() {
 						groupName = "my-group"
 
-						project = &projects.Project{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "my-project",
-							},
-							Spec: projects.ProjectSpec{
-								Access: []projects.SubjectRef{
-									{
-										Kind:      "Group",
-										Name:      groupName,
-										Namespace: "some-namespace",
-									},
-								},
+						project.Spec.Access = []projects.SubjectRef{
+							{
+								Kind:      "Group",
+								Name:      groupName,
+								Namespace: "some-namespace",
 							},
 						}
 
-						err := fakeClient.Update(context.TODO(), project)
+						err := fakeClient.Update(ctx, project)
 						Expect(err).NotTo(HaveOccurred())
 					})
 
 					It("allows the group specified in the project access to the namespace", func() {
-						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
 						role := &rbacv1.RoleBinding{}
-						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						err = fakeClient.Get(ctx, client.ObjectKey{
 							Name:      project.Name + "-rolebinding",
 							Namespace: project.Name,
 						}, role)
@@ -420,11 +407,11 @@ var _ = Describe("ProjectController", func() {
 					})
 
 					It("allows the group specified in the project access to the project", func() {
-						_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+						_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 						Expect(err).NotTo(HaveOccurred())
 
 						clusterRole := &rbacv1.ClusterRoleBinding{}
-						err = fakeClient.Get(context.TODO(), client.ObjectKey{
+						err = fakeClient.Get(ctx, client.ObjectKey{
 							Name: project.Name + "-clusterrolebinding",
 						}, clusterRole)
 						Expect(err).NotTo(HaveOccurred())
@@ -445,11 +432,11 @@ var _ = Describe("ProjectController", func() {
 				})
 
 				It("owned by the project", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					role := &rbacv1.RoleBinding{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name:      project.Name + "-rolebinding",
 						Namespace: project.Name,
 					}, role)
@@ -461,7 +448,7 @@ var _ = Describe("ProjectController", func() {
 					Expect(ownerReference.Kind).To(Equal("Project"))
 
 					clusterRole := &rbacv1.ClusterRoleBinding{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name + "-clusterrolebinding",
 					}, clusterRole)
 					Expect(err).NotTo(HaveOccurred())
@@ -477,12 +464,12 @@ var _ = Describe("ProjectController", func() {
 		Describe("update", func() {
 			Describe("update a role binding", func() {
 				It("that can be updated", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					// need to retrieve the reconciled project so that it has the correct ResourceVersion
 					reconciledProject := &projects.Project{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Namespace: project.Namespace,
 						Name:      project.Name,
 					}, reconciledProject)
@@ -491,14 +478,14 @@ var _ = Describe("ProjectController", func() {
 					first := reconciledProject.Spec.Access[0]
 					reconciledProject.Spec.Access = []projects.SubjectRef{first}
 
-					err = fakeClient.Update(context.TODO(), reconciledProject)
+					err = fakeClient.Update(ctx, reconciledProject)
 					Expect(err).NotTo(HaveOccurred())
 
-					_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err = reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					updatedRole := &rbacv1.RoleBinding{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name:      project.Name + "-rolebinding",
 						Namespace: project.Name,
 					}, updatedRole)
@@ -511,7 +498,7 @@ var _ = Describe("ProjectController", func() {
 					Expect(subject1.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 
 					updatedClusterRole := &rbacv1.ClusterRoleBinding{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name + "-clusterrolebinding",
 					}, updatedClusterRole)
 					Expect(err).NotTo(HaveOccurred())
@@ -526,37 +513,37 @@ var _ = Describe("ProjectController", func() {
 
 			Describe("finalizer removal", func() {
 				It("deletes the namespace and removes the finalizer when a deletion timestamp is present", func() {
-					_, err := reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err := reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					// need to retrieve the reconciled project so that it has the correct ResourceVersion
 					reconciledProject := &projects.Project{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Namespace: project.Namespace,
 						Name:      project.Name,
 					}, reconciledProject)
 					Expect(err).NotTo(HaveOccurred())
 
+					Expect(reconciledProject.Finalizers).To(Not(BeEmpty()))
+
 					reconciledProject.DeletionTimestamp = &metav1.Time{Time: time.Now()}
 
-					err = fakeClient.Update(context.TODO(), reconciledProject)
+					err = fakeClient.Update(ctx, reconciledProject)
 					Expect(err).NotTo(HaveOccurred())
 
-					_, err = reconciler.Reconcile(Request(project.Namespace, project.Name))
+					_, err = reconciler.Reconcile(ctx, Request(project.Namespace, project.Name))
 					Expect(err).NotTo(HaveOccurred())
 
 					namespace := &corev1.Namespace{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name,
 					}, namespace)
 					Expect(errors.IsNotFound(err)).To(BeTrue())
 
-					updatedProject := &projects.Project{}
-					err = fakeClient.Get(context.TODO(), client.ObjectKey{
+					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name,
-					}, updatedProject)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(updatedProject.Finalizers).To(BeEmpty())
+					}, reconciledProject)
+					Expect(errors.IsNotFound(err)).To(BeTrue())
 				})
 			})
 		})

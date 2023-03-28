@@ -19,7 +19,7 @@ import (
 	"github.com/caarlos0/env/v6"
 	"github.com/pivotal/projects-operator/testhelpers"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

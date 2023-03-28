@@ -21,11 +21,10 @@ import (
 	"context"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	projects "github.com/pivotal/projects-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -253,18 +252,11 @@ var _ = Describe("ProjectController", func() {
 					var serviceAccountName = "service-account"
 
 					BeforeEach(func() {
-						project = &projects.Project{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "my-project",
-							},
-							Spec: projects.ProjectSpec{
-								Access: []projects.SubjectRef{
-									{
-										Kind:      "ServiceAccount",
-										Name:      serviceAccountName,
-										Namespace: "some-namespace",
-									},
-								},
+						project.Spec.Access = []projects.SubjectRef{
+							{
+								Kind:      "ServiceAccount",
+								Name:      serviceAccountName,
+								Namespace: "some-namespace",
 							},
 						}
 
@@ -379,18 +371,11 @@ var _ = Describe("ProjectController", func() {
 					BeforeEach(func() {
 						groupName = "my-group"
 
-						project = &projects.Project{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "my-project",
-							},
-							Spec: projects.ProjectSpec{
-								Access: []projects.SubjectRef{
-									{
-										Kind:      "Group",
-										Name:      groupName,
-										Namespace: "some-namespace",
-									},
-								},
+						project.Spec.Access = []projects.SubjectRef{
+							{
+								Kind:      "Group",
+								Name:      groupName,
+								Namespace: "some-namespace",
 							},
 						}
 
@@ -539,6 +524,8 @@ var _ = Describe("ProjectController", func() {
 					}, reconciledProject)
 					Expect(err).NotTo(HaveOccurred())
 
+					Expect(reconciledProject.Finalizers).To(Not(BeEmpty()))
+
 					reconciledProject.DeletionTimestamp = &metav1.Time{Time: time.Now()}
 
 					err = fakeClient.Update(ctx, reconciledProject)
@@ -553,12 +540,10 @@ var _ = Describe("ProjectController", func() {
 					}, namespace)
 					Expect(errors.IsNotFound(err)).To(BeTrue())
 
-					updatedProject := &projects.Project{}
 					err = fakeClient.Get(ctx, client.ObjectKey{
 						Name: project.Name,
-					}, updatedProject)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(updatedProject.Finalizers).To(BeEmpty())
+					}, reconciledProject)
+					Expect(errors.IsNotFound(err)).To(BeTrue())
 				})
 			})
 		})

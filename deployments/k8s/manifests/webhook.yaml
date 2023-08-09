@@ -93,6 +93,9 @@ webhooks:
       name: #@ data.values.instance + '-' + data.values.name + "-webhook"
       path: /projectaccess
       namespace: #@ data.values.namespace
+  admissionReviewVersions:
+  - v1
+  sideEffects: None
   failurePolicy: Fail
   name: projectaccess.projects.vmware.com
   rules:
@@ -119,6 +122,9 @@ webhooks:
       namespace: #@ data.values.namespace
   failurePolicy: Fail
   name: project.projects.vmware.com
+  admissionReviewVersions:
+  - v1
+  sideEffects: None
   rules:
   - apiGroups:
     - projects.vmware.com
@@ -142,6 +148,9 @@ webhooks:
       namespace: #@ data.values.namespace
   failurePolicy: Fail
   name: project.projects.vmware.com
+  admissionReviewVersions:
+  - v1
+  sideEffects: None
   rules:
   - apiGroups:
     - projects.vmware.com
